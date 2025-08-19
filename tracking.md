@@ -11,9 +11,9 @@
 
 | Phase | Total Features | Completed | In Progress | Blocked | Not Started |
 |-------|----------------|-----------|-------------|---------|-------------|
-| **Phase 1** | 5 | 5 | 0 | 0 | 0 |
+| **Phase 1** | 5 | 1 | 0 | 0 | 4 |
 | **Phase 2** | 12 | 0 | 0 | 0 | 12 |
-| **Total** | 17 | 5 | 0 | 0 | 12 |
+| **Total** | 17 | 1 | 0 | 0 | 16 |
 
 **Current Sprint:** Phase 2 - Week 1  
 **Target Go-Live:** [TODO: Add target date]  
@@ -27,11 +27,11 @@
 
 | Module | Feature | Developer | Status | Deadline | PR/Branch | Test Coverage | Notes |
 |--------|---------|-----------|--------|----------|-----------|---------------|-------|
-| **Authentication** | Core auth system | [TODO: Dev name] | ✅ Done | Completed | `main` | 90% | Laravel 12.20.0 default authentication installed (starter kit) |
-| **User Management** | Basic employee CRUD | [TODO: Dev name] | ✅ Done | Completed | `main` | 80% | Spatie permissions integrated |
-| **RBAC** | Role-based access control | [TODO: Dev name] | ✅ Done | Completed | `main` | 90% | Super Admin, HR Admin, Employee roles |
-| **Navigation** | Responsive navigation | [TODO: Dev name] | ✅ Done | Completed | `main` | 75% | Tailwind CSS responsive design |
-| **Document Upload** | File upload system | [TODO: Dev name] | ✅ Done | Completed | `main` | 60% | Storage configuration completed |
+| **Authentication** | Core auth system | [TODO: Dev name] | ✅ Done | Completed | `main` | 100% | Laravel 12.20.0 default authentication installed (starter kit) |
+| **User Management** | Basic employee CRUD | [TODO: Dev name] | ⏳ To Do | [TODO: Date] | - | 0% | Not started |
+| **RBAC** | Role-based access control | [TODO: Dev name] | ⏳ To Do | [TODO: Date] | - | 0% | Not started |
+| **Navigation** | Responsive navigation | [TODO: Dev name] | ⏳ To Do | [TODO: Date] | - | 0% | Not started |
+| **Document Upload** | File upload system | [TODO: Dev name] | ⏳ To Do | [TODO: Date] | - | 0% | Not started |
 
 ### **Phase 2 Modules (To Be Implemented)**
 

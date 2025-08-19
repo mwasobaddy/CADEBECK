@@ -20,6 +20,59 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Permissions
         $permissions = [
+            'manage_employees',
+            'create_employees',
+            'edit_employees',
+            'delete_employees',
+            'view_employees',
+
+            'manage_branches',
+            'create_branches',
+            'edit_branches',
+            'delete_branches',
+            'view_branches',
+
+            'manage_departments',
+            'create_departments',
+            'edit_departments',
+            'delete_departments',
+            'view_departments',
+
+            'manage_roles',
+            'create_roles',
+            'edit_roles',
+            'delete_roles',
+            'view_roles',
+
+            'manage_permissions',
+            'create_permissions',
+            'edit_permissions',
+            'delete_permissions',
+            'view_permissions',
+
+            'manage_other_leave_requests',
+            'edit_other_leave_requests',
+            'delete_other_leave_requests',
+            'view_other_leave_requests',
+
+            'manage_own_leave_requests',
+            'create_own_leave_requests',
+            'edit_own_leave_requests',
+            'delete_own_leave_requests',
+            'view_own_leave_requests',
+
+
+            'manage_other_attendance',
+            'edit_other_attendance',
+            'delete_other_attendance',
+            'view_other_attendance',
+
+            'manage_own_attendance',
+            'mark_attendance',
+            'edit_own_attendance',
+            'delete_own_attendance',
+            'view_own_attendance',
+
             // Super Administrator
             'full_system_access',
             'create_onboarding_templates',
@@ -84,19 +137,59 @@ class RolesAndPermissionsSeeder extends Seeder
             'HR Administrator' => [
                 // HR Admin permissions
                 [
-                    'create_onboarding_workflows',
-                    'manage_onboarding_workflows',
-                    'monitor_onboarding_progress',
-                    'manage_document_templates',
+                    'manage_employees',
+                    'create_employees',
+                    'edit_employees',
+                    'delete_employees',
+                    'view_employees',
+
+                    'manage_branches',
                     'create_branches',
-                    'modify_branches',
+                    'edit_branches',
+                    'delete_branches',
+                    'view_branches',
+
+                    'manage_departments',
                     'create_departments',
-                    'modify_departments',
-                    'create_new_employees',
-                    'modify_new_employees',
-                    'assign_roles',
-                    'manage_leave_requests',
-                    'manage_attendance',
+                    'edit_departments',
+                    'delete_departments',
+                    'view_departments',
+
+                    'manage_roles',
+                    'create_roles',
+                    'edit_roles',
+                    'delete_roles',
+                    'view_roles',
+
+                    'manage_permissions',
+                    'create_permissions',
+                    'edit_permissions',
+                    'delete_permissions',
+                    'view_permissions',
+
+                    'manage_other_leave_requests',
+                    'edit_other_leave_requests',
+                    'delete_other_leave_requests',
+                    'view_other_leave_requests',
+
+                    'manage_own_leave_requests',
+                    'create_own_leave_requests',
+                    'edit_own_leave_requests',
+                    'delete_own_leave_requests',
+                    'view_own_leave_requests',
+
+
+                    'manage_other_attendance',
+                    'edit_other_attendance',
+                    'delete_other_attendance',
+                    'view_other_attendance',
+
+                    'manage_own_attendance',
+                    'mark_attendance',
+                    'edit_own_attendance',
+                    'delete_own_attendance',
+                    'view_own_attendance',
+
                     'process_payroll',
                     'generate_payslips',
                     'manage_performance_reviews',
@@ -138,8 +231,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $users = [
             [
                 'name' => 'Super Admin',
-                'email' => 'superadmin@cadebeck.com',
-                'password' => Hash::make('SuperAdmin123!'),
+                'email' => 'kelvinramsiel@gmail.com',
+                'password' => Hash::make('kelvin1234'),
                 'role' => 'Super Administrator',
             ],
             [

@@ -38,7 +38,7 @@ This file provides explicit instructions for any AI coding assistant (GitHub Cop
 - **Framework:** Laravel 12+ (core), Livewire (reactivity), Tailwind CSS (styling) url https://laravel.com/docs/12.x.
 - **RBAC:** Use Spatie Laravel Permission for all roles/permissions.
 - **Database:** MySQL (prod), SQLite (dev). Use Eloquent ORM.
-- **Frontend:** Livewire for all interactive components.
+- **Frontend:** Livewire for all interactive components. Use class-based Volt components for all new Volt features (see https://livewire.laravel.com/docs/volt#class-based-volt-components).
 - **Testing:** Always write feature and unit tests for new logic.
 - **Localization:** All user-facing text must support English and Swahili via Laravel translations.
 

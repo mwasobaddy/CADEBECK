@@ -40,6 +40,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
+        // Send verification email if not verified
+        if (!Auth::user()->hasVerifiedEmail()) {
+            Auth::user()->sendEmailVerificationNotification();
+            Session::flash('status', __('A verification email has been sent to your email address.'));
+        }
+
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 
