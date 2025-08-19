@@ -20,6 +20,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Permissions
         $permissions = [
+            'create_job_advert',
+            'manage_job_advert',
+            'vet_candidate',
+            'view_applications',
+            'apply_job_advert',
+
             'manage_employees',
             'create_employees',
             'edit_employees',
@@ -137,6 +143,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'HR Administrator' => [
                 // HR Admin permissions
                 [
+                    'create_job_advert',
+                    'manage_job_advert',
+                    'vet_candidate',
+                    'view_applications',
+                    'apply_job_advert',
+
                     'manage_employees',
                     'create_employees',
                     'edit_employees',

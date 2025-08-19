@@ -15,6 +15,26 @@
                 <flux:navlist.group :heading="__('Platform')" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
                 </flux:navlist.group>
+
+                <!-- Jobs Dropdown for Admins with Permissions -->
+                @if(auth()->user()->can('manage_job_advert') || auth()->user()->can('vet_candidate') || auth()->user()->can('view_applications') || auth()->user()->can('view analytics'))
+                    <flux:navlist.group :heading="__('Jobs')" class="grid">
+                        <flux:navlist.item icon="briefcase" :href="route('admin.job-adverts')" :current="request()->routeIs('admin.job-adverts')" wire:navigate>
+                            {{ __('Manage Job Adverts') }}
+                        </flux:navlist.item>
+                        {{-- To avoid missing slug error, do not show vetting link directly. Consider a dropdown of job adverts for vetting. --}}
+                        @if(auth()->user()->can('view_applications'))
+                            <flux:navlist.item icon="document-text" :href="route('careers')" :current="request()->routeIs('careers')" wire:navigate>
+                                {{ __('View Applications') }}
+                            </flux:navlist.item>
+                        @endif
+                        @if(auth()->user()->can('view analytics'))
+                            <flux:navlist.item icon="bar-chart-2" :href="route('admin.analytics')" :current="request()->routeIs('admin.analytics')" wire:navigate>
+                                {{ __('Analytics Dashboard') }}
+                            </flux:navlist.item>
+                        @endif
+                    </flux:navlist.group>
+                @endif
             </flux:navlist>
 
             <flux:spacer />
