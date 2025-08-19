@@ -1,21 +1,20 @@
+
 <?php
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use App\Models\JobAdvert;
 
-new #[Layout('components.layouts.app.guest')] class extends Component {
-    public $jobAdverts;
+new #[Layout('components.layouts.app.guest')] class extends Component {};
+?>
 
-    public function mount(): void
-    {
-        $this->jobAdverts = JobAdvert::where('status', 'Published')
-            ->whereDate('deadline', '>=', now()->toDateString())
-            ->orderBy('deadline')
-            ->get();
-    }
-}; ?>
+@php
+    $jobAdverts = App\Models\JobAdvert::where('status', 'Published')
+        ->whereDate('deadline', '>=', now()->toDateString())
+        ->orderBy('deadline')
+        ->paginate(12);
+@endphp
 
-<div class="p-6">
+<div class="p-6 mx-auto w-full h-full [:where(&)]:max-w-7xl px-6 lg:px-8 flex flex-col">
     <h1 class="text-2xl font-bold mb-4">{{ __('Current Job Openings') }}</h1>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse ($jobAdverts as $advert)
@@ -30,5 +29,8 @@ new #[Layout('components.layouts.app.guest')] class extends Component {
         @empty
             <div class="col-span-3 text-center text-zinc-500">{{ __('No job openings at this time.') }}</div>
         @endforelse
+    </div>
+    <div class="mt-6">
+        {{ $jobAdverts->links() }}
     </div>
 </div>

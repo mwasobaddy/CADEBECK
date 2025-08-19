@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 
-new #[Layout('components.layouts.app')] class extends Component {
+new #[Layout('components.layouts.app.guest')] class extends Component {
     use WithFileUploads;
 
     public ?JobAdvert $advert = null;

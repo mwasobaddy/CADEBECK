@@ -16,6 +16,8 @@ Volt::route('dashboard', 'dashboard')
 
 Volt::route('careers', 'job.job-advert-list')
     ->name('careers');
+Volt::route('careers/{slug}', 'job.job-advert-details')
+    ->name('careers.details');
 Volt::route('careers/{slug}/apply', 'job.job-application-form')
     ->name('careers.apply');
 
