@@ -6,31 +6,132 @@ use Illuminate\Support\Str;
 use App\Models\JobAdvert;
 
 new #[Layout('components.layouts.app')] class extends Component {
+    public $showFilters = false;
     public ?int $editingId = null;
     public $jobAdverts;
+    public $showDeleteModal = false;
+    public $showEditModal = false;
+    public $pendingDeleteId = null;
+    public $pendingEditId = null;
+    public $isLoadingDelete = false;
+    public $isLoadingEdit = false;
+    public $search = '';
+    public $filterStatus = '';
+    public $selected = [];
+    public $selectAll = false;
+    public $showBulkDeleteModal = false;
+    public $isLoadingBulkDelete = false;
+    public $perPage = 10;
+    public $page = 1;
+    public $total = 0;
 
     public function mount(): void
     {
         $this->loadJobAdverts();
     }
 
+    public function updatedSearch(): void
+    {
+        $this->page = 1;
+        $this->loadJobAdverts();
+    }
+    public function updatedFilterStatus(): void
+    {
+        $this->page = 1;
+        $this->loadJobAdverts();
+    }
+    public function updatedPage(): void
+    {
+        $this->loadJobAdverts();
+    }
+    public function updatedPerPage(): void
+    {
+        $this->page = 1;
+        $this->loadJobAdverts();
+    }
+
     public function loadJobAdverts(): void
     {
-        $this->jobAdverts = JobAdvert::orderByDesc('created_at')->get();
+        $query = JobAdvert::query();
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%')
+                    ->orWhere('slug', 'like', '%' . $this->search . '%');
+            });
+        }
+        if ($this->filterStatus) {
+            $query->where('status', $this->filterStatus);
+        }
+        $this->total = $query->count();
+        $this->jobAdverts = $query
+            ->orderByDesc('created_at')
+            ->skip(($this->page - 1) * $this->perPage)
+            ->take($this->perPage)
+            ->get();
+        $this->updateSelectAll();
     }
 
-    public function edit($id): void
+    public function updateSelectAll(): void
     {
-        $advert = JobAdvert::findOrFail($id);
-        $this->form = $advert->only(['title', 'description', 'deadline', 'status']);
-        $this->editingId = $id;
+        if ($this->selectAll) {
+            $this->selected = $this->jobAdverts->pluck('id')->toArray();
+        } else {
+            $this->selected = [];
+        }
     }
 
-    public function delete($id): void
+    public function toggleSelectAll(): void
     {
-        JobAdvert::findOrFail($id)->delete();
+        $this->selectAll = !$this->selectAll;
+        $this->updateSelectAll();
+    }
+
+    public function bulkDeleteConfirm(): void
+    {
+        $this->showBulkDeleteModal = true;
+    }
+
+    public function bulkDelete(): void
+    {
+        $this->isLoadingBulkDelete = true;
+        JobAdvert::whereIn('id', $this->selected)->delete();
+        $this->showBulkDeleteModal = false;
+        $this->isLoadingBulkDelete = false;
+        $this->selected = [];
+        $this->selectAll = false;
+        $this->loadJobAdverts();
+    }
+
+    public function confirmEdit($id): void
+    {
+        $this->pendingEditId = $id;
+        $this->showEditModal = true;
+    }
+
+    public function confirmDelete($id): void
+    {
+        $this->pendingDeleteId = $id;
+        $this->showDeleteModal = true;
+    }
+
+    public function editConfirmed(): void
+    {
+        $this->isLoadingEdit = true;
+        $advert = JobAdvert::findOrFail($this->pendingEditId);
+        $this->showEditModal = false;
+        $this->isLoadingEdit = false;
+        $this->redirectRoute('admin.job-adverts.edit', ['slug' => $advert->slug]);
+    }
+
+    public function deleteConfirmed(): void
+    {
+        $this->isLoadingDelete = true;
+        JobAdvert::findOrFail($this->pendingDeleteId)->delete();
         $this->loadJobAdverts();
         $this->resetForm();
+        $this->showDeleteModal = false;
+        $this->isLoadingDelete = false;
     }
 
     public function resetForm(): void
@@ -45,84 +146,354 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
 }; ?>
 
-<div class="max-w-5xl mx-auto p-6">
-    <!-- Page Title with Icon and Create Button -->
-    <div class="flex items-center gap-3 mb-8 justify-between">
-        <div class="flex items-center gap-3">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
-            </svg>
-            <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ __('Manage Job Adverts') }}</h1>
-        </div>
-        <a href="{{ route('admin.job-adverts.create') }}" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-            </svg>
-            {{ __('Create New') }}
-        </a>
+<div class="relative max-w-6xl mx-auto px-4 py-8">
+    <!-- SVG Blobs Background -->
+    <svg class="absolute -top-24 -left-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400"
+        fill="none">
+        <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#blob1)" />
+        <defs>
+            <radialGradient id="blob1" cx="0" cy="0" r="1"
+                gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38bdf8" />
+                <stop offset="1" stop-color="#6366f1" />
+            </radialGradient>
+        </defs>
+    </svg>
+    <svg class="absolute -bottom-24 -right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0"
+        viewBox="0 0 400 400" fill="none">
+        <ellipse cx="200" cy="200" rx="160" ry="100" fill="url(#blob2)" />
+        <defs>
+            <radialGradient id="blob2" cx="0" cy="0" r="1"
+                gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#34d399" />
+                <stop offset="1" stop-color="#f472b6" />
+            </radialGradient>
+        </defs>
+    </svg>
+
+    {{-- create a mini navbar and separate breadcrumbs with glassmorphism --}}
+    <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-lg p-6 mb-8 z-10 relative">
+        <nav class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="{{ route('admin.job-adverts.create') }}" class="text-gray-500 hover:text-gray-700">
+                    {{ __('Job Advert List') }}
+                </a>
+                <span class="text-gray-400">/</span>
+                <a href="{{ route('admin.job-adverts.create') }}" class="text-gray-500 hover:text-gray-700">
+                    {{ __('Create Advert') }}
+                </a>
+            </div>
+        </nav>
     </div>
 
+    <!-- Header: Title, Icon, Create Button -->
+    {{-- @can('create_job_advert')
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
+            <div class="flex items-center gap-3">
+                <!-- Modern Icon: Briefcase -->
+                <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <rect x="2" y="7" width="20" height="15" rx="3" stroke="currentColor" stroke-width="2"
+                        fill="none"></rect>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 3v4M8 3v4"></path>
+                </svg>
+                <h1 class="text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+                    {{ __('Manage Job Adverts') }}
+                </h1>
+            </div>
+            <a href="{{ route('admin.job-adverts.create') }}"
+                class="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span class="hidden sm:inline">{{ __('Create New') }}</span>
+            </a>
+        </div>
+    @endcan --}}
 
-    <!-- Card for Table -->
-    <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
-        <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-            </svg>
-            {{ __('Job Advert List') }}
-        </h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-zinc-800">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{{ __('Title') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{{ __('Slug') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{{ __('Deadline') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{{ __('Status') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{{ __('Actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($jobAdverts as $advert)
-                        <tr class="hover:bg-blue-50 dark:hover:bg-zinc-800 transition">
-                            <td class="border-b px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{{ $advert->title }}</td>
-                            <td class="border-b px-4 py-3 text-gray-700 dark:text-gray-300">{{ $advert->slug }}</td>
-                            <td class="border-b px-4 py-3 text-gray-700 dark:text-gray-300">{{ $advert->deadline }}</td>
-                            <td class="border-b px-4 py-3">
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold
-                                    @if($advert->status === 'Published') bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200
-                                    @elseif($advert->status === 'Draft') bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200
-                                    @else bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 @endif">
-                                    {{ __($advert->status) }}
-                                </span>
-                            </td>
-                            <td class="border-b px-4 py-3 flex gap-2">
-                                <a href="{{ route('admin.job-adverts.edit', ['slug' => $advert->slug]) }}"
-                                    class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold px-3 py-1 rounded transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    title="{{ __('Edit') }}">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.293-6.293a1 1 0 011.414 0l1.586 1.586a1 1 0 010 1.414L11 15H9v-2z"></path>
-                                    </svg>
-                                    {{ __('Edit') }}
-                                </a>
-                                <button wire:click="delete({{ $advert->id }})"
-                                    class="flex items-center gap-1 text-red-600 hover:text-red-800 font-semibold px-3 py-1 rounded transition focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    title="{{ __('Delete') }}">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    {{ __('Delete') }}
-                                </button>
-                            </td>
+    <!-- Card Container for Table -->
+    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-10 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+            <div class="flex items-center gap-2">
+                <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-pink-500 flex items-center gap-2 drop-shadow-lg">
+                    <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor"
+                            stroke-width="2" fill="none"></rect>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h8"></path>
+                    </svg>
+                    {{ __('Job Advert List') }}
+                </h2>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <!-- Search Bar with Icon -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                    </span>
+                    <input type="text" wire:model.live="search"
+                        class="pl-10 pr-4 py-2 rounded-xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                        placeholder="{{ __('Search adverts...') }}">
+                </div>
+                <!-- Filter Toggle Icon -->
+                <button type="button" wire:click="$toggle('showFilters')"
+                    class="flex items-center gap-1 px-3 py-2 rounded-xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
+                    <span class="hidden sm:inline">{{ __('Filters') }}</span>
+                </button>
+                <!-- Filters (hidden by default, shown when toggled) -->
+                @if ($showFilters ?? false)
+                    <div class="flex flex-wrap gap-2 items-center animate-fade-in">
+                        <select wire:model.live="filterStatus"
+                            class="px-3 py-2 rounded-xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                            <option value="">{{ __('All Statuses') }}</option>
+                            <option value="Published">{{ __('Published') }}</option>
+                            <option value="Draft">{{ __('Draft') }}</option>
+                            <option value="Expired">{{ __('Expired') }}</option>
+                        </select>
+                        <select wire:model.live="perPage"
+                            class="px-3 py-2 rounded-xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                @endif
+            </div>
+        </div>
+        <div class="overflow-x-auto bg-transparent">
+            <form wire:submit.prevent="bulkDelete">
+                <table class="min-w-full divide-y divide-blue-200 dark:divide-indigo-700 text-sm">
+                    <thead>
+                        <tr
+                            class="bg-gradient-to-r from-blue-50/60 via-indigo-50/60 to-pink-50/60 dark:from-zinc-800/60 dark:via-zinc-900/60 dark:to-zinc-800/60 backdrop-blur-md">
+                            <th
+                                class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                <input type="checkbox" wire:model="selectAll" wire:click="toggleSelectAll"
+                                    class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
+                            </th>
+                            <th
+                                class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                {{ __('Title') }}</th>
+                            <th
+                                class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                {{ __('Slug') }}</th>
+                            <th
+                                class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                {{ __('Deadline') }}</th>
+                            <th
+                                class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                {{ __('Status') }}</th>
+                            @if (Auth::user()->can('view_job_advert') ||
+                                    Auth::user()->can('edit_job_advert') ||
+                                    Auth::user()->can('delete_job_advert'))
+                                <th
+                                    class="px-5 py-3 text-left font-semibold text-blue-500 dark:text-indigo-400 uppercase tracking-wider">
+                                    {{ __('Actions') }}</th>
+                            @endif
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">{{ __('No job adverts found.') }}</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse ($jobAdverts as $advert)
+                            <tr
+                                class="hover:bg-gradient-to-r hover:from-blue-100/60 hover:via-indigo-100/60 hover:to-pink-100/60 dark:hover:from-zinc-800/60 dark:hover:via-zinc-900/60 dark:hover:to-zinc-800/60 transition group backdrop-blur-md">
+                                <td class="border-b px-5 py-4">
+                                    <input type="checkbox" wire:model="selected" value="{{ $advert->id }}"
+                                        class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
+                                </td>
+                                <td class="border-b px-5 py-4 text-gray-900 dark:text-white font-bold">
+                                    <span class="group-hover:underline">{{ $advert->title }}</span>
+                                </td>
+                                <td class="border-b px-5 py-4 text-indigo-600 dark:text-indigo-300 font-mono">
+                                    {{ $advert->slug }}</td>
+                                <td class="border-b px-5 py-4 text-pink-600 dark:text-pink-300 font-semibold">
+                                    {{ $advert->deadline }}</td>
+                                <td class="border-b px-5 py-4">
+                                    <span
+                                        class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow-md
+                                    @if ($advert->status === 'Published') bg-gradient-to-r from-green-400/60 via-green-300/60 to-green-500/60 text-green-900 dark:bg-green-900/60 dark:text-green-200
+                                    @elseif($advert->status === 'Draft') bg-gradient-to-r from-yellow-300/60 via-yellow-200/60 to-yellow-400/60 text-yellow-900 dark:bg-yellow-900/60 dark:text-yellow-200
+                                    @else bg-gradient-to-r from-red-300/60 via-red-200/60 to-red-400/60 text-red-900 dark:bg-red-900/60 dark:text-red-200 @endif
+                                    transition-colors duration-200 backdrop-blur-sm">
+                                        {{ __($advert->status) }}
+                                    </span>
+                                </td>
+                                @if (Auth::user()->can('view_job_advert') ||
+                                        Auth::user()->can('edit_job_advert') ||
+                                        Auth::user()->can('delete_job_advert'))
+                                    <td class="border-b px-5 py-4 flex gap-2">
+                                        @can('edit_job_advert')
+                                            <button wire:click="confirmEdit({{ $advert->id }})"
+                                                class="flex items-center gap-1 text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 font-semibold px-3 py-1 rounded-xl shadow-lg transition focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 backdrop-blur-sm"
+                                                title="{{ __('Edit') }}"
+                                                @if ($isLoadingEdit && $pendingEditId === $advert->id) disabled @endif>
+                                                <svg class="w-4 h-4 @if ($isLoadingEdit && $pendingEditId === $advert->id) animate-spin @endif"
+                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M15.232 5.232l3.536 3.536M9 13l6.293-6.293a1 1 0 011.414 0l1.586 1.586a1 1 0 010 1.414L11 15H9v-2z">
+                                                    </path>
+                                                </svg>
+                                                {{ $isLoadingEdit && $pendingEditId === $advert->id ? __('Loading...') : __('Edit') }}
+                                            </button>
+                                        @endcan
+                                        @can('delete_job_advert')
+                                            <button wire:click="confirmDelete({{ $advert->id }})"
+                                                class="flex items-center gap-1 text-white bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 font-semibold px-3 py-1 rounded-xl shadow-lg transition focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-60 backdrop-blur-sm"
+                                                title="{{ __('Delete') }}"
+                                                @if ($isLoadingDelete && $pendingDeleteId === $advert->id) disabled @endif>
+                                                <svg class="w-4 h-4 @if ($isLoadingDelete && $pendingDeleteId === $advert->id) animate-spin @endif"
+                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                                {{ $isLoadingDelete && $pendingDeleteId === $advert->id ? __('Loading...') : __('Delete') }}
+                                            </button>
+                                        @endcan
+                                        <!-- Delete Confirmation Modal -->
+                                        @if ($showDeleteModal)
+                                            <div
+                                                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm transition">
+                                                <div
+                                                    class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800">
+                                                    <h3
+                                                        class="text-xl font-bold mb-4 text-red-600 dark:text-red-400 flex items-center gap-2">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                            stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                        {{ __('Confirm Delete') }}
+                                                    </h3>
+                                                    <p class="mb-6 text-zinc-700 dark:text-zinc-300">
+                                                        {{ __('Are you sure you want to delete this job advert? This action cannot be undone.') }}
+                                                    </p>
+                                                    <div class="flex justify-end gap-3">
+                                                        <button wire:click="deleteConfirmed"
+                                                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                                            @if ($isLoadingDelete) disabled @endif>
+                                                            {{ $isLoadingDelete ? __('Deleting...') : __('Delete') }}
+                                                        </button>
+                                                        <button wire:click="$set('showDeleteModal', false)"
+                                                            class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
+                                                            {{ __('Cancel') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!-- Edit Confirmation Modal -->
+                                        @if ($showEditModal)
+                                            <div
+                                                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm transition">
+                                                <div
+                                                    class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800">
+                                                    <h3
+                                                        class="text-xl font-bold mb-4 text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                            stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M15.232 5.232l3.536 3.536M9 13l6.293-6.293a1 1 0 011.414 0l1.586 1.586a1 1 0 010 1.414L11 15H9v-2z">
+                                                            </path>
+                                                        </svg>
+                                                        {{ __('Confirm Edit') }}
+                                                    </h3>
+                                                    <p class="mb-6 text-zinc-700 dark:text-zinc-300">
+                                                        {{ __('Are you sure you want to edit this job advert?') }}</p>
+                                                    <div class="flex justify-end gap-3">
+                                                        <button wire:click="editConfirmed"
+                                                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                            @if ($isLoadingEdit) disabled @endif>
+                                                            {{ $isLoadingEdit ? __('Editing...') : __('Edit') }}
+                                                        </button>
+                                                        <button wire:click="$set('showEditModal', false)"
+                                                            class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
+                                                            {{ __('Cancel') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-zinc-700" fill="none"
+                                            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="2" fill="none"></circle>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 10h6v4H9z">
+                                            </path>
+                                        </svg>
+                                        {{ __('No job adverts found.') }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <div class="flex items-center justify-between mt-6">
+                    <div>
+                        @if (count($selected) > 0)
+                            <button type="button" wire:click="bulkDeleteConfirm"
+                                class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-5 py-2 rounded-xl font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm">
+                                {{ __('Delete Selected') }} ({{ count($selected) }})
+                            </button>
+                        @endif
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-sm text-indigo-500 dark:text-indigo-400 font-semibold">{{ __('Page') }}
+                            {{ $page }} / {{ ceil($total / $perPage) }}</span>
+                        <button type="button" wire:click="$set('page', max(1, $page-1))"
+                            class="px-3 py-1 rounded-xl border border-blue-200 dark:border-indigo-700 text-blue-600 dark:text-indigo-300 bg-white/80 dark:bg-zinc-900/80 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 font-semibold shadow backdrop-blur-sm">&laquo;
+                            {{ __('Prev') }}</button>
+                        <button type="button" wire:click="$set('page', min(ceil($total / $perPage), $page+1))"
+                            class="px-3 py-1 rounded-xl border border-blue-200 dark:border-indigo-700 text-blue-600 dark:text-indigo-300 bg-white/80 dark:bg-zinc-900/80 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 font-semibold shadow backdrop-blur-sm">{{ __('Next') }}
+                            &raquo;</button>
+                    </div>
+                </div>
+            </form>
+            <!-- Bulk Delete Confirmation Modal -->
+            @if ($showBulkDeleteModal)
+                <div
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-2xl transition">
+                    <div
+                        class="bg-gradient-to-br from-pink-50/80 via-white/80 to-red-100/80 dark:from-zinc-900/80 dark:via-zinc-800/80 dark:to-zinc-900/80 backdrop-blur-xl rounded-xl shadow-2xl p-10 max-w-md w-full border border-pink-200 dark:border-zinc-800">
+                        <h3
+                            class="text-2xl font-extrabold text-pink-600 dark:text-pink-400 flex items-center gap-2 mb-4">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            {{ __('Confirm Bulk Delete') }}
+                        </h3>
+                        <p class="mb-6 text-zinc-700 dark:text-zinc-300 font-semibold">
+                            {{ __('Are you sure you want to delete the selected job adverts? This action cannot be undone.') }}
+                        </p>
+                        <div class="flex justify-end gap-3">
+                            <button wire:click="bulkDelete"
+                                class="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-5 py-2 rounded-xl font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition backdrop-blur-sm"
+                                @if ($isLoadingBulkDelete) disabled @endif>
+                                {{ $isLoadingBulkDelete ? __('Deleting...') : __('Delete Selected') }}
+                            </button>
+                            <button wire:click="$set('showBulkDeleteModal', false)"
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
+                                {{ __('Cancel') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
