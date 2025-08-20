@@ -28,13 +28,21 @@
                                 {{ __('View Applications') }}
                             </flux:navlist.item>
                         @endif
-                        @if(auth()->user()->can('view analytics'))
-                            <flux:navlist.item icon="bar-chart-2" :href="route('admin.analytics')" :current="request()->routeIs('admin.analytics')" wire:navigate>
+                        @if(auth()->user()->can('view_applications'))
+                            <flux:navlist.item icon="chart-bar-square" :href="route('admin.analytics')" :current="request()->routeIs('admin.analytics')" wire:navigate>
                                 {{ __('Analytics Dashboard') }}
                             </flux:navlist.item>
                         @endif
                     </flux:navlist.group>
                 @endif
+
+                <flux:navlist.group expandable :expanded="false" heading="Favorites" class="hidden lg:grid" icon="chart-bar-square">
+                    <flux:navlist.item icon="briefcase" :href="route('admin.job-adverts')" :current="request()->routeIs('admin.job-adverts')" wire:navigate>
+                        {{ __('Job Adverts List') }}
+                    </flux:navlist.item>
+                    <flux:navlist.item href="#">Android app</flux:navlist.item>
+                    <flux:navlist.item href="#">Brand guidelines</flux:navlist.item>
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />

@@ -25,7 +25,7 @@ class JobAdvertSeeder extends Seeder
             JobAdvert::create([
                 'title' => 'Job Position ' . $i,
                 'slug' => Str::slug('Job Position ' . $i . '-' . Str::random(5)),
-                'description' => 'This is a sample description for Job Position ' . $i . '. Responsibilities include... Requirements include... Apply before the deadline.',
+                'description' => 'This is a sample description for Job Position ' . $i . '. Responsibilities include managing daily operations, collaborating with cross-functional teams, and ensuring compliance with company policies. Candidates should possess excellent communication skills, relevant academic qualifications, and a minimum of 3 years experience in a similar role. Additional requirements include proficiency in computer applications, ability to work under pressure, and strong problem-solving skills. Successful applicants will participate in onboarding, receive training, and contribute to organizational growth. Apply before the deadline.',
                 'deadline' => now()->addDays(rand(5, 60)),
                 'status' => 'Published',
                 'posted_by' => $users[array_rand($users)],

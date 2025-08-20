@@ -32,22 +32,23 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
-
-    Volt::route('admin/job-adverts', 'job.job-advert-manager')
-        ->middleware(['auth', 'permission:manage_job_advert'])
-        ->name('admin.job-adverts');
-    Volt::route('admin/job-adverts/create', 'job.job-advert-create')
-        ->middleware(['auth', 'permission:manage_job_advert'])
-        ->name('admin.job-adverts.create');
-    Volt::route('admin/job-adverts/{slug}/edit', 'job.job-advert-create')
-        ->middleware(['auth', 'permission:manage_job_advert'])
-        ->name('admin.job-adverts.edit');
-    Volt::route('admin/job-adverts/{slug}/vetting', 'job.candidate-vetting')
-        ->middleware(['auth', 'permission:vet_candidates'])
-        ->name('admin.job-adverts.vetting');
-    Volt::route('admin/analytics', 'job.admin-analytics-dashboard')
+    Route::middleware(['verified'])->group(function () {
+        Volt::route('job/job-adverts', 'job.job-advert-manager')
+            ->middleware(['auth', 'permission:manage_job_advert'])
+            ->name('admin.job-adverts');
+        Volt::route('job/job-adverts/create', 'job.job-advert-create')
+            ->middleware(['auth', 'permission:manage_job_advert'])
+            ->name('admin.job-adverts.create');
+        Volt::route('job/job-adverts/{slug}/edit', 'job.job-advert-create')
+            ->middleware(['auth', 'permission:manage_job_advert'])
+            ->name('admin.job-adverts.edit');
+        Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
+            ->middleware(['auth', 'permission:vet_candidates'])
+            ->name('admin.job-adverts.vetting');
+        Volt::route('admin/analytics', 'job.admin-analytics-dashboard')
             ->middleware(['auth', 'permission:view_analytics'])
             ->name('admin.analytics');
+    });
 });
 
 require __DIR__.'/auth.php';
