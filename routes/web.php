@@ -35,19 +35,23 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['verified'])->group(function () {
         Volt::route('job/job-adverts', 'job.job-advert-manager')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('admin.job-adverts');
+            ->name('job.job-adverts');
+
         Volt::route('job/job-adverts/create', 'job.job-advert-create')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('admin.job-adverts.create');
+            ->name('job.job-adverts.create');
+
         Volt::route('job/job-adverts/{slug}/edit', 'job.job-advert-create')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('admin.job-adverts.edit');
+            ->name('job.job-adverts.edit');
+
         Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
             ->middleware(['auth', 'permission:vet_candidates'])
-            ->name('admin.job-adverts.vetting');
+            ->name('job.job-adverts.vetting');
+            
         Volt::route('admin/analytics', 'job.admin-analytics-dashboard')
             ->middleware(['auth', 'permission:view_analytics'])
-            ->name('admin.analytics');
+            ->name('job.analytics');
     });
 });
 
