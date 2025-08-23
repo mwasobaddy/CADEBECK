@@ -55,7 +55,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             JobAdvert::create($data);
             session()->flash('status', __('Job advert created successfully.'));
         }
-        $this->redirectRoute('admin.job-adverts');
+        $this->redirectRoute('job.job-adverts');
     }
 
     public function resetForm(): void
@@ -74,7 +74,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 }; ?>
 
 
-<div class="relative max-w-6xl mx-auto px-4 py-8">
+<div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
     <!-- SVG Blobs Background -->
     <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
         <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#blob1)" />
@@ -99,10 +99,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('job.job-adverts') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-800 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.job-adverts') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Job Advert List') }}
                 </a>
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-800 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ $editing ? __('Edit Advert') : __('Create Advert') }}
                 </a>
             </div>

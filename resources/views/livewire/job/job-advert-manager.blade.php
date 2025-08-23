@@ -287,7 +287,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 };
 ?>
 
-<div class="relative max-w-6xl mx-auto px-4 py-8">
+<div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
     <!-- SVG Blobs Background -->
     <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400"
         fill="none">
@@ -316,10 +316,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-800 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Job Advert List') }}
                 </a>
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-800 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Create Advert') }}
                 </a>
             </div>
@@ -328,7 +328,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <!-- Card Container for Table -->
     <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
-        <div class="flex flex-row items-center justify-between mb-6 gap-4">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
             <div class="flex items-center gap-2">
                 <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 flex items-center gap-2 drop-shadow-lg">
                     <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" stroke-width="2"
@@ -342,27 +342,31 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Import Button -->
-                <button type="button" onclick="document.getElementById('import-file').click()"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                    </svg>
-                    <span class="hidden lg:inline">{{ __('Import') }}</span>
-                </button>
-                <input type="file" id="import-file" accept=".csv,.xlsx,.xls" class="hidden" wire:change="importFile">
+                @can('import_job_advert')
+                    <!-- Import Button -->
+                    <button type="button" onclick="document.getElementById('import-file').click()"
+                        class="flex items-center gap-2 px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                        </svg>
+                        <span class="hidden lg:inline">{{ __('Import') }}</span>
+                    </button>
+                    <input type="file" id="import-file" accept=".csv,.xlsx,.xls" class="hidden" wire:change="importFile">
+                @endcan
 
-                <!-- Export All Button -->
-                <button type="button" wire:click="exportAll"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                    @if ($isLoadingExport) disabled @endif>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <span class="hidden lg:inline">
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                    </span>
-                </button>
+                @can('export_job_advert')
+                    <!-- Export All Button -->
+                    <button type="button" wire:click="exportAll"
+                        class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                        @if ($isLoadingExport) disabled @endif>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <span class="hidden lg:inline">
+                            {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
+                        </span>
+                    </button>
+                @endcan
 
                 @can('create_job_advert')
                     <!-- Create New Advert Button -->
@@ -439,24 +443,29 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- Export Selected Button -->
-                    <button type="button" wire:click="exportSelected"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                        @if ($isLoadingExport) disabled @endif>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                    </button>
+                    @can('export_job_advert')
+                        <!-- Export Selected Button -->
+                        <button type="button" wire:click="exportSelected"
+                            class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                            @if ($isLoadingExport) disabled @endif>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
+                        </button>
+                    @endcan
                     
-                    <!-- Delete Selected Button -->
-                    <button type="button" wire:click="bulkDeleteConfirm"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        {{ __('Delete Selected') }}
-                    </button>
+                    @can('delete_job_advert')
+                        
+                    @endcan
+                        <!-- Delete Selected Button -->
+                        <button type="button" wire:click="bulkDeleteConfirm"
+                            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            {{ __('Delete Selected') }}
+                        </button>
                 </div>
             </div>
         @endif
