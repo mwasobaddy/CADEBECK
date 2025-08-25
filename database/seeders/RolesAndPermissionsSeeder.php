@@ -24,6 +24,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit_job_advert',
             'delete_job_advert',
             'manage_job_advert',
+            'export_job_advert',
+            'import_job_advert',
             'vet_candidate',
             'view_applications',
             'apply_job_advert',
