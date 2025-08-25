@@ -30,6 +30,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_applications',
             'apply_job_advert',
 
+            'create_user',
+            'edit_user',
+            'delete_user',
+            'manage_user',
+            'export_user',
+            'import_user',
+
             'manage_employees',
             'create_employees',
             'edit_employees',
@@ -246,19 +253,22 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create demo users for each role
         $users = [
             [
-                'name' => 'Super Admin',
+                'first_name' => 'Super',
+                'other_names' => 'Admin',
                 'email' => 'kelvinramsiel@gmail.com',
                 'password' => Hash::make('kelvin1234'),
                 'role' => 'Super Administrator',
             ],
             [
-                'name' => 'HR Admin',
+                'first_name' => 'HR',
+                'other_names' => 'Admin',
                 'email' => 'hradmin@cadebeck.com',
                 'password' => Hash::make('HRAdmin123!'),
                 'role' => 'HR Administrator',
             ],
             [
-                'name' => 'New Employee',
+                'first_name' => 'New',
+                'other_names' => 'Employee',
                 'email' => 'employee@cadebeck.com',
                 'password' => Hash::make('Employee123!'),
                 'role' => 'New Employee',
@@ -269,7 +279,8 @@ class RolesAndPermissionsSeeder extends Seeder
             $user = User::firstOrCreate([
                 'email' => $userData['email'],
             ], [
-                'name' => $userData['name'],
+                'first_name' => $userData['first_name'],
+                'other_names' => $userData['other_names'],
                 'password' => $userData['password'],
             ]);
             $user->assignRole($userData['role']);

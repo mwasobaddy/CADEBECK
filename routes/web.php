@@ -33,6 +33,18 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
     Route::middleware(['verified'])->group(function () {
+        Volt::route('users/manage', 'User.user-manager')
+            ->middleware(['auth', 'permission:manage_user'])
+            ->name('user.manage');
+
+        Volt::route('users/create', 'User.user-create')
+            ->middleware(['auth', 'permission:create_user'])
+            ->name('user.create');
+
+        Volt::route('users/{id}/edit', 'User.user-create')
+            ->middleware(['auth', 'permission:edit_user'])
+            ->name('user.edit');
+
         Volt::route('job/job-adverts', 'job.job-advert-manager')
             ->middleware(['auth', 'permission:manage_job_advert'])
             ->name('job.job-adverts');
