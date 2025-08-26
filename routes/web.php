@@ -84,6 +84,55 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:vet_candidates'])
             ->name('job.job-adverts.vetting');
             
+        // Organisation: Locations, Branches, Departments, Designations
+        Volt::route('organisation/locations', 'organisation.location_manager')
+            ->middleware(['auth', 'permission:manage_location'])
+            ->name('location.manage');
+
+        Volt::route('organisation/locations/create', 'organisation.location_create')
+            ->middleware(['auth', 'permission:create_location'])
+            ->name('location.create');
+
+        Volt::route('organisation/locations/{id}/edit', 'organisation.location_create')
+            ->middleware(['auth', 'permission:edit_location'])
+            ->name('location.edit');
+
+        Volt::route('organisation/branches', 'organisation.branch_manager')
+            ->middleware(['auth', 'permission:manage_branch'])
+            ->name('branch.manage');
+
+        Volt::route('organisation/branches/create', 'organisation.branch_create')
+            ->middleware(['auth', 'permission:create_branch'])
+            ->name('branch.create');
+
+        Volt::route('organisation/branches/{id}/edit', 'organisation.branch_create')
+            ->middleware(['auth', 'permission:edit_branch'])
+            ->name('branch.edit');
+
+        Volt::route('organisation/departments', 'organisation.department_manager')
+            ->middleware(['auth', 'permission:manage_department'])
+            ->name('department.manage');
+
+        Volt::route('organisation/departments/create', 'organisation.department_create')
+            ->middleware(['auth', 'permission:create_department'])
+            ->name('department.create');
+
+        Volt::route('organisation/departments/{id}/edit', 'organisation.department_create')
+            ->middleware(['auth', 'permission:edit_department'])
+            ->name('department.edit');
+
+        Volt::route('organisation/designations', 'organisation.designation_manager')
+            ->middleware(['auth', 'permission:manage_designation'])
+            ->name('designation.manage');
+
+        Volt::route('organisation/designations/create', 'organisation.designation_create')
+            ->middleware(['auth', 'permission:create_designation'])
+            ->name('designation.create');
+
+        Volt::route('organisation/designations/{id}/edit', 'organisation.designation_create')
+            ->middleware(['auth', 'permission:edit_designation'])
+            ->name('designation.edit');
+
         Volt::route('admin/analytics', 'job.admin-analytics-dashboard')
             ->middleware(['auth', 'permission:view_analytics'])
             ->name('job.analytics');
