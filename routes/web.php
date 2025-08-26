@@ -68,6 +68,18 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:manage_job_advert'])
             ->name('job.job-adverts.edit');
 
+        Volt::route('role/manage', 'Role.role-manager')
+            ->middleware(['permission:manage_role'])
+            ->name('role.manage');
+
+        Volt::route('role/create', 'Role.role-create')
+            ->middleware(['permission:create_role'])
+            ->name('role.create');
+
+        Volt::route('role/{id}/edit', 'Role.role-create')
+            ->middleware(['permission:edit_role'])
+            ->name('role.edit');
+
         Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
             ->middleware(['auth', 'permission:vet_candidates'])
             ->name('job.job-adverts.vetting');

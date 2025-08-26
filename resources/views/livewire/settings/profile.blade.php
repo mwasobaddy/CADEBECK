@@ -7,7 +7,8 @@ use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
 new class extends Component {
-    public string $name = '';
+    public string $firstName = '';
+    public string $otherNames = '';
     public string $email = '';
 
     /**
@@ -15,7 +16,8 @@ new class extends Component {
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
+        $this->firstName = Auth::user()->first_name;
+        $this->otherNames = Auth::user()->other_names;
         $this->email = Auth::user()->email;
     }
 
@@ -27,7 +29,8 @@ new class extends Component {
         $user = Auth::user();
 
         $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'firstName' => ['required', 'string', 'max:255'],
+            'otherNames' => ['required', 'string', 'max:255'],
 
             'email' => [
                 'required',
@@ -74,7 +77,9 @@ new class extends Component {
 
     <x-settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <flux:input wire:model="firstName" :label="__('First Name')" type="text" required autofocus autocomplete="firstName" />
+
+            <flux:input wire:model="otherNames" :label="__('Other Names')" type="text" required autofocus autocomplete="otherNames" />
 
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />

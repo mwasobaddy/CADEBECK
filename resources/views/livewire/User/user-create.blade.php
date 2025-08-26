@@ -150,7 +150,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         </nav>
     </div>
 
-    @can('manage_user')
+    @can('create_user')
         <!-- Card Container for Form -->
         <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
             <div class="flex items-center gap-3 mb-8">
