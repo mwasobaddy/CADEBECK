@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             JobAdvertSeeder::class,
+            LocationSeeder::class,
+            BranchSeeder::class,
+            DepartmentSeeder::class,
+            DesignationSeeder::class,
         ]);
     }
 }
