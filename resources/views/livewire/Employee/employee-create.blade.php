@@ -12,7 +12,12 @@ use Illuminate\Support\Facades\Hash;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
-        'user_id' => '',
+        'first_name' => '',
+        'other_names' => '',
+        'email' => '',
+        'password' => '',
+        'password_confirmation' => '',
+        'role' => '',
         'date_of_birth' => '',
         'gender' => '',
         'mobile_number' => '',
@@ -34,8 +39,13 @@ new #[Layout('components.layouts.app')] class extends Component {
         if ($id) {
             $this->employee = Employee::findOrFail($id);
             $this->form = [
-                'user_id' => $this->employee->user_id,
-                'date_of_birth' => $this->employee->date_of_birth,
+                'first_name' => $this->employee->user->first_name,
+                'other_names' => $this->employee->user->other_names,
+                'email' => $this->employee->user->email,
+                'password' => '',
+                'password_confirmation' => '',
+                'role' => $this->employee->user->roles->first()?->name ?? '',
+                'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
                 'gender' => $this->employee->gender,
                 'mobile_number' => $this->employee->mobile_number,
                 'home_address' => $this->employee->home_address,
@@ -44,17 +54,50 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'branch_id' => $this->employee->branch_id,
                 'department_id' => $this->employee->department_id,
                 'designation_id' => $this->employee->designation_id,
-                'date_of_join' => $this->employee->date_of_join,
+                'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
             ];
+            $user = $this->employee->user;
+            if ($user) {
+                $this->user = [
+                    'first_name' => $user->first_name,
+                    'other_names' => $user->other_names,
+                    'email' => $user->email,
+                    'password' => '',
+                    'password_confirmation' => '',
+                    'role' => $user->roles->first()?->name ?? '',
+                ];
+            }
             $this->editing = true;
         }
     }
 
+    public function updatedFormUserId($value): void
+    {
+        $this->showNewUserFields = ($value === 'create_new');
+    }
+
+    // Add method to handle location change and reset dependent fields
+    public function updatedFormLocationId(): void
+    {
+        $this->form['branch_id'] = '';
+        $this->form['department_id'] = '';
+    }
+
+    // Add method to handle branch change and reset dependent fields
+    public function updatedFormBranchId(): void
+    {
+        $this->form['department_id'] = '';
+    }
+
     public function save(): void
     {
-        $this->validate([
-            'form.user_id' => ['required', 'exists:users,id'],
+        $rules = [
+            'form.first_name' => ['required', 'string', 'max:50'],
+            'form.other_names' => ['nullable', 'string', 'max:50'],
+            'form.email' => ['required', 'email', $this->editing ? 'unique:users,email,' . ($this->employee?->user_id ?? 'NULL') : 'unique:users,email'],
+            'form.password' => [$this->editing ? 'nullable' : 'required', 'min:8', 'confirmed'],
+            'form.role' => ['required', 'string'],
             'form.date_of_birth' => ['required', 'date'],
             'form.gender' => ['required', 'in:male,female,other'],
             'form.mobile_number' => ['required', 'string', 'max:20'],
@@ -66,12 +109,34 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.designation_id' => ['required', 'exists:designations,id'],
             'form.date_of_join' => ['required', 'date'],
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
-        ]);
+        ];
+        $this->validate($rules);
+
         if ($this->editing && $this->employee) {
+            $user = $this->employee->user;
+            if ($user) {
+                $user->first_name = $this->user['first_name'];
+                $user->other_names = $this->user['other_names'];
+                $user->email = $this->user['email'];
+                if (!empty($this->user['password'])) {
+                    $user->password = Hash::make($this->user['password']);
+                }
+                $user->save();
+                $user->syncRoles([$this->user['role']]);
+            }
             $this->employee->update($this->form);
             session()->flash('status', __('Employee updated successfully.'));
         } else {
-            Employee::create($this->form);
+            $user = User::create([
+                'first_name' => $this->user['first_name'],
+                'other_names' => $this->user['other_names'],
+                'email' => $this->user['email'],
+                'password' => Hash::make($this->user['password']),
+            ]);
+            $user->assignRole($this->user['role']);
+            $employeeData = $this->form;
+            $employeeData['user_id'] = $user->id;
+            Employee::create($employeeData);
             session()->flash('status', __('Employee created successfully.'));
         }
         $this->redirectRoute('employee.manage');
@@ -121,7 +186,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 };
 ?>
 
-<div class="relative max-w-4xl mx-auto md:px-4 md:py-8">
+<div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -142,32 +207,31 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
                 </svg>
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg">
-                    {{ $editing ? __('Edit Employee') : __('Add Employee') }}
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
+                    {{ $editing ? __('Edit Employee') : __('Create Employee') }}
+                    <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
                 </h1>
             </div>
-            <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <flux:select
-                        wire:model="form.user_id"
-                        :label="__('Select User')"
-                        required
-                        :placeholder="__('Select User')"
-                    >
-                        @foreach($this->users as $user)
-                            <flux:select.option value="{{ $user->id }}">{{ $user->first_name }}{{ $user->other_names ? ' ' . $user->other_names : '' }} ({{ $user->email }})</flux:select.option>
-                        @endforeach
-                    </flux:select>
+            <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Personal Information -->
+                <div class="md:col-span-2 lg:col-span-3">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Personal Information') }}</h2>
                 </div>
                 <div>
                     <flux:input
-                        wire:model="form.staff_number"
-                        :label="__('Staff Number')"
+                        wire:model="form.first_name"
+                        :label="__('First Name')"
                         type="text"
                         required
-                        autocomplete="off"
-                        placeholder="{{ __('Staff Number') }}"
-                    />
+                        placeholder="{{ __('First Name') }}" />
+                </div>
+                <div>
+                    <flux:input
+                        wire:model="form.other_names"
+                        :label="__('Other Names')"
+                        type="text"
+                        required
+                        placeholder="{{ __('Other Names') }}" />
                 </div>
                 <div>
                     <flux:input
@@ -201,7 +265,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         placeholder="{{ __('Mobile Number') }}"
                     />
                 </div>
-                <div>
+                <div class="md:col-span-2 lg:col-span-3">
                     <flux:input
                         wire:model="form.home_address"
                         :label="__('Home Address')"
@@ -209,6 +273,31 @@ new #[Layout('components.layouts.app')] class extends Component {
                         required
                         autocomplete="street-address"
                         placeholder="{{ __('Home Address') }}"
+                    />
+                </div>
+
+                <!-- Employment Details -->
+                <div class="md:col-span-2 lg:col-span-3 mt-6">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Employment Details') }}</h2>
+                </div>
+                <div>
+                    <flux:input
+                        wire:model="form.staff_number"
+                        :label="__('Staff Number')"
+                        type="text"
+                        required
+                        autocomplete="off"
+                        placeholder="{{ __('Staff Number') }}"
+                    />
+                </div>
+                <div>
+                    <flux:input
+                        wire:model="form.date_of_join"
+                        :label="__('Date of Join')"
+                        type="date"
+                        required
+                        autocomplete="date-of-join"
+                        placeholder="{{ __('Date of Join') }}"
                     />
                 </div>
                 <div>
@@ -229,11 +318,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                         :label="__('Branch')"
                         required
                         :placeholder="__('Branch')"
-                        @if(!$form['location_id']) disabled @endif
+                        :disabled="!$form['location_id']"
                     >
-                        @foreach($form['location_id'] ? $this->branches->where('location_id', $form['location_id']) : [] as $branch)
-                            <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
-                        @endforeach
+                        @if($form['location_id'])
+                            @foreach($this->branches->where('location_id', $form['location_id']) as $branch)
+                                <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
+                            @endforeach
+                        @endif
                     </flux:select>
                 </div>
                 <div>
@@ -242,11 +333,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                         :label="__('Department')"
                         required
                         :placeholder="__('Department')"
-                        @if(!$form['branch_id']) disabled @endif
+                        :disabled="!$form['branch_id']"
                     >
-                        @foreach($form['branch_id'] ? $this->departments->where('branch_id', $form['branch_id']) : [] as $department)
-                            <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
-                        @endforeach
+                        @if($form['branch_id'])
+                            @foreach($this->departments->where('branch_id', $form['branch_id']) as $department)
+                                <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
+                            @endforeach
+                        @endif
                     </flux:select>
                 </div>
                 <div>
@@ -273,17 +366,50 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endforeach
                     </flux:select>
                 </div>
+
+                <!-- Account Details -->
+                <div class="md:col-span-2 lg:col-span-3 mt-6">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Account Details') }}</h2>
+                </div>
                 <div>
                     <flux:input
-                        wire:model="form.date_of_join"
-                        :label="__('Date of Join')"
-                        type="date"
+                        wire:model="form.email"
+                        :label="__('Email')"
+                        type="email"
                         required
-                        autocomplete="date-of-join"
-                        placeholder="{{ __('Date of Join') }}"
+                        placeholder="{{ __('Email') }}" />
+                </div>
+                <div>
+                    <flux:select wire:model="form.role" :label="__('Role')" required :placeholder="__('Role')">
+                        <flux:select.option value="">{{ __('Select Role') }}</flux:select.option>
+                        <flux:select.option value="Super Administrator">Super Administrator</flux:select.option>
+                        <flux:select.option value="HR Administrator">HR Administrator</flux:select.option>
+                        <flux:select.option value="New Employee">New Employee</flux:select.option>
+                    </flux:select>
+                </div>
+                <div>
+                    <flux:input
+                        wire:model="form.password"
+                        :label="__('Password')"
+                        type="password"
+                        autocomplete="new-password"
+                        :placeholder="__('Password')"
+                        viewable
                     />
                 </div>
-                <div class="flex items-end justify-end gap-3">
+                <div>
+                    <flux:input
+                        wire:model="form.password_confirmation"
+                        :label="__('Confirm Password')"
+                        type="password"
+                        autocomplete="new-password"
+                        :placeholder="__('Confirm Password')"
+                        viewable
+                    />
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
                     <button type="submit"
                         class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
                         {{ $editing ? __('Update') : __('Create') }}

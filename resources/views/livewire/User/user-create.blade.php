@@ -158,11 +158,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
                 </svg>
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg">
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
                     {{ $editing ? __('Edit User') : __('Create User') }}
+                    <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
                 </h1>
             </div>
             <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="md:col-span-2">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Personal Information') }}</h2>
+                </div>
                 <div>
                     <flux:input
                         wire:model="form.first_name"
@@ -181,6 +185,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                         autocomplete="additional-name"
                         placeholder="{{ __('Other Names') }}"
                     />
+                </div>
+
+                <!-- Account Information -->
+                <div class="md:col-span-2">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Account Information') }}</h2>
                 </div>
                 <div>
                     <flux:input
@@ -204,6 +213,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endforeach
                     </flux:select>
                 </div>
+
+                <!-- Security -->
+                <div class="md:col-span-2">
+                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Security') }}</h2>
+                </div>
                 <div>
                     <flux:input
                         wire:model="form.password"
@@ -224,7 +238,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         viewable
                     />
                 </div>
-                <div class="flex items-end justify-end gap-3">
+                <div class="flex items-end justify-end gap-3 md:col-span-2">
                     <button type="submit"
                         class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
                         {{ $editing ? __('Update') : __('Create') }}

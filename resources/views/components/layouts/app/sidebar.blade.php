@@ -96,21 +96,21 @@
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="10"/>
-                                        </svg>
-                                        <a href="{{ route('user.create') }}">
-                                            {{ __('User List') }}
-                                        </a>
-                                    </div>
-                                </li>
-                                <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
                                         <a href="{{ route('user.manage') }}">
+                                            {{ __('User List') }}
+                                        </a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10"/>
+                                        </svg>
+                                        <a href="{{ route('user.create') }}">
                                             {{ __('Create User') }}
                                         </a>
                                     </div>
