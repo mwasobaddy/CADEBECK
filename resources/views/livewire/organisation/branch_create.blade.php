@@ -2,9 +2,12 @@
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
+use App\Models\Location;
+
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
         'name' => '',
+        'code' => '',
         'location_id' => null,
         'address' => '',
     ];
@@ -23,41 +26,119 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $this->validate([
             'form.name' => ['required', 'string', 'max:255'],
+            'form.code' => ['required', 'string', 'max:255'],
+            'form.location_id' => ['required', 'integer'],
             'form.address' => ['nullable', 'string'],
         ]);
 
-        session()->flash('status', $this->editing ? 'Branch updated.' : 'Branch created.');
-        $this->redirectRoute('organisation.branch_manager');
+        session()->flash('status', $this->editing ? __('Branch updated.') : __('Branch created.'));
+        $this->redirectRoute('branch.manage');
+    }
+
+    public function getLocationsProperty()
+    {
+        return Location::orderBy('name')->get();
     }
 };
 ?>
 
+
 <div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
-    <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8">
+    <!-- SVG Blobs Background -->
+    <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
+        <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#blob1)" />
+        <defs>
+            <radialGradient id="blob1" cx="0" cy="0" r="1" gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38bdf8" />
+                <stop offset="1" stop-color="#6366f1" />
+            </radialGradient>
+        </defs>
+    </svg>
+    <svg class="fixed -bottom-24 -right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
+        <ellipse cx="200" cy="200" rx="160" ry="100" fill="url(#blob2)" />
+        <defs>
+            <radialGradient id="blob2" cx="0" cy="0" r="1" gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#34d399" />
+                <stop offset="1" stop-color="#f472b6" />
+            </radialGradient>
+        </defs>
+    </svg>
+
+    <!-- Breadcrumbs -->
+    <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="#" class="border rounded-full py-2 px-4">Branch List</a>
-                <a href="#" class="border rounded-full py-2 px-4 bg-green-600 text-white">Create Branch</a>
+                <a href="{{ route('branch.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('branch.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                    {{ __('Branch List') }}
+                </a>
+                <a href="{{ route('branch.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('branch.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                    {{ $editing ? __('Edit Branch') : __('Create Branch') }}
+                </a>
             </div>
         </nav>
     </div>
 
-    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8">
+    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <div class="flex items-center gap-3 mb-8">
-            <h1 class="text-3xl font-extrabold">{{ $editing ? 'Edit Branch' : 'Create Branch' }}</h1>
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
+            </svg>
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
+                {{ $editing ? __('Edit Branch') : __('Create Branch') }}
+                <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
+            </h1>
         </div>
         <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-                <label class="block mb-2 text-sm font-semibold">Name</label>
-                <input type="text" wire:model="form.name" class="w-full px-4 py-3 rounded-2xl border" required />
+            <flux:input
+                wire:model="form.name"
+                :label="__('Name')"
+                type="text"
+                required
+                autocomplete="organization"
+                placeholder="{{ __('Branch Name') }}"
+            />
             </div>
             <div>
-                <label class="block mb-2 text-sm font-semibold">Address</label>
-                <input type="text" wire:model="form.address" class="w-full px-4 py-3 rounded-2xl border" />
+            <flux:input
+                wire:model="form.code"
+                :label="__('Code')"
+                type="text"
+                required
+                autocomplete="off"
+                placeholder="{{ __('Branch Code') }}"
+            />
+            </div>
+            <div>
+            <flux:select
+                wire:model="form.location_id"
+                :label="__('Location')"
+                required
+                :placeholder="__('Select Location')"
+            >
+                <flux:select.option value="">{{ __('Select Location') }}</flux:select.option>
+                @foreach($this->locations as $location)
+                <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            </div>
+            <div>
+            <flux:input
+                wire:model="form.address"
+                :label="__('Address')"
+                type="text"
+                autocomplete="street-address"
+                placeholder="{{ __('Branch Address') }}"
+            />
             </div>
             <div class="flex items-end justify-end gap-3 md:col-span-2">
-                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-xl">{{ $editing ? 'Update' : 'Create' }}</button>
-                <button type="button" wire:click="resetForm" class="px-6 py-2 bg-gray-200 rounded-xl">Reset</button>
+            <button type="submit" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                {{ $editing ? __('Update') : __('Create') }}
+            </button>
+            <button type="button" wire:click="resetForm" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                {{ __('Reset') }}
+            </button>
             </div>
         </form>
     </div>

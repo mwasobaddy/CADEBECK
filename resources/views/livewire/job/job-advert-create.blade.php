@@ -125,26 +125,47 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                    <label class="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ __('Title') }}</label>
-                    <input type="text" wire:model="form.title" class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-zinc-700 focus:ring-2 focus:ring-gray-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md" required />
+                    <flux:input
+                        wire:model="form.title"
+                        :label="__('Title')"
+                        type="text"
+                        required
+                        autocomplete="off"
+                        placeholder="{{ __('Title') }}"
+                    />
                 </div>
                 <div>
-                    <label class="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ __('Deadline') }}</label>
-                    <input type="date" wire:model="form.deadline" class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-zinc-700 focus:ring-2 focus:ring-gray-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md" required />
+                    <flux:input
+                        wire:model="form.deadline"
+                        :label="__('Deadline')"
+                        type="date"
+                        required
+                        autocomplete="off"
+                        placeholder="{{ __('Deadline') }}"
+                    />
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ __('Description') }}</label>
-                    <textarea wire:model="form.description" class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-zinc-700 focus:ring-2 focus:ring-gray-400 dark:bg-zinc-800/80 dark:text-white min-h-[120px] transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md" required></textarea>
+                    <flux:textarea
+                        wire:model="form.description"
+                        :label="__('Description')"
+                        required
+                        placeholder="{{ __('Description') }}"
+                        rows="5"
+                    />
                 </div>
                 <div>
-                    <label class="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ __('Status') }}</label>
-                    <select wire:model="form.status" class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-zinc-700 focus:ring-2 focus:ring-gray-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                        <option value="Draft">{{ __('Draft') }}</option>
-                        <option value="Published">{{ __('Published') }}</option>
-                        <option value="Expired">{{ __('Expired') }}</option>
-                    </select>
+                    <flux:select
+                        wire:model="form.status"
+                        :label="__('Status')"
+                        required
+                        :placeholder="__('Select Status')"
+                    >
+                        <flux:select.option value="Draft">{{ __('Draft') }}</flux:select.option>
+                        <flux:select.option value="Published">{{ __('Published') }}</flux:select.option>
+                        <flux:select.option value="Expired">{{ __('Expired') }}</flux:select.option>
+                    </flux:select>
                 </div>
-                <div class="flex items-end justify-end gap-3">
+                <div class="flex items-end justify-end gap-3 md:col-span-2">
                     <button type="submit"
                         class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
                         {{ $editing ? __('Update') : __('Create') }}

@@ -245,7 +245,7 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __('Organisation') }}</span>
+                                <span>{{ __("Organization") }}</span>
                                 <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
