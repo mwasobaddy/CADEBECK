@@ -65,6 +65,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'export_department',
             'import_department',
 
+            'manage_designation',
+            'create_designation',
+            'edit_designation',
+            'delete_designation',
+            'export_designation',
+            'import_designation',
+
             'manage_role',
             'create_role',
             'edit_role',
@@ -181,7 +188,6 @@ class RolesAndPermissionsSeeder extends Seeder
                     'create_branch',
                     'edit_branch',
                     'delete_branch',
-                    'view_branch',
 
                     'manage_department',
                     'create_department',

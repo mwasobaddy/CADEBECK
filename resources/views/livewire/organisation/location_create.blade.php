@@ -2,6 +2,8 @@
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
+use App\Models\Location;
+
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
         'name' => '',
@@ -15,11 +17,20 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function mount($id = null): void
     {
-        if ($id) {
-            // placeholder: load model by id when available
-            $this->entity_id = $id;
-            $this->editing = true;
-        }
+            if ($id) {
+                $this->entity_id = $id;
+                $this->editing = true;
+                $location = Location::find($id);
+                if ($location) {
+                    $this->form = [
+                        'name' => $location->name,
+                        'code' => $location->code,
+                        'address' => $location->address,
+                        'city' => $location->city,
+                        'country' => $location->country,
+                    ];
+                }
+            }
     }
 
     public function save(): void

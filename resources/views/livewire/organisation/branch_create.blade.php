@@ -3,23 +3,31 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 use App\Models\Location;
+use App\Models\Branch;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
         'name' => '',
         'code' => '',
         'location_id' => null,
-        'address' => '',
     ];
     public bool $editing = false;
     public $entity_id = null;
 
     public function mount($id = null): void
     {
-        if ($id) {
-            $this->entity_id = $id;
-            $this->editing = true;
-        }
+            if ($id) {
+                $this->entity_id = $id;
+                $this->editing = true;
+                $branch = Branch::find($id);
+                if ($branch) {
+                    $this->form = [
+                        'name' => $branch->name,
+                        'code' => $branch->code,
+                        'location_id' => $branch->location_id,
+                    ];
+                }
+            }
     }
 
     public function save(): void
@@ -28,7 +36,6 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.name' => ['required', 'string', 'max:255'],
             'form.code' => ['required', 'string', 'max:255'],
             'form.location_id' => ['required', 'integer'],
-            'form.address' => ['nullable', 'string'],
         ]);
 
         session()->flash('status', $this->editing ? __('Branch updated.') : __('Branch created.'));
@@ -122,15 +129,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
                 @endforeach
             </flux:select>
-            </div>
-            <div>
-            <flux:input
-                wire:model="form.address"
-                :label="__('Address')"
-                type="text"
-                autocomplete="street-address"
-                placeholder="{{ __('Branch Address') }}"
-            />
             </div>
             <div class="flex items-end justify-end gap-3 md:col-span-2">
             <button type="submit" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
