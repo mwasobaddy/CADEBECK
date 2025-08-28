@@ -192,6 +192,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'users_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('User exported successfully.')]);
     }
 
     public function exportAll(): void
@@ -222,6 +223,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_users_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('User exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -247,13 +249,12 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function deleteConfirmed(): void
     {
-    $this->isLoadingDelete = true;
-    User::findOrFail($this->pendingDeleteId)->delete();
-    $this->resetForm();
-    $this->showDeleteModal = false;
-    $this->isLoadingDelete = false;
-    // Pass type and message as an array for Livewire event
-    $this->dispatch('notify', ['type' => 'success', 'message' => __('User deleted successfully.')]);
+        $this->isLoadingDelete = true;
+        User::findOrFail($this->pendingDeleteId)->delete();
+        $this->resetForm();
+        $this->showDeleteModal = false;
+        $this->isLoadingDelete = false;
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('User deleted successfully.')]);
     }
 
     public function resetForm(): void

@@ -55,7 +55,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => $this->form['password'] ? Hash::make($this->form['password']) : $this->user->password,
             ]);
             $this->user->syncRoles([$this->form['role']]);
-            session()->flash('status', __('User updated successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('User updated successfully.')]);
         } else {
             $user = User::create([
                 'first_name' => $this->form['first_name'],
@@ -64,7 +64,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => Hash::make($this->form['password']),
             ]);
             $user->assignRole($this->form['role']);
-            session()->flash('status', __('User created successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('User created successfully.')]);
         }
         $this->redirectRoute('user.manage');
     }
@@ -90,6 +90,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'role' => '',
             ];
         }
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     public function getUsersProperty()
