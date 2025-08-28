@@ -126,6 +126,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             }
             $this->employee->update($this->form);
             session()->flash('status', __('Employee updated successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee updated successfully.']);
         } else {
             $user = User::create([
                 'first_name' => $this->user['first_name'],
@@ -138,6 +139,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $employeeData['user_id'] = $user->id;
             Employee::create($employeeData);
             session()->flash('status', __('Employee created successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee created successfully.']);
         }
         $this->redirectRoute('employee.manage');
     }

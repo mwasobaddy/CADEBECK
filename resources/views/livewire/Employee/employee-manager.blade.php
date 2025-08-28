@@ -317,7 +317,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
-        Employee::findOrFail($this->pendingDeleteId)->delete();
+        $employee = Employee::findOrFail($this->pendingDeleteId);
+        $employee->delete();
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee deleted successfully.']);
+
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
