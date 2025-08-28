@@ -262,7 +262,15 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
-        JobAdvert::findOrFail($this->pendingDeleteId)->delete();
+        $jobAdvert = JobAdvert::findOrFail($this->pendingDeleteId);
+        $jobAdvert->delete();
+
+        // Dispatch notification event
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Job advert deleted successfully.']);
+
+        // Dispatch audit log event
+        event(new AuditLogEvent(Auth::id(), 'delete', 'JobAdvert', $jobAdvert->id, $jobAdvert->toArray()));
+
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
