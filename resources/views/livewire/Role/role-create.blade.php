@@ -35,10 +35,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->role->save();
             $this->role->syncPermissions($this->form['permissions']);
             session()->flash('status', __('Role updated successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Role updated successfully.']);
         } else {
             $role = Role::create(['name' => $this->form['name']]);
             $role->syncPermissions($this->form['permissions']);
             session()->flash('status', __('Role created successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Role created successfully.']);
         }
         $this->redirectRoute('role.manage');
     }
