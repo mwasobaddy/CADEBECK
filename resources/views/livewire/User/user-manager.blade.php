@@ -284,9 +284,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                $this->isLoadingData;
     }
 
-    public function toggleFilters(): void
+    public function testNotification(): void
     {
-        $this->showFilters = !$this->showFilters;
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Test notification - this should persist across page navigation!')]);
     }
 };
 ?>
@@ -366,6 +366,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <span class="hidden lg:inline">{{ __('Add User') }}</span>
                         </button>
                     @endcan
+                    <!-- Test Notification Button -->
+                    <button type="button" wire:click="testNotification"
+                        class="flex items-center gap-2 px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-5 5v-5zM4.5 4.5l15 15"></path>
+                        </svg>
+                        <span class="hidden lg:inline">{{ __('Test Notification') }}</span>
+                    </button>
                 </div>
             </div>
             <div>
