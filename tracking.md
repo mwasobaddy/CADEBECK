@@ -243,3 +243,59 @@
 ---
 
 *This tracking document should be updated weekly or after significant milestones. All team members should refer to this document for current project status and priorities.*
+
+---
+
+## 🔔 **Persistent Notification System**
+
+#### Description
+A centralized notification system to display real-time updates to users for events like create, update, delete actions.
+
+#### Implementation Steps
+1. **Create Notification Component**: ✅
+   - Use Livewire Volt to create a `NotificationManager` component.
+   - Include methods to listen for `notify` events and display messages.
+
+2. **Integrate Component**: ✅
+   - Add the `NotificationManager` component to the main layout file.
+   - Ensure it is always available to listen for events.
+
+3. **Dispatch Events**:
+   - Modify Volt components to dispatch `notify` events after actions.
+   - Example: Dispatch a success message after a record is deleted.
+
+4. **Test Integration**:
+   - Verify that notifications appear correctly in response to events.
+   - Test with `job-advert-manager.blade.php`.
+
+#### Dependencies
+- Livewire Volt
+- Tailwind CSS for styling
+
+---
+
+## 📜 **Audit Log System**
+
+#### Description
+A persistent audit log to track actions like create, update, delete for compliance and debugging.
+
+#### Implementation Steps
+1. **Create Audit Log Table**:
+   - Run `php artisan make:migration create_audit_logs_table`.
+   - Define columns: `id`, `user_id`, `action`, `model`, `model_id`, `data`, `created_at`.
+
+2. **Define Event and Listener**:
+   - Create an `AuditLogEvent` to encapsulate log data.
+   - Create an `AuditLogListener` to save data to the database.
+
+3. **Dispatch Events**:
+   - Modify Volt components to dispatch `AuditLogEvent` after actions.
+   - Example: Log the user and action after a record is updated.
+
+4. **Test Integration**:
+   - Verify that logs are created correctly in the database.
+   - Test with `job-advert-manager.blade.php`.
+
+#### Dependencies
+- Laravel Events and Listeners
+- Database migration for `audit_logs` table
