@@ -5,13 +5,18 @@ use Livewire\Attributes\On;
 new class extends Component {
     public $notifications = [];
 
-
     #[On('notify')]
-    public function showNotification($event)
+    public function showNotification($data)
     {
-        // $event is array: [$type, $message]
-        $type = $event[0] ?? 'info';
-        $message = $event[1] ?? '';
+        if (is_array($data)) {
+            $type = $data['type'];
+            $message = $data['message'];
+        } else {
+            // Fallback for old format (type, message)
+            $type = $data;
+            $message = func_get_arg(1);
+        }
+        
         $this->notifications[] = [
             'type' => $type,
             'message' => __($message),
@@ -38,7 +43,7 @@ new class extends Component {
              }">
             <div class="flex justify-between items-center">
                 <span>{{ $notification['message'] }}</span>
-                <button wire:click="removeNotification({{ $index }})" class="ml-4" aria-label="{{ __('Close notification') }}">&times;</button>
+                <button wire:click="removeNotification({{ $index }})" class="ml-4" aria-label="Close notification">&times;</button>
             </div>
         </div>
     @endforeach

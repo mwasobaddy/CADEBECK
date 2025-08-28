@@ -173,6 +173,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected users deleted successfully.')]);
     }
 
     public function exportSelected(): void
@@ -251,8 +252,8 @@ new #[Layout('components.layouts.app')] class extends Component {
     $this->resetForm();
     $this->showDeleteModal = false;
     $this->isLoadingDelete = false;
-    // Pass type and message as separate arguments for Livewire event
-    $this->dispatch('notify', 'success', __('User deleted successfully.'));
+    // Pass type and message as an array for Livewire event
+    $this->dispatch('notify', ['type' => 'success', 'message' => __('User deleted successfully.')]);
     }
 
     public function resetForm(): void
