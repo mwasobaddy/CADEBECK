@@ -246,11 +246,13 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function deleteConfirmed(): void
     {
-        $this->isLoadingDelete = true;
-        User::findOrFail($this->pendingDeleteId)->delete();
-        $this->resetForm();
-        $this->showDeleteModal = false;
-        $this->isLoadingDelete = false;
+    $this->isLoadingDelete = true;
+    User::findOrFail($this->pendingDeleteId)->delete();
+    $this->resetForm();
+    $this->showDeleteModal = false;
+    $this->isLoadingDelete = false;
+    // Pass type and message as separate arguments for Livewire event
+    $this->dispatch('notify', 'success', __('User deleted successfully.'));
     }
 
     public function resetForm(): void
