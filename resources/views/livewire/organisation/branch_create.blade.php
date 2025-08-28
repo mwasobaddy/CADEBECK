@@ -38,8 +38,36 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.location_id' => ['required', 'integer'],
         ]);
 
-        session()->flash('status', $this->editing ? __('Branch updated.') : __('Branch created.'));
+        if ($this->editing && $this->entity_id) {
+            $branch = Branch::find($this->entity_id);
+            if ($branch) {
+                $branch->update($this->form);
+            }
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Branch updated successfully.')]);
+        } else {
+            Branch::create($this->form);
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Branch created successfully.')]);
+        }
+
         $this->redirectRoute('branch.manage');
+    }
+
+    public function resetForm(): void
+    {
+        if ($this->editing && $this->entity_id) {
+            $this->form = [
+                'name' => $this->branch->name,
+                'code' => $this->branch->code,
+                'location_id' => $this->branch->location_id,
+            ];
+        } else {
+            $this->form = [
+                'name' => '',
+                'code' => '',
+                'location_id' => '',
+            ];
+        }
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     public function getLocationsProperty()

@@ -18,19 +18,19 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function mount($id = null): void
     {
-            if ($id) {
-                $this->entity_id = $id;
-                $this->editing = true;
-                $department = Department::with('branch')->find($id);
-                if ($department) {
-                    $this->form = [
-                        'name' => $department->name,
-                        'code' => $department->code,
-                        'location_id' => $department->branch ? $department->branch->location_id : null,
-                        'branch_id' => $department->branch_id,
-                    ];
-                }
+        if ($id) {
+            $this->entity_id = $id;
+            $this->editing = true;
+            $department = Department::with('branch')->find($id);
+            if ($department) {
+                $this->form = [
+                    'name' => $department->name,
+                    'code' => $department->code,
+                    'location_id' => $department->branch ? $department->branch->location_id : null,
+                    'branch_id' => $department->branch_id,
+                ];
             }
+        }
     }
 
     public function save(): void
@@ -42,8 +42,39 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.branch_id' => ['required', 'integer'],
         ]);
 
-        session()->flash('status', $this->editing ? __('Department updated.') : __('Department created.'));
+        if ($this->editing && $this->entity_id) {
+            $department = Department::find($this->entity_id);
+            if ($department) {
+                $department->update($this->form);
+            }
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Department updated successfully.')]);
+        } else {
+            Department::create($this->form);
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Department created successfully.')]);
+        }
+        
         $this->redirectRoute('department.manage');
+    }
+    
+    public function resetForm(): void
+    {
+        if ($this->editing && $this->entity_id) {
+            $this->form = [
+                'name' => $this->department->name,
+                'code' => $this->department->code,
+                'location_id' => $this->department->location_id,
+                'branch_id' => $this->department->branch_id,
+            ];
+        } else {
+            $this->form = [
+                'name' => '',
+                'code' => '',
+                'location_id' => '',
+                'branch_id' => '',
+            ];
+        }
+        
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     public function getLocationsProperty()

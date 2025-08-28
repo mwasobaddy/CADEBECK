@@ -192,6 +192,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Branch deleted successfully.')]);
     }
 
     public function exportSelected(): void
@@ -212,6 +214,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'departments_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected departments exported successfully.')]);
     }
 
     public function exportAll(): void
@@ -251,6 +255,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_departments_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected departments exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -281,6 +287,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Department deleted successfully.')]);
     }
 
     public function resetForm(): void

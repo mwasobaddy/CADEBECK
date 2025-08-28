@@ -40,11 +40,11 @@ new #[Layout('components.layouts.app')] class extends Component {
             $designation = Designation::find($this->entity_id);
             if ($designation) {
                 $designation->update($this->form);
-                session()->flash('status', __('Designation updated successfully.'));
+                $this->dispatch('notify', ['type' => 'success', 'message' => __('Designation updated successfully.')]);
             }
         } else {
             Designation::create($this->form);
-            session()->flash('status', __('Designation created successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Designation created successfully.')]);
         }
         $this->redirectRoute('designation.manage');
     }
@@ -67,6 +67,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'description' => '',
             ];
         }
+
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 };
 ?>

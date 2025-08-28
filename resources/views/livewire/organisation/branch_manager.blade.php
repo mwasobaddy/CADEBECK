@@ -156,6 +156,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected branches deleted successfully.')]);
     }
 
     public function exportSelected(): void
@@ -175,6 +176,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'branches_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected branches exported successfully.')]);
     }
 
     public function exportAll(): void
@@ -204,6 +206,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_branches_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected branches exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -234,12 +237,16 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = array_values(array_diff($this->selected, [$this->pendingDeleteId]));
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
+        
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Branch deleted successfully.')]);
     }
 
     public function resetForm(): void
     {
         $this->selected = [];
         $this->selectAll = false;
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected roles deleted successfully.')]);
     }
 
     public function createNewBranch(): void

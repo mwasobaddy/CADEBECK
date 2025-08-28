@@ -43,20 +43,40 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.country' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Implement actual save/update logic with models later
-        session()->flash('status', $this->editing ? 'Location updated.' : 'Location created.');
+        if ($this->editing && $this->entity_id) {
+            $location = Location::find($this->entity_id);
+            if ($location) {
+                $location->update($this->form);
+                $this->dispatch('notify', ['type' => 'success', 'message' => __('Location updated successfully.')]);
+            }
+        } else {
+            Location::create($this->form);
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Location created successfully.')]);
+        }
         $this->redirectRoute('location.manage');
     }
 
     public function resetForm(): void
     {
-        $this->form = [
-            'name' => '',
-            'code' => '',
-            'address' => '',
-            'city' => '',
-            'country' => '',
-        ];
+        if ($this->editing && $this->entity_id) {
+            $this->form = [
+                'name' => $this->location->name,
+                'code' => $this->location->code,
+                'address' => $this->location->address,
+                'city' => $this->location->city,
+                'country' => $this->location->country,
+            ];
+        } else {
+            $this->form = [
+                'name' => '',
+                'code' => '',
+                'address' => '',
+                'city' => '',
+                'country' => '',
+            ];
+        }
+
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 };
 ?>
