@@ -222,6 +222,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employee deleted successfully.')]);
     }
     public function exportSelected(): void
     {
@@ -246,6 +247,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'employees_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
     }
     public function exportAll(): void
     {
@@ -295,6 +297,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_employees_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
     }
     public function confirmEdit($id): void
     {
@@ -319,12 +322,11 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->isLoadingDelete = true;
         $employee = Employee::findOrFail($this->pendingDeleteId);
         $employee->delete();
-
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee deleted successfully.']);
-
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Employee deleted successfully.')]);
     }
     public function resetForm(): void
     {

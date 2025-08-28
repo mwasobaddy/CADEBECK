@@ -125,8 +125,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $user->syncRoles([$this->user['role']]);
             }
             $this->employee->update($this->form);
-            session()->flash('status', __('Employee updated successfully.'));
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee updated successfully.']);
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('User updated successfully.')]);
         } else {
             $user = User::create([
                 'first_name' => $this->user['first_name'],
@@ -138,8 +137,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $employeeData = $this->form;
             $employeeData['user_id'] = $user->id;
             Employee::create($employeeData);
-            session()->flash('status', __('Employee created successfully.'));
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Employee created successfully.']);
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('User created successfully.')]);
         }
         $this->redirectRoute('employee.manage');
     }
@@ -177,6 +175,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => '',
             ];
         }
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     public function getLocationsProperty() { return Location::all(); }
