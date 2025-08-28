@@ -251,13 +251,19 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
-        Role::findOrFail($this->pendingDeleteId)->delete();
+        $role = Role::findOrFail($this->pendingDeleteId);
+        $role->delete();
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Role deleted successfully.']);
+
+        $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
         $this->pendingDeleteId = null;
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+
     }
 
     public function delete($id): void
