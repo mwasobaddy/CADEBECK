@@ -225,6 +225,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_roles_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected roles exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -254,8 +256,6 @@ new #[Layout('components.layouts.app')] class extends Component {
         $role = Role::findOrFail($this->pendingDeleteId);
         $role->delete();
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Role deleted successfully.']);
-
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
@@ -264,13 +264,15 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selectAll = false;
         $this->updateSelectAllState();
 
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Role deleted successfully.')]);
+
     }
 
     public function delete($id): void
     {
         $role = Role::findOrFail($id);
         $role->delete();
-        session()->flash('status', __('Role deleted successfully.'));
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Role deleted successfully.')]);
         $this->redirectRoute('role.manage');
     }
 
@@ -286,13 +288,30 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->role->name = $this->form['name'];
             $this->role->save();
             $this->role->syncPermissions($this->form['permissions']);
-            session()->flash('status', __('Role updated successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Role updated successfully.')]);
         } else {
             $role = Role::create(['name' => $this->form['name']]);
             $role->syncPermissions($this->form['permissions']);
-            session()->flash('status', __('Role created successfully.'));
+            $this->dispatch('notify', ['type' => 'success', 'message' => __('Role created successfully.')]);
         }
         $this->redirectRoute('role.manage');
+    }
+
+    public function resetForm(): void
+    {
+        if ($this->editing && $this->entity_id) {
+            $this->form = [
+                'name' => $this->role->name,
+                'permissions' => $this->role->permissions->pluck('id')->toArray(),
+            ];
+        } else {
+            $this->form = [
+                'name' => '',
+                'permissions' => [],
+            ];
+        }
+
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     // Helper method to check if we should show skeleton
