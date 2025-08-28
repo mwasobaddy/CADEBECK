@@ -5,14 +5,21 @@ use Livewire\Attributes\On;
 new class extends Component {
     public $notifications = [];
 
-    protected $listeners = ['notify' => 'showNotification', 'remove-notification-auto' => 'removeNotificationByIndex'];
+    protected $listeners = ['notify' => 'showNotification'];
 
     public function mount()
     {
         // Load persistent notifications from session
         $sessionNotifications = session('notifications', []);
-        if (!empty($sessionNotifications)) {
-            $this->notifications = $sessionNotifications;
+        if (!empty($sessionNotifications) && is_array($sessionNotifications)) {
+            // Filter out any invalid notifications
+            $validNotifications = array_filter($sessionNotifications, function($notification) {
+                return is_array($notification) && 
+                       isset($notification['type']) && 
+                       isset($notification['message']) && 
+                       isset($notification['timestamp']);
+            });
+            $this->notifications = array_values($validNotifications);
             // Clear session notifications after loading
             session()->forget('notifications');
         }
@@ -21,12 +28,16 @@ new class extends Component {
     public function showNotification($data)
     {
         if (is_array($data)) {
-            $type = $data['type'];
-            $message = $data['message'];
+            $type = $data['type'] ?? 'info';
+            $message = $data['message'] ?? '';
         } else {
             // Fallback for old format (type, message)
             $type = $data;
-            $message = func_get_arg(1);
+            $message = func_get_arg(1) ?? '';
+        }
+        
+        if (empty($message)) {
+            return; // Don't show empty notifications
         }
         
         $notification = [
@@ -39,26 +50,34 @@ new class extends Component {
         
         // Store in session for persistence across page loads
         $sessionNotifications = session('notifications', []);
+        if (!is_array($sessionNotifications)) {
+            $sessionNotifications = [];
+        }
         $sessionNotifications[] = $notification;
         session(['notifications' => $sessionNotifications]);
         
-        // Remove notification after 5 seconds
-        $this->dispatch('remove-notification-auto', ['index' => count($this->notifications) - 1], 5000);
+        // No need for Livewire dispatch timeout - Alpine.js handles the UI timeout
     }
 
     public function removeNotificationByIndex($index)
     {
+        // Ensure index is valid
+        if (!is_numeric($index) || $index < 0) {
+            return;
+        }
+
+        // Remove from component notifications
         if (isset($this->notifications[$index])) {
             unset($this->notifications[$index]);
             $this->notifications = array_values($this->notifications);
-            
-            // Also remove from session
-            $sessionNotifications = session('notifications', []);
-            if (isset($sessionNotifications[$index])) {
-                unset($sessionNotifications[$index]);
-                $sessionNotifications = array_values($sessionNotifications);
-                session(['notifications' => $sessionNotifications]);
-            }
+        }
+        
+        // Also remove from session - find by timestamp to ensure consistency
+        $sessionNotifications = session('notifications', []);
+        if (isset($sessionNotifications[$index])) {
+            unset($sessionNotifications[$index]);
+            $sessionNotifications = array_values($sessionNotifications);
+            session(['notifications' => $sessionNotifications]);
         }
     }
 
