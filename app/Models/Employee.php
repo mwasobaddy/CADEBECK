@@ -50,4 +50,19 @@ class Employee extends Model
     {
         return $this->belongsTo(ContractType::class);
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function wellBeingResponses()
+    {
+        return $this->hasMany(WellBeingResponse::class);
+    }
 }
