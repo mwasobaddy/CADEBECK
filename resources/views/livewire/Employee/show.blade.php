@@ -59,13 +59,24 @@ new #[Layout('components.layouts.app')] class extends Component {
             ];
             $user = $this->employee->user;
             if ($user) {
-                $this->user = [
+                $this->form = [
                     'first_name' => $user->first_name,
                     'other_names' => $user->other_names,
                     'email' => $user->email,
                     'password' => '',
                     'password_confirmation' => '',
                     'role' => $user->roles->first()?->name ?? '',
+                    'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
+                    'gender' => $this->employee->gender,
+                    'mobile_number' => $this->employee->mobile_number,
+                    'home_address' => $this->employee->home_address,
+                    'staff_number' => $this->employee->staff_number,
+                    'location_id' => $this->employee->location_id,
+                    'branch_id' => $this->employee->branch_id,
+                    'department_id' => $this->employee->department_id,
+                    'designation_id' => $this->employee->designation_id,
+                    'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
+                    'contract_type_id' => $this->employee->contract_type_id,
                 ];
             }
             $this->editing = true;
@@ -115,29 +126,53 @@ new #[Layout('components.layouts.app')] class extends Component {
         if ($this->editing && $this->employee) {
             $user = $this->employee->user;
             if ($user) {
-                $user->first_name = $this->user['first_name'];
-                $user->other_names = $this->user['other_names'];
-                $user->email = $this->user['email'];
-                if (!empty($this->user['password'])) {
-                    $user->password = Hash::make($this->user['password']);
+                $user->first_name = $this->form['first_name'];
+                $user->other_names = $this->form['other_names'];
+                $user->email = $this->form['email'];
+                if (!empty($this->form['password'])) {
+                    $user->password = Hash::make($this->form['password']);
                 }
                 $user->save();
-                $user->syncRoles([$this->user['role']]);
+                $user->syncRoles([$this->form['role']]);
             }
             $this->employee->update($this->form);
-            $this->dispatch('notify', ['type' => 'success', 'message' => __('User updated successfully.')]);
+            
+            $notification = [
+                'type' => 'success',
+                'message' => __('Employee updated successfully.'),
+                'timestamp' => now()->timestamp,
+            ];
+            
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
         } else {
             $user = User::create([
-                'first_name' => $this->user['first_name'],
-                'other_names' => $this->user['other_names'],
-                'email' => $this->user['email'],
-                'password' => Hash::make($this->user['password']),
+                'first_name' => $this->form['first_name'],
+                'other_names' => $this->form['other_names'],
+                'email' => $this->form['email'],
+                'password' => Hash::make($this->form['password']),
             ]);
-            $user->assignRole($this->user['role']);
+            $user->assignRole($this->form['role']);
             $employeeData = $this->form;
             $employeeData['user_id'] = $user->id;
             Employee::create($employeeData);
-            $this->dispatch('notify', ['type' => 'success', 'message' => __('User created successfully.')]);
+            
+            $notification = [
+                'type' => 'success',
+                'message' => __('Employee created successfully.'),
+                'timestamp' => now()->timestamp,
+            ];
+            
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
         }
         $this->redirectRoute('employee.index');
     }
