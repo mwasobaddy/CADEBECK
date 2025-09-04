@@ -33,26 +33,27 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
     Route::middleware(['verified'])->group(function () {
-        Volt::route('employees/manage', 'Employee.employee-manager')
+        Volt::route('employees/manage', 'employee.index')
             ->middleware(['auth', 'permission:manage_employee'])
-            ->name('employee.manage');
+            ->name('employee.index');
 
-        Volt::route('employees/create', 'Employee.employee-create')
+        Volt::route('employees/create', 'employee.show')
             ->middleware(['auth', 'permission:create_employee'])
-            ->name('employee.create');
+            ->name('employee.show');
 
-        Volt::route('employees/{id}/edit', 'Employee.employee-create')
+        Volt::route('employees/{id}/edit', 'employee.show')
             ->middleware(['auth', 'permission:edit_employee'])
             ->name('employee.edit');
-        Volt::route('users/manage', 'User.user-manager')
+
+        Volt::route('users/manage', 'user.index')
             ->middleware(['auth', 'permission:manage_user'])
-            ->name('user.manage');
+            ->name('user.index');
 
-        Volt::route('users/create', 'User.user-create')
+        Volt::route('users/create', 'user.show')
             ->middleware(['auth', 'permission:create_user'])
-            ->name('user.create');
+            ->name('user.show');
 
-        Volt::route('users/{id}/edit', 'User.user-create')
+        Volt::route('users/{id}/edit', 'user.show')
             ->middleware(['auth', 'permission:edit_user'])
             ->name('user.edit');
 
@@ -136,6 +137,14 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('admin/analytics', 'job.admin-analytics-dashboard')
             ->middleware(['auth', 'permission:view_analytics'])
             ->name('job.analytics');
+
+        Volt::route('clock', 'clock.clock-manager')
+            ->middleware(['auth', 'permission:mark_attendance'])
+            ->name('clock.manage');
+
+        Volt::route('wellbeing', 'wellbeing.wellbeing-manager')
+            ->middleware(['auth', 'permission:edit_user'])
+            ->name('wellbeing.dashboard');
     });
 });
 
