@@ -5,6 +5,8 @@ use Livewire\WithPagination;
 
 use App\Models\Branch;
 use App\Models\Location;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -150,7 +152,17 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function bulkDelete(): void
     {
         $this->isLoadingBulkDelete = true;
+        $branches = Branch::whereIn('id', $this->selected)->get();
         Branch::whereIn('id', $this->selected)->delete();
+
+        // Log the bulk delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'bulk_delete',
+            'target_type' => Branch::class,
+            'details' => json_encode(['branch_ids' => $this->selected]),
+        ]);
+
         $this->showBulkDeleteModal = false;
         $this->isLoadingBulkDelete = false;
         $this->selected = [];
@@ -163,6 +175,15 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $this->isLoadingExport = true;
         $branches = Branch::whereIn('id', $this->selected)->with('location')->get();
+
+        // Log the export selected action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_selected',
+            'target_type' => Branch::class,
+            'details' => json_encode(['branch_ids' => $this->selected]),
+        ]);
+
         $csvData = "ID,Name,Code,Location,Address,Created At\n";
         foreach ($branches as $branch) {
             $csvData .= '"' . $branch->id . '","' .
@@ -193,6 +214,15 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('location_id', $this->filterLocation);
         }
         $branches = $query->orderByDesc('created_at')->get();
+
+        // Log the export all action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_all',
+            'target_type' => Branch::class,
+            'details' => json_encode(['total_branches' => $branches->count()]),
+        ]);
+
         $csvData = "ID,Name,Code,Location,Address,Created At\n";
         foreach ($branches as $branch) {
             $csvData .= '"' . $branch->id . '","' .
@@ -233,7 +263,18 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
-        Branch::findOrFail($this->pendingDeleteId)->delete();
+        $branch = Branch::findOrFail($this->pendingDeleteId);
+        $branch->delete();
+
+        // Log the delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'delete',
+            'target_type' => Branch::class,
+            'target_id' => $branch->id,
+            'details' => json_encode(['name' => $branch->name, 'code' => $branch->code]),
+        ]);
+
         $this->selected = array_values(array_diff($this->selected, [$this->pendingDeleteId]));
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;

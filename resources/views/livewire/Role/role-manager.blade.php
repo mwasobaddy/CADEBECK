@@ -4,6 +4,8 @@ use Livewire\Volt\Component;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Livewire\WithPagination;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -155,12 +157,23 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function bulkDelete(): void
     {
         $this->isLoadingBulkDelete = true;
+        $roles = Role::whereIn('id', $this->selected)->get();
         Role::whereIn('id', $this->selected)->delete();
+
+        // Log the bulk delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'bulk_delete',
+            'target_type' => Role::class,
+            'details' => json_encode(['role_ids' => $this->selected]),
+        ]);
+
         $this->showBulkDeleteModal = false;
         $this->isLoadingBulkDelete = false;
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected roles deleted successfully.')]);
     }
 
     public function exportSelected(): void
@@ -171,7 +184,16 @@ new #[Layout('components.layouts.app')] class extends Component {
         $roles = Role::with('permissions')->whereIn('id', $this->selected)->get();
         
         // Create CSV content
-        $csvData = "ID,Role Name,Permissions,Created At\n";
+        $csvData = "ID,Role Name,Permissions,Created At\n";$roles = Role::whereIn('id', $this->selected)->get();
+
+        // Log the export selected action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_selected',
+            'target_type' => Role::class,
+            'details' => json_encode(['role_ids' => $this->selected]),
+        ]);
+
         foreach ($roles as $role) {
             $permissions = $role->permissions->pluck('name')->join('; ');
             $csvData .= '"' . $role->id . '","' . 
@@ -179,14 +201,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                        str_replace('"', '""', $permissions) . '","' . 
                        $role->created_at . '"' . "\n";
         }
-        
         $this->isLoadingExport = false;
-        
-        // Trigger download
         $this->dispatch('download-csv', [
             'data' => $csvData,
             'filename' => 'roles_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected roles exported successfully.')]);
     }
 
     public function exportAll(): void
@@ -209,7 +229,16 @@ new #[Layout('components.layouts.app')] class extends Component {
         $roles = $query->orderBy('name', 'asc')->get();
         
         // Create CSV content
-        $csvData = "ID,Role Name,Permissions,Created At\n";
+        $csvData = "ID,Role Name,Permissions,Created At\n";        $roles = Role::all();
+
+        // Log the export all action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_all',
+            'target_type' => Role::class,
+            'details' => json_encode(['total_roles' => $roles->count()]),
+        ]);
+
         foreach ($roles as $role) {
             $permissions = $role->permissions->pluck('name')->join('; ');
             $csvData .= '"' . $role->id . '","' . 
@@ -217,16 +246,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                        str_replace('"', '""', $permissions) . '","' . 
                        $role->created_at . '"' . "\n";
         }
-        
         $this->isLoadingExport = false;
-        
-        // Trigger download
         $this->dispatch('download-csv', [
             'data' => $csvData,
             'filename' => 'all_roles_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
-
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected roles exported successfully.')]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('All roles exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -256,6 +281,15 @@ new #[Layout('components.layouts.app')] class extends Component {
         $role = Role::findOrFail($this->pendingDeleteId);
         $role->delete();
 
+        // Log the delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'delete',
+            'target_type' => Role::class,
+            'target_id' => $role->id,
+            'details' => json_encode(['name' => $role->name]),
+        ]);
+
         $this->resetForm();
         $this->showDeleteModal = false;
         $this->isLoadingDelete = false;
@@ -265,7 +299,6 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
 
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Role deleted successfully.')]);
-
     }
 
     public function delete($id): void

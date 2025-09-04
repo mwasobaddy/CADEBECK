@@ -86,6 +86,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'export_permission',
             'import_permission',
 
+            'mark_attendance',
+
             'manage_other_leave_requests',
             'edit_other_leave_requests',
             'delete_other_leave_requests',
