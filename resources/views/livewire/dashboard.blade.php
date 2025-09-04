@@ -89,20 +89,10 @@ new class extends \Livewire\Volt\Component {
         $employee = Employee::where('user_id', $user->id)->first();
 
         if (!$employee) {
-            
-            $notification = [
+            $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => __('Employee record not found. Please contact HR.'),
-                'timestamp' => now()->timestamp,
-            ];
-            
-            $existingNotifications = session('notifications', []);
-            if (!is_array($existingNotifications)) {
-                $existingNotifications = [];
-            }
-            $existingNotifications[] = $notification;
-            session(['notifications' => $existingNotifications]);
-
+                'message' => 'Employee record not found. Please contact HR.'
+            ]);
             $this->isLoading = false;
             return;
         }
@@ -113,19 +103,10 @@ new class extends \Livewire\Volt\Component {
             ->first();
 
         if ($existingAttendance && $existingAttendance->clock_in_time) {
-            $notification = [
+            $this->dispatch('notify', [
                 'type' => 'info',
-                'message' => __('You are already clocked in for today.'),
-                'timestamp' => now()->timestamp,
-            ];
-            
-            $existingNotifications = session('notifications', []);
-            if (!is_array($existingNotifications)) {
-                $existingNotifications = [];
-            }
-            $existingNotifications[] = $notification;
-            session(['notifications' => $existingNotifications]);
-
+                'message' => 'You are already clocked in for today.'
+            ]);
             $this->isLoading = false;
             return;
         }
@@ -142,18 +123,10 @@ new class extends \Livewire\Volt\Component {
         $this->currentAttendance = $attendance;
         $this->todayAttendance = $attendance;
 
-        $notification = [
+        $this->dispatch('notify', [
             'type' => 'success',
-            'message' => 'Successfully clocked in at ' . now()->format('H:i'),
-            'timestamp' => now()->timestamp,
-        ];
-
-        $existingNotifications = session('notifications', []);
-        if (!is_array($existingNotifications)) {
-            $existingNotifications = [];
-        }
-        $existingNotifications[] = $notification;
-        session(['notifications' => $existingNotifications]);
+            'message' => 'Successfully clocked in at ' . now()->format('H:i')
+        ]);
 
         $this->isLoading = false;
     }
@@ -190,6 +163,14 @@ new class extends \Livewire\Volt\Component {
         ]);
 
         $this->isLoading = false;
+    }
+
+    public function testNotification()
+    {
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Test notification! This should appear in the bottom right corner.'
+        ]);
     }
 
     public function getStatusText()
@@ -323,6 +304,16 @@ new class extends \Livewire\Volt\Component {
                             <span wire:loading>{{ 'Clocking Out...' }}</span>
                         </button>
                     @endif
+                </div>
+
+                <!-- Test Notification Button -->
+                <div class="mt-4">
+                    <button
+                        wire:click="testNotification"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        Test Notification
+                    </button>
                 </div>
 
                 <!-- Today's Summary -->
