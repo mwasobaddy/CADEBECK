@@ -4,6 +4,7 @@ use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Models\JobAdvert;
+use App\Models\Audit;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
@@ -35,7 +36,28 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         if ($this->editing && $this->advert) {
             $this->advert->update($this->form);
-            session()->flash('status', __('Job advert updated successfully.'));
+
+            // Log the update action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'update',
+                'target_type' => JobAdvert::class,
+                'target_id' => $this->advert->id,
+                'details' => json_encode($this->form),
+            ]);
+            
+            $notification = [
+                'type' => 'success',
+                'message' => __('Job advert updated successfully.'),
+                'timestamp' => now()->timestamp,
+            ];
+            
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
         } else {
             $slugBase = Str::slug($this->form['title']);
             $slug = $slugBase;
@@ -53,9 +75,30 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'posted_by' => Auth::id(),
             ];
             JobAdvert::create($data);
-            session()->flash('status', __('Job advert created successfully.'));
+            
+            // Log the create action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'create',
+                'target_type' => JobAdvert::class,
+                'target_id' => $advert->id,
+                'details' => json_encode($this->form),
+            ]);
+            
+            $notification = [
+                'type' => 'success',
+                'message' => __('Job advert created successfully.'),
+                'timestamp' => now()->timestamp,
+            ];
+            
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
         }
-        $this->redirectRoute('job.job-adverts');
+        $this->redirectRoute('job.index');
     }
 
     public function resetForm(): void
@@ -70,6 +113,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'status' => 'Draft',
             ];
         }
+        $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 }; ?>
 
@@ -99,17 +143,17 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('job.job-adverts') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.index') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Job Advert List') }}
                 </a>
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ $editing ? __('Edit Advert') : __('Create Advert') }}
                 </a>
             </div>
         </nav>
     </div>
-
-    @can('create_job_advert')
+    
+    @if (Auth::user()->can('create_job_advert') || Auth::user()->can('update_job_advert'))
         <!-- Card Container for Form -->
         <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
 
@@ -195,5 +239,5 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </p>
             </div>
         </div>
-    @endcan
+    @endif
 </div>

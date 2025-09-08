@@ -4,6 +4,7 @@ use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Models\JobAdvert;
+use App\Models\Audit;
 use Livewire\WithPagination;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -163,11 +164,21 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $this->isLoadingBulkDelete = true;
         JobAdvert::whereIn('id', $this->selected)->delete();
+
+        // Log the bulk delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'bulk_delete',
+            'target_type' => JobAdvert::class,
+            'details' => json_encode(['job_advert_ids' => $this->selected]),
+        ]);
+
         $this->showBulkDeleteModal = false;
         $this->isLoadingBulkDelete = false;
         $this->selected = [];
         $this->selectAll = false;
         $this->updateSelectAllState();
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected job adverts deleted successfully.')]);
     }
 
     public function exportSelected(): void
@@ -186,7 +197,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                        $advert->deadline . '","' . 
                        $advert->status . '","' . 
                        $advert->created_at . '"' . "\n";
-        }
+        } 
+        
+        // Log the export selected action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_selected',
+            'target_type' => JobAdvert::class,
+            'details' => json_encode(['job_advert_ids' => $this->selected]),
+        ]);
         
         $this->isLoadingExport = false;
         
@@ -195,6 +214,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'job_adverts_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected job adverts exported successfully.')]);
     }
 
     public function exportAll(): void
@@ -227,7 +247,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                        $advert->deadline . '","' . 
                        $advert->status . '","' . 
                        $advert->created_at . '"' . "\n";
-        }
+        }        
+        
+        // Log the export all action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_all',
+            'target_type' => JobAdvert::class,
+            'details' => json_encode(['total_job_adverts' => $jobAdverts->count()]),
+        ]);
         
         $this->isLoadingExport = false;
         
@@ -236,6 +264,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'data' => $csvData,
             'filename' => 'all_job_adverts_' . now()->format('Y-m-d_H-i-s') . '.csv'
         ]);
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected job adverts exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -256,7 +285,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $advert = JobAdvert::findOrFail($this->pendingEditId);
         $this->showEditModal = false;
         $this->isLoadingEdit = false;
-        $this->redirectRoute('job.job-adverts.edit', ['slug' => $advert->slug]);
+        $this->redirectRoute('job.edit', ['slug' => $advert->slug]);
     }
 
     public function deleteConfirmed(): void
@@ -265,11 +294,16 @@ new #[Layout('components.layouts.app')] class extends Component {
         $jobAdvert = JobAdvert::findOrFail($this->pendingDeleteId);
         $jobAdvert->delete();
 
-        // Dispatch notification event
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Job advert deleted successfully.']);
+        // Log the delete action
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'delete',
+            'target_type' => JobAdvert::class,
+            'target_id' => $jobAdvert->id,
+            'details' => json_encode(['title' => $jobAdvert->title]),
+        ]);
 
-        // Dispatch audit log event
-        event(new AuditLogEvent(Auth::id(), 'delete', 'JobAdvert', $jobAdvert->id, $jobAdvert->toArray()));
+        $this->dispatch('notify', ['type' => 'success', 'message' => __('Job advert deleted successfully.')]);
 
         $this->resetForm();
         $this->showDeleteModal = false;
@@ -289,7 +323,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function createNewAdvert(): void
     {
-        $this->redirectRoute('job.job-adverts.create');
+        $this->redirectRoute('job.show');
     }
 
     // Helper method to check if we should show skeleton
@@ -342,10 +376,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Job Advert List') }}
                 </a>
-                <a href="{{ route('job.job-adverts.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.job-adverts.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('job.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('job.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Create Advert') }}
                 </a>
             </div>
