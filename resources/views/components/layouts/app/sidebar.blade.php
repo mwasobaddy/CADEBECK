@@ -126,16 +126,16 @@
                             </ul>
                         </div>
                     </li>
-                    <li x-data="{ open: {{ (request()->routeIs('job.job-adverts') || request()->routeIs('job.job-adverts.create') || request()->routeIs('job.job-adverts.edit') || request()->routeIs('job.job-adverts.vetting')) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ (request()->routeIs('job.index') || request()->routeIs('job.show') || request()->routeIs('job.edit') || request()->routeIs('job.index.vetting')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
                                 @click="open = !open"
                                 class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
-                                {{ request()->routeIs('job.job-adverts') || request()->routeIs('job.job-adverts.create') || request()->routeIs('job.job-adverts.edit') || request()->routeIs('job.job-adverts.vetting')
+                                {{ request()->routeIs('job.index') || request()->routeIs('job.show') || request()->routeIs('job.edit') || request()->routeIs('job.index.vetting')
                                     ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
                                     : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                 <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
-                                    {{ request()->routeIs('job.job-adverts') || request()->routeIs('job.job-adverts.create') || request()->routeIs('job.job-adverts.edit') || request()->routeIs('job.job-adverts.vetting')
+                                    {{ request()->routeIs('job.index') || request()->routeIs('job.show') || request()->routeIs('job.edit') || request()->routeIs('job.index.vetting')
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="briefcase" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
@@ -146,35 +146,35 @@
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.job-adverts') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.job-adverts') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('job.job-adverts') }}">
+                                        <a href="{{ route('job.index') }}">
                                             {{ __('Job Adverts') }}
                                         </a>
                                     </div>
                                 </li>
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.job-adverts.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.job-adverts.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('job.job-adverts.create') }}">
+                                        <a href="{{ route('job.show') }}">
                                             {{ __('Create Adverts') }}
                                         </a>
                                     </div>
                                 </li>
                                 <li>
                                     @if(!empty($slug))
-                                    <a href="{{ route('job.job-adverts.edit', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.job-adverts.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                                    <a href="{{ route('job.edit', ['slug' => $slug]) }}"
+                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                         {{ __('Edit Advert') }}
                                     </a>
                                     @endif
                                     @if(!empty($slug))
-                                    <a href="{{ route('job.job-adverts.vetting', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.job-adverts.vetting') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                                    <a href="{{ route('job.index.vetting', ['slug' => $slug]) }}"
+                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.index.vetting') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                         {{ __('Vetting') }}
                                     </a>
                                     @endif
@@ -182,16 +182,16 @@
                             </ul>
                         </div>
                     </li>
-                    <li x-data="{ open: {{ (request()->routeIs('role.create') || request()->routeIs('role.manage') || request()->routeIs('role.edit')) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ (request()->routeIs('role.show') || request()->routeIs('role.index') || request()->routeIs('role.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
                                 @click="open = !open"
                                 class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
-                                {{ request()->routeIs('role.create') || request()->routeIs('role.manage') || request()->routeIs('role.edit')
+                                {{ request()->routeIs('role.show') || request()->routeIs('role.index') || request()->routeIs('role.edit')
                                     ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
                                     : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                 <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
-                                    {{ request()->routeIs('role.create') || request()->routeIs('role.manage') || request()->routeIs('role.edit')
+                                    {{ request()->routeIs('role.show') || request()->routeIs('role.index') || request()->routeIs('role.edit')
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="tag" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
@@ -202,21 +202,21 @@
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('role.manage') }}">
+                                        <a href="{{ route('role.index') }}">
                                             {{ __('Role List') }}
                                         </a>
                                     </div>
                                 </li>
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('role.create') }}">
+                                        <a href="{{ route('role.show') }}">
                                             {{ __('Create Role') }}
                                         </a>
                                     </div>
