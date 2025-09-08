@@ -165,14 +165,6 @@ new class extends \Livewire\Volt\Component {
         $this->isLoading = false;
     }
 
-    public function testNotification()
-    {
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Test notification! This should appear in the bottom right corner.'
-        ]);
-    }
-
     public function getStatusText()
     {
         if ($this->currentAttendance) {
@@ -304,16 +296,6 @@ new class extends \Livewire\Volt\Component {
                             <span wire:loading>{{ 'Clocking Out...' }}</span>
                         </button>
                     @endif
-                </div>
-
-                <!-- Test Notification Button -->
-                <div class="mt-4">
-                    <button
-                        wire:click="testNotification"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        Test Notification
-                    </button>
                 </div>
 
                 <!-- Today's Summary -->
