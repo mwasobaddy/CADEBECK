@@ -306,7 +306,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $role = Role::findOrFail($id);
         $role->delete();
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Role deleted successfully.')]);
-        $this->redirectRoute('role.manage');
+        $this->redirectRoute('role.index');
     }
 
     public function save(): void
@@ -327,7 +327,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $role->syncPermissions($this->form['permissions']);
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role created successfully.')]);
         }
-        $this->redirectRoute('role.manage');
+        $this->redirectRoute('role.index');
     }
 
     public function resetForm(): void
@@ -394,10 +394,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('role.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('role.index') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Role List') }}
                 </a>
-                <a href="{{ route('role.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('role.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ $editing ? __('Edit Role') : __('Add Role') }}
                 </a>
             </div>
@@ -445,7 +445,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </button>
                     @endcan
 
-                    <a href="{{ route('role.create') }}" class="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <a href="{{ route('role.show') }}" class="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>

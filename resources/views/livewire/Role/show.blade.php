@@ -3,6 +3,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Models\Audit;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
@@ -34,15 +35,29 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->role->name = $this->form['name'];
             $this->role->save();
             $this->role->syncPermissions($this->form['permissions']);
-            session()->flash('status', __('Role updated successfully.'));
+
+            // Log the update action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'update',
+                'target_type' => Role::class,
+                'details' => json_encode(['role_id' => $this->role->id]),
+            ]);
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role updated successfully.')]);
         } else {
             $role = Role::create(['name' => $this->form['name']]);
             $role->syncPermissions($this->form['permissions']);
-            session()->flash('status', __('Role created successfully.'));
+
+            // Log the creation action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'create',
+                'target_type' => Role::class,
+                'details' => json_encode(['role_id' => $role->id]),
+            ]);
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role created successfully.')]);
         }
-        $this->redirectRoute('role.manage');
+        $this->redirectRoute('role.index');
     }
 
     public function getPermissionsProperty() { return Permission::all(); }
@@ -53,10 +68,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('role.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('role.index') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Role List') }}
                 </a>
-                <a href="{{ route('role.create') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.create') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('role.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('role.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Add Role') }}
                 </a>
             </div>
