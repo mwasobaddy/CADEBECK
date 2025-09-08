@@ -57,33 +57,33 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:edit_user'])
             ->name('user.edit');
 
-        Volt::route('job/job-adverts', 'job.job-advert-manager')
+        Volt::route('job/job-adverts', 'job.index')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('job.job-adverts');
+            ->name('job.index');
 
-        Volt::route('job/job-adverts/create', 'job.job-advert-create')
+        Volt::route('job/job-adverts/create', 'job.show')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('job.job-adverts.create');
+            ->name('job.show');
 
-        Volt::route('job/job-adverts/{slug}/edit', 'job.job-advert-create')
+        Volt::route('job/job-adverts/{slug}/edit', 'job.show')
             ->middleware(['auth', 'permission:manage_job_advert'])
-            ->name('job.job-adverts.edit');
+            ->name('job.edit');
 
-        Volt::route('role/manage', 'Role.role-manager')
-            ->middleware(['permission:manage_role'])
-            ->name('role.manage');
+        Volt::route('role/manage', 'role.index')
+            ->middleware(['permission:manage_roles'])
+            ->name('role.index');
 
-        Volt::route('role/create', 'Role.role-create')
+        Volt::route('role/create', 'role.show')
             ->middleware(['permission:create_role'])
-            ->name('role.create');
+            ->name('role.show');
 
-        Volt::route('role/{id}/edit', 'Role.role-create')
+        Volt::route('role/{id}/edit', 'role.show')
             ->middleware(['permission:edit_role'])
             ->name('role.edit');
 
         Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
             ->middleware(['auth', 'permission:vet_candidates'])
-            ->name('job.job-adverts.vetting');
+            ->name('job.index.vetting');
             
         // Organisation: Locations, Branches, Departments, Designations
         Volt::route('organisation/locations', 'organisation.location_manager')
