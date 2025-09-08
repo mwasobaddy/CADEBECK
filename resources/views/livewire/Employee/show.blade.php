@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\ContractType;
 use App\Models\User;
+use App\Models\Audit;
 use Illuminate\Support\Facades\Hash;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -137,6 +138,15 @@ new #[Layout('components.layouts.app')] class extends Component {
             }
             $this->employee->update($this->form);
             
+            // Log the create action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'update',
+                'target_type' => Employee::class,
+                'target_id' => $employee->id,
+                'details' => json_encode($this->form),
+            ]);
+            
             $notification = [
                 'type' => 'success',
                 'message' => __('Employee updated successfully.'),
@@ -160,6 +170,15 @@ new #[Layout('components.layouts.app')] class extends Component {
             $employeeData = $this->form;
             $employeeData['user_id'] = $user->id;
             Employee::create($employeeData);
+            
+            // Log the create action
+            Audit::create([
+                'actor_id' => Auth::id(),
+                'action' => 'create',
+                'target_type' => Employee::class,
+                'target_id' => $employee->id,
+                'details' => json_encode($this->form),
+            ]);
             
             $notification = [
                 'type' => 'success',
@@ -236,7 +255,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         </nav>
     </div>
 
-    @can('create_employee')
+    @if (Auth::user()->can('create_employee') || Auth::user()->can('edit_employee'))
         <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
             <div class="flex items-center gap-3 mb-8">
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

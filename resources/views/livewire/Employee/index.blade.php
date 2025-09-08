@@ -113,6 +113,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->isFiltering = false;
     }
+
     public function updatedFilterBranch(): void
     {
         $this->isFiltering = true;
@@ -120,6 +121,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->isFiltering = false;
     }
+
     public function updatedFilterDepartment(): void
     {
         $this->isFiltering = true;
@@ -127,6 +129,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->isFiltering = false;
     }
+
     public function updatedFilterDesignation(): void
     {
         $this->isFiltering = true;
@@ -134,6 +137,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->isFiltering = false;
     }
+
     public function updatedFilterContractType(): void
     {
         $this->isFiltering = true;
@@ -141,17 +145,20 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->isFiltering = false;
     }
+
     public function updatedPage(): void
     {
         $this->isPaginating = true;
         $this->updateSelectAllState();
         $this->isPaginating = false;
     }
+
     public function updatedPerPage(): void
     {
         $this->resetPage();
         $this->updateSelectAllState();
     }
+
     public function updateSelectAllState(): void
     {
         $employees = $this->employees;
@@ -163,6 +170,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->selectAll = false;
         }
     }
+
     public function toggleSelectAll(): void
     {
         $employees = $this->employees;
@@ -177,10 +185,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             }
         }
     }
+
     public function updatedSelected(): void
     {
         $this->updateSelectAllState();
     }
+
     public function selectAllData(): void
     {
         $query = Employee::query();
@@ -211,10 +221,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selected = $query->pluck('id')->toArray();
         $this->updateSelectAllState();
     }
+
     public function bulkDeleteConfirm(): void
     {
         $this->showBulkDeleteModal = true;
     }
+
     public function bulkDelete(): void
     {
         $this->isLoadingBulkDelete = true;
@@ -236,6 +248,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->updateSelectAllState();
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees deleted successfully.')]);
     }
+
     public function exportSelected(): void
     {
         $this->isLoadingExport = true;
@@ -270,6 +283,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         ]);
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
     }
+
     public function exportAll(): void
     {
         $this->isLoadingExport = true;
@@ -329,16 +343,19 @@ new #[Layout('components.layouts.app')] class extends Component {
         ]);
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
     }
+
     public function confirmEdit($id): void
     {
         $this->pendingEditId = $id;
         $this->showEditModal = true;
     }
+
     public function confirmDelete($id): void
     {
         $this->pendingDeleteId = $id;
         $this->showDeleteModal = true;
     }
+
     public function editConfirmed(): void
     {
         $this->isLoadingEdit = true;
@@ -347,6 +364,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->isLoadingEdit = false;
         $this->redirectRoute('employee.edit', ['id' => $employee->id]);
     }
+
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
@@ -367,16 +385,19 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->isLoadingDelete = false;
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Employee deleted successfully.')]);
     }
+
     public function resetForm(): void
     {
         $this->editingId = null;
         $this->selected = [];
         $this->selectAll = false;
     }
+
     public function createNewEmployee(): void
     {
         $this->redirectRoute('employee.show');
     }
+
     public function shouldShowSkeleton(): bool
     {
         return $this->isLoadingBulkDelete || 
@@ -388,6 +409,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                $this->isLoadingExport ||
                $this->isLoadingData;
     }
+    
     public function toggleFilters(): void
     {
         $this->showFilters = !$this->showFilters;
@@ -577,7 +599,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                     <thead>
                         <tr class="h-16 bg-zinc-800/5 dark:bg-white/10 text-zinc-600 dark:text-white/70">
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider w-12">
                                 <button type="button"
                                     wire:click="toggleSelectAll"
                                     class="rounded focus:ring-2 focus:ring-pink-400 transition-colors duration-200
@@ -595,7 +617,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     @endif
                                 </button>
                             </th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('name')">
+                            <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[200px]" wire:click="sortBy('name')">
                                 {{ __('Name') }}
                                 @if($this->sortField === 'name')
                                     <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -607,7 +629,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </svg>
                                 @endif
                             </th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('staff_number')">
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[100px]" wire:click="sortBy('staff_number')">
                                 {{ __('Staff') }}&nbsp;{{ __('NO.') }}
                                 @if($this->sortField === 'staff_number')
                                     <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -619,14 +641,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </svg>
                                 @endif
                             </th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Email') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Mobile') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Location') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Branch') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Department') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Designation') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Contract Type') }}</th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('created_at')">
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[180px]">{{ __('Email') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[120px]">{{ __('Mobile') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[100px]">{{ __('Location') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[100px]">{{ __('Branch') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[120px]">{{ __('Department') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[120px]">{{ __('Designation') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[130px]">{{ __('Contract Type') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[120px]" wire:click="sortBy('created_at')">
                                 {{ __('Date of Join') }}
                                 @if($this->sortField === 'created_at')
                                     <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -638,7 +660,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </svg>
                                 @endif
                             </th>
-                            <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">{{ __('Actions') }}</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[100px]">{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -662,10 +684,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @else
                             @forelse (($this->employees ?? []) as $employee)
                                 <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
-                                    <td class="px-5 py-4">
+                                    <td class="px-3 py-4">
                                         <input type="checkbox" wire:model.live="selected" value="{{ $employee->id }}" class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
                                     </td>
-                                    <td class="px-5 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate flex items-center gap-3">
+                                    <td class="px-4 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate flex items-center gap-3">
                                         <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-300 font-bold text-lg">
                                             {{ strtoupper(Str::substr($employee->user->first_name, 0, 1) . Str::substr($employee->user->other_names, 0, 1)) }}
                                         </span>
@@ -674,20 +696,20 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $employee->user->email }}</span>
                                         </span>
                                     </td>
-                                    <td class="px-5 py-4 font-semibold">{{ $employee->staff_number }}</td>
-                                    <td class="px-5 py-4">{{ $employee->user->email }}</td>
-                                    <td class="px-5 py-4">{{ $employee->mobile_number }}</td>
-                                    <td class="px-5 py-4">{{ $employee->location?->name }}</td>
-                                    <td class="px-5 py-4">{{ $employee->branch?->name }}</td>
-                                    <td class="px-5 py-4">{{ $employee->department?->name }}</td>
-                                    <td class="px-5 py-4">{{ $employee->designation?->name }}</td>
-                                    <td class="px-5 py-4">{{ $employee->contractType?->name }}</td>
-                                    <td class="px-5 py-4 font-semibold">
+                                    <td class="px-3 py-4 font-semibold">{{ $employee->staff_number }}</td>
+                                    <td class="px-3 py-4">{{ $employee->user->email }}</td>
+                                    <td class="px-3 py-4">{{ $employee->mobile_number }}</td>
+                                    <td class="px-3 py-4">{{ $employee->location?->name }}</td>
+                                    <td class="px-3 py-4">{{ $employee->branch?->name }}</td>
+                                    <td class="px-3 py-4">{{ $employee->department?->name }}</td>
+                                    <td class="px-3 py-4 font-medium text-green-600 dark:text-green-400">{{ $employee->designation?->name }}</td>
+                                    <td class="px-3 py-4">{{ $employee->contractType?->name }}</td>
+                                    <td class="px-3 py-4 font-semibold">
                                         <span class="truncate text-blue-600 dark:text-blue-400">
                                             {{ $employee->date_of_join ? \Carbon\Carbon::parse($employee->date_of_join)->translatedFormat('j M Y') : '' }}
                                         </span>
                                     </td>
-                                    <td class="px-5 py-4">
+                                    <td class="px-3 py-4">
                                         <span class="flex gap-2">
                                             @can('edit_employee')
                                                 <flux:button
@@ -712,7 +734,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colspan="12" class="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
                                         <div class="flex flex-col items-center gap-2">
                                             <svg class="w-8 h-8 text-gray-300 dark:text-zinc-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
