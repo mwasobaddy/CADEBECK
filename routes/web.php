@@ -4,18 +4,16 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 
-Route::get('/', function () {
-    return redirect()->route('careers');
-})->name('home');
+
+
 
 Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 
-
-Volt::route('careers', 'job.job-advert-list')
-    ->name('careers');
+Volt::route('/', 'job.job-advert-list')
+    ->name('home');
 Volt::route('careers/{slug}', 'job.job-advert-details')
     ->name('careers.details');
 Volt::route('careers/{slug}/apply', 'job.job-application-form')
@@ -70,7 +68,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('job.edit');
 
         Volt::route('role/manage', 'role.index')
-            ->middleware(['permission:manage_roles'])
+            ->middleware(['permission:manage_role'])
             ->name('role.index');
 
         Volt::route('role/create', 'role.show')
@@ -145,6 +143,20 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('wellbeing', 'wellbeing.wellbeing-manager')
             ->middleware(['auth', 'permission:edit_user'])
             ->name('wellbeing.dashboard');
+
+        Volt::route('own-leave/manage', 'leave.leave-manager')
+            ->middleware(['auth', 'permission:manage_my_leave'])
+            ->name('leave.leave-manager');
+
+        Volt::route('leave/apply', 'leave.apply')
+            ->middleware(['auth', 'permission:manage_my_leave'])
+            ->name('leave.apply');
+
+        Volt::route('own-leave/request/{id}/edit', 'leave.apply')
+            ->middleware(['auth', 'permission:manage_my_leave'])
+            ->name('leave.request.edit');
+
+            
     });
 });
 

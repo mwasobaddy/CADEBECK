@@ -254,244 +254,227 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
         </nav>
     </div>
-
-    @if (Auth::user()->can('create_employee') || Auth::user()->can('edit_employee'))
-        <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
-            <div class="flex items-center gap-3 mb-8">
-                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
-                </svg>
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
-                    {{ $editing ? __('Edit Employee') : __('Create Employee') }}
-                    <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
-                </h1>
-            </div>
-            <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Personal Information -->
-                <div class="md:col-span-2 lg:col-span-3">
-                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Personal Information') }}</h2>
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.first_name"
-                        :label="__('First Name')"
-                        type="text"
-                        required
-                        placeholder="{{ __('First Name') }}" />
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.other_names"
-                        :label="__('Other Names')"
-                        type="text"
-                        required
-                        placeholder="{{ __('Other Names') }}" />
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.date_of_birth"
-                        :label="__('Date of Birth')"
-                        type="date"
-                        required
-                        autocomplete="bday"
-                        placeholder="{{ __('Date of Birth') }}"
-                    />
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.gender"
-                        :label="__('Gender')"
-                        required
-                        :placeholder="__('Gender')"
-                    >
-                        <flux:select.option value="male">{{ __('Male') }}</flux:select.option>
-                        <flux:select.option value="female">{{ __('Female') }}</flux:select.option>
-                        <flux:select.option value="other">{{ __('Other') }}</flux:select.option>
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.mobile_number"
-                        :label="__('Mobile Number')"
-                        type="text"
-                        required
-                        autocomplete="tel"
-                        placeholder="{{ __('Mobile Number') }}"
-                    />
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <flux:input
-                        wire:model="form.home_address"
-                        :label="__('Home Address')"
-                        type="text"
-                        required
-                        autocomplete="street-address"
-                        placeholder="{{ __('Home Address') }}"
-                    />
-                </div>
-
-                <!-- Employment Details -->
-                <div class="md:col-span-2 lg:col-span-3 mt-6">
-                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Employment Details') }}</h2>
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.staff_number"
-                        :label="__('Staff Number')"
-                        type="text"
-                        required
-                        autocomplete="off"
-                        placeholder="{{ __('Staff Number') }}"
-                    />
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.date_of_join"
-                        :label="__('Date of Join')"
-                        type="date"
-                        required
-                        autocomplete="date-of-join"
-                        placeholder="{{ __('Date of Join') }}"
-                    />
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.location_id"
-                        :label="__('Branch Location')"
-                        required
-                        :placeholder="__('Branch Location')"
-                    >
-                        @foreach($this->locations as $location)
-                            <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.branch_id"
-                        :label="__('Branch')"
-                        required
-                        :placeholder="__('Branch')"
-                        :disabled="!$form['location_id']"
-                    >
-                        @if($form['location_id'])
-                            @foreach($this->branches->where('location_id', $form['location_id']) as $branch)
-                                <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
-                            @endforeach
-                        @endif
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.department_id"
-                        :label="__('Department')"
-                        required
-                        :placeholder="__('Department')"
-                        :disabled="!$form['branch_id']"
-                    >
-                        @if($form['branch_id'])
-                            @foreach($this->departments->where('branch_id', $form['branch_id']) as $department)
-                                <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
-                            @endforeach
-                        @endif
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.designation_id"
-                        :label="__('Designation')"
-                        required
-                        :placeholder="__('Designation')"
-                    >
-                        @foreach($this->designations as $designation)
-                            <flux:select.option value="{{ $designation->id }}">{{ $designation->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:select
-                        wire:model="form.contract_type_id"
-                        :label="__('Contract Type')"
-                        required
-                        :placeholder="__('Contract Type')"
-                    >
-                        @foreach($this->contractTypes as $type)
-                            <flux:select.option value="{{ $type->id }}">{{ $type->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </div>
-
-                <!-- Account Details -->
-                <div class="md:col-span-2 lg:col-span-3 mt-6">
-                    <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Account Details') }}</h2>
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.email"
-                        :label="__('Email')"
-                        type="email"
-                        required
-                        placeholder="{{ __('Email') }}" />
-                </div>
-                <div>
-                    <flux:select wire:model="form.role" :label="__('Role')" required :placeholder="__('Role')">
-                        <flux:select.option value="">{{ __('Select Role') }}</flux:select.option>
-                        <flux:select.option value="Super Administrator">Super Administrator</flux:select.option>
-                        <flux:select.option value="HR Administrator">HR Administrator</flux:select.option>
-                        <flux:select.option value="New Employee">New Employee</flux:select.option>
-                    </flux:select>
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.password"
-                        :label="__('Password')"
-                        type="password"
-                        autocomplete="new-password"
-                        :placeholder="__('Password')"
-                        viewable
-                    />
-                </div>
-                <div>
-                    <flux:input
-                        wire:model="form.password_confirmation"
-                        :label="__('Confirm Password')"
-                        type="password"
-                        autocomplete="new-password"
-                        :placeholder="__('Confirm Password')"
-                        viewable
-                    />
-                </div>
-
-                <!-- Actions -->
-                <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    <button type="submit"
-                        class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
-                        {{ $editing ? __('Update') : __('Create') }}
-                        <flux:icon name="check" class="w-5 h-5" />
-                    </button>
-                    <button type="button" wire:click="resetForm"
-                        class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                        {{ __('Reset') }}
-                        <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
-                    </button>
-                </div>
-            </form>
+    
+    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
+        <div class="flex items-center gap-3 mb-8">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"></path>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
+            </svg>
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
+                {{ $editing ? __('Edit Employee') : __('Create Employee') }}
+                <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
+            </h1>
         </div>
-    @else
-        <div class="flex items-center justify-center w-full">
-            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-10 border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40 flex flex-col items-center gap-6 max-w-lg w-full">
-                <svg class="w-16 h-16 text-red-400 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
-                </svg>
-                <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 flex items-center gap-2 drop-shadow-lg">
-                    {{ __('Access Denied') }}
-                </h2>
-                <p class="text-lg text-gray-700 dark:text-gray-300 font-medium text-center">
-                    {{ __('You do not have permission to access this page or perform this action.') }}
-                </p>
+        <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Personal Information -->
+            <div class="md:col-span-2 lg:col-span-3">
+                <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Personal Information') }}</h2>
             </div>
-        </div>
-    @endcan
+            <div>
+                <flux:input
+                    wire:model="form.first_name"
+                    :label="__('First Name')"
+                    type="text"
+                    required
+                    placeholder="{{ __('First Name') }}" />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.other_names"
+                    :label="__('Other Names')"
+                    type="text"
+                    required
+                    placeholder="{{ __('Other Names') }}" />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.date_of_birth"
+                    :label="__('Date of Birth')"
+                    type="date"
+                    required
+                    autocomplete="bday"
+                    placeholder="{{ __('Date of Birth') }}"
+                />
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.gender"
+                    :label="__('Gender')"
+                    required
+                    :placeholder="__('Gender')"
+                >
+                    <flux:select.option value="male">{{ __('Male') }}</flux:select.option>
+                    <flux:select.option value="female">{{ __('Female') }}</flux:select.option>
+                    <flux:select.option value="other">{{ __('Other') }}</flux:select.option>
+                </flux:select>
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.mobile_number"
+                    :label="__('Mobile Number')"
+                    type="text"
+                    required
+                    autocomplete="tel"
+                    placeholder="{{ __('Mobile Number') }}"
+                />
+            </div>
+            <div class="md:col-span-2 lg:col-span-3">
+                <flux:input
+                    wire:model="form.home_address"
+                    :label="__('Home Address')"
+                    type="text"
+                    required
+                    autocomplete="street-address"
+                    placeholder="{{ __('Home Address') }}"
+                />
+            </div>
+
+            <!-- Employment Details -->
+            <div class="md:col-span-2 lg:col-span-3 mt-6">
+                <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Employment Details') }}</h2>
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.staff_number"
+                    :label="__('Staff Number')"
+                    type="text"
+                    required
+                    autocomplete="off"
+                    placeholder="{{ __('Staff Number') }}"
+                />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.date_of_join"
+                    :label="__('Date of Join')"
+                    type="date"
+                    required
+                    autocomplete="date-of-join"
+                    placeholder="{{ __('Date of Join') }}"
+                />
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.location_id"
+                    :label="__('Branch Location')"
+                    required
+                    :placeholder="__('Branch Location')"
+                >
+                    @foreach($this->locations as $location)
+                        <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.branch_id"
+                    :label="__('Branch')"
+                    required
+                    :placeholder="__('Branch')"
+                    :disabled="!$form['location_id']"
+                >
+                    @if($form['location_id'])
+                        @foreach($this->branches->where('location_id', $form['location_id']) as $branch)
+                            <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
+                        @endforeach
+                    @endif
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.department_id"
+                    :label="__('Department')"
+                    required
+                    :placeholder="__('Department')"
+                    :disabled="!$form['branch_id']"
+                >
+                    @if($form['branch_id'])
+                        @foreach($this->departments->where('branch_id', $form['branch_id']) as $department)
+                            <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
+                        @endforeach
+                    @endif
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.designation_id"
+                    :label="__('Designation')"
+                    required
+                    :placeholder="__('Designation')"
+                >
+                    @foreach($this->designations as $designation)
+                        <flux:select.option value="{{ $designation->id }}">{{ $designation->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.contract_type_id"
+                    :label="__('Contract Type')"
+                    required
+                    :placeholder="__('Contract Type')"
+                >
+                    @foreach($this->contractTypes as $type)
+                        <flux:select.option value="{{ $type->id }}">{{ $type->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <!-- Account Details -->
+            <div class="md:col-span-2 lg:col-span-3 mt-6">
+                <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Account Details') }}</h2>
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.email"
+                    :label="__('Email')"
+                    type="email"
+                    required
+                    placeholder="{{ __('Email') }}" />
+            </div>
+            <div>
+                <flux:select wire:model="form.role" :label="__('Role')" required :placeholder="__('Role')">
+                    <flux:select.option value="">{{ __('Select Role') }}</flux:select.option>
+                    <flux:select.option value="Super Administrator">Super Administrator</flux:select.option>
+                    <flux:select.option value="HR Administrator">HR Administrator</flux:select.option>
+                    <flux:select.option value="New Employee">New Employee</flux:select.option>
+                </flux:select>
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.password"
+                    :label="__('Password')"
+                    type="password"
+                    autocomplete="new-password"
+                    :placeholder="__('Password')"
+                    viewable
+                />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.password_confirmation"
+                    :label="__('Confirm Password')"
+                    type="password"
+                    autocomplete="new-password"
+                    :placeholder="__('Confirm Password')"
+                    viewable
+                />
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
+                <button type="submit"
+                    class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    {{ $editing ? __('Update') : __('Create') }}
+                    <flux:icon name="check" class="w-5 h-5" />
+                </button>
+                <button type="button" wire:click="resetForm"
+                    class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    {{ __('Reset') }}
+                    <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
