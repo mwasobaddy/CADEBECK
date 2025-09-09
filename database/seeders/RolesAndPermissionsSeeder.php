@@ -88,17 +88,18 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'mark_attendance',
 
-            'manage_other_leave_requests',
-            'edit_other_leave_requests',
-            'delete_other_leave_requests',
-            'view_other_leave_requests',
+            'manage_my_leave',
+            'apply_for_leave',
+            'edit_my_leave',
+            'delete_my_leave',
+            'export_my_leave',
 
-            'manage_own_leave_requests',
-            'create_own_leave_requests',
-            'edit_own_leave_requests',
-            'delete_own_leave_requests',
-            'view_own_leave_requests',
+            'manage_all_leaves',
+            'edit_all_leaves',
+            'delete_all_leaves',
+            'export_all_leaves',
 
+            
 
             'manage_other_attendance',
             'edit_other_attendance',
@@ -206,17 +207,16 @@ class RolesAndPermissionsSeeder extends Seeder
                     'edit_permission',
                     'delete_permission',
 
-                    'manage_other_leave_requests',
-                    'edit_other_leave_requests',
-                    'delete_other_leave_requests',
-                    'view_other_leave_requests',
+                    'manage_my_leave',
+                    'apply_for_leave',
+                    'edit_my_leave',
+                    'delete_my_leave',
+                    'export_my_leave',
 
-                    'manage_own_leave_requests',
-                    'create_own_leave_requests',
-                    'edit_own_leave_requests',
-                    'delete_own_leave_requests',
-                    'view_own_leave_requests',
-
+                    'manage_all_leaves',
+                    'edit_all_leaves',
+                    'delete_all_leaves',
+                    'export_all_leaves',
 
                     'manage_other_attendance',
                     'edit_other_attendance',
