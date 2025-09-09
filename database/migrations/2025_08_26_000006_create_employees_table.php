@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->foreignId('designation_id')->constrained('designations')->onDelete('cascade');
             $table->date('date_of_join')->nullable();
             $table->foreignId('contract_type_id')->constrained('contract_types')->onDelete('cascade');
+            $table->foreignId('supervisor_id')->nullable()->constrained('employees')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });

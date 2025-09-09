@@ -60,4 +60,12 @@ class User extends Authenticatable implements MustVerifyEmail
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    /**
+     * Get the employee record associated with this user
+     */
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
 }

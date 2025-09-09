@@ -24,7 +24,7 @@ class Employee extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id'
+        'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id'
     ];
     public function user()
     {
@@ -49,6 +49,16 @@ class Employee extends Model
     public function contractType()
     {
         return $this->belongsTo(ContractType::class);
+    }
+
+    public function supervisor()
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_id');
+    }
+
+    public function subordinates()
+    {
+        return $this->hasMany(Employee::class, 'supervisor_id');
     }
 
     public function attendances()
