@@ -9,58 +9,49 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 new #[Layout('components.layouts.app')] class extends Component {
+    public array $form = [
+        'leave_type' => '',
+        'start_date' => '',
+        'end_date' => '',
+        'days_requested' => 0,
+        'reason' => '',
+    ];
     public $leaveRequest = null;
     public $isEditing = false;
-
-    // Form fields
-    public $leave_type = '';
-    public $start_date = '';
-    public $end_date = '';
-    public $days_requested = 0;
-    public $reason = '';
-
     public $isLoading = false;
 
-    public function mount($leaveRequestId = null)
+    public function mount($id = null)
     {
-        if ($leaveRequestId) {
-            $this->leaveRequest = LeaveRequest::find($leaveRequestId);
-            if ($this->leaveRequest && $this->leaveRequest->employee->user_id === Auth::id() && $this->leaveRequest->isPending()) {
+        if ($id) {
+            $this->leaveRequest = LeaveRequest::find($id);
+            if ($this->leaveRequest && $this->leaveRequest->user_id === Auth::id() && $this->leaveRequest->isPending()) {
                 $this->isEditing = true;
-                $this->populateForm();
+                $this->form = [
+                    'leave_type' => $this->leaveRequest->leave_type,
+                    'start_date' => $this->leaveRequest->start_date ? $this->leaveRequest->start_date->format('Y-m-d') : '',
+                    'end_date' => $this->leaveRequest->end_date ? $this->leaveRequest->end_date->format('Y-m-d') : '',
+                    'days_requested' => $this->leaveRequest->days_requested,
+                    'reason' => $this->leaveRequest->reason,
+                ];
             } else {
-                // Invalid request, redirect or show error
                 $this->dispatch('notify', [
                     'type' => 'error',
                     'message' => __('Leave request not found or cannot be edited.')
                 ]);
-                return redirect()->route('leave.leave-manager');
+                return redirect()->route('own-leave.manage');
             }
         }
-
-        // Calculate days if we have both dates (for editing or pre-filled forms)
-        if ($this->start_date && $this->end_date) {
+        if ($this->form['start_date'] && $this->form['end_date'] && !$this->isEditing) {
             $this->calculateDays();
         }
     }
 
-    public function populateForm()
-    {
-        if ($this->leaveRequest) {
-            $this->leave_type = $this->leaveRequest->leave_type;
-            $this->start_date = $this->leaveRequest->start_date->format('Y-m-d');
-            $this->end_date = $this->leaveRequest->end_date->format('Y-m-d');
-            $this->days_requested = $this->leaveRequest->days_requested;
-            $this->reason = $this->leaveRequest->reason;
-        }
-    }
-
-    public function updatedStartDate()
+    public function updatedFormStartDate()
     {
         $this->calculateDays();
     }
 
-    public function updatedEndDate()
+    public function updatedFormEndDate()
     {
         $this->calculateDays();
     }
@@ -68,14 +59,14 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function calculateDays()
     {
         // Reset days_requested if dates are not set
-        if (!$this->start_date || !$this->end_date) {
-            $this->days_requested = 0;
+        if (!$this->form['start_date'] || !$this->form['end_date']) {
+            $this->form['days_requested'] = 0;
             return;
         }
 
         try {
-            $start = \Carbon\Carbon::parse($this->start_date);
-            $end = \Carbon\Carbon::parse($this->end_date);
+            $start = \Carbon\Carbon::parse($this->form['start_date']);
+            $end = \Carbon\Carbon::parse($this->form['end_date']);
 
             // If end date is before start date, reset to 0
             if ($end->lessThan($start)) {
@@ -83,19 +74,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                     'type' => 'error',
                     'message' => __('End date must be after start date.')
                 ]);
-                $this->days_requested = 0;
+                $this->form['days_requested'] = 0;
                 return;
             }
 
             // Calculate business days using Carbon's built-in method
             // This method excludes weekends and we add 1 to include both start and end dates
-            $this->days_requested = $start->diffInWeekdays($end) + 1;
+            $this->form['days_requested'] = $start->diffInWeekdays($end) + 1;
 
             // Optional: Debug info (you can remove this after testing)
             logger('Leave calculation', [
                 'start' => $start->format('Y-m-d (l)'), // l shows day name
                 'end' => $end->format('Y-m-d (l)'),
-                'business_days' => $this->days_requested
+                'business_days' => $this->form['days_requested']
             ]);
 
         } catch (\Exception $e) {
@@ -103,7 +94,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'type' => 'error',
                 'message' => __('Error calculating leave days: ' . $e->getMessage())
             ]);
-            $this->days_requested = 0;
+            $this->form['days_requested'] = 0;
         }
     }
 
@@ -124,20 +115,13 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->validate([
-            'leave_type' => 'required|in:annual,sick,maternity,paternity,emergency,unpaid',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'days_requested' => 'required|integer|min:1|max:30',
-            'reason' => 'required|string|min:10|max:500',
+            'form.leave_type' => 'required|in:annual,sick,maternity,paternity,emergency,unpaid',
+            'form.start_date' => 'required|date|after_or_equal:today',
+            'form.end_date' => 'required|date|after_or_equal:form.start_date',
+            'form.days_requested' => 'required|integer|min:1|max:30',
+            'form.reason' => 'required|string|min:10|max:500',
         ]);
-
-        $formData = [
-            'leave_type' => $this->leave_type,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'days_requested' => $this->days_requested,
-            'reason' => $this->reason,
-        ];
+        $formData = $this->form;
 
         if ($this->isEditing && $this->leaveRequest) {
             $this->leaveRequest->update($formData);
@@ -156,11 +140,11 @@ new #[Layout('components.layouts.app')] class extends Component {
             $leaveRequest = LeaveRequest::create([
                 'employee_id' => $employee->id,
                 'user_id' => $user->id,
-                'leave_type' => $this->leave_type,
-                'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
-                'days_requested' => $this->days_requested,
-                'reason' => $this->reason,
+                'leave_type' => $this->form['leave_type'],
+                'start_date' => $this->form['start_date'],
+                'end_date' => $this->form['end_date'],
+                'days_requested' => $this->form['days_requested'],
+                'reason' => $this->form['reason'],
                 'status' => 'pending',
             ]);
 
@@ -193,12 +177,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->isLoading = false;
 
         // Redirect back to leave manager
-        return redirect()->route('leave.leave-manager');
+        return redirect()->route('own-leave.manage');
     }
 
     public function cancel()
     {
-        return redirect()->route('leave.leave-manager');
+        return redirect()->route('own-leave.manage');
     }
 };
 ?>
@@ -228,10 +212,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('leave.leave-manager') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.leave-manager') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('own-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('own-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('Leave Manager') }}
                 </a>
-                <a href="{{ request()->routeIs('leave.request.edit') ? route('leave.request.edit', $leaveRequest->id ?? '') : route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ $this->isEditing && $this->leaveRequest ? route('own-leave.edit', $this->leaveRequest->id) : route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ $this->isEditing ? __('Edit Leave Request') : __('New Leave Request') }}
                 </a>
             </div>
@@ -256,7 +240,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div>
                 <flux:select
-                    wire:model="leave_type"
+                    wire:model="form.leave_type"
                     :label="__('Leave Type')"
                     required
                     :placeholder="__('Select Leave Type')"
@@ -269,13 +253,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:select.option value="unpaid">{{ __('Unpaid Leave') }}</flux:select.option>
                 </flux:select>
             </div>
-
             <div>
                 <flux:input
-                    wire:model.lazy="days_requested"
+                    wire:model.lazy="form.days_requested"
                     :label="__('Days Requested')"
                     readonly
-                    :value="$this->days_requested"
                     :placeholder="__('Auto-calculated')"
                 />
             </div>
@@ -287,7 +269,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div>
                 <flux:input
-                    wire:model.lazy="start_date"
+                    wire:model.lazy="form.start_date"
                     :label="__('Start Date')"
                     type="date"
                     required
@@ -297,7 +279,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div>
                 <flux:input
-                    wire:model.lazy="end_date"
+                    wire:model.lazy="form.end_date"
                     :label="__('End Date')"
                     type="date"
                     required
@@ -312,12 +294,12 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="md:col-span-2">
                 <flux:textarea
-                    wire:model="reason"
+                    wire:model="form.reason"
                     :label="__('Reason')"
                     :placeholder="__('Please provide details about your leave request...')"
                     required
                     rows="4"
-                />
+                >{{ $form['reason'] }}</flux:textarea>
             </div>
 
             <div class="flex items-end justify-end gap-3 md:col-span-2">
@@ -328,7 +310,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <span wire:loading>{{ __('Submitting...') }}</span>
                     <flux:icon name="check" class="w-5 h-5" />
                 </button>
-                <a href="{{ route('leave.leave-manager') }}"
+                <a href="{{ route('own-leave.manage') }}"
                     class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
                     {{ __('Cancel') }}
                     <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
