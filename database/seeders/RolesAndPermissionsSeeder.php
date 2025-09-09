@@ -99,7 +99,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_all_leaves',
             'export_all_leaves',
 
-            
+
 
             'manage_other_attendance',
             'edit_other_attendance',
@@ -173,7 +173,74 @@ class RolesAndPermissionsSeeder extends Seeder
                 // All permissions
                 $permissions,
             ],
-            'HR Administrator' => [
+            'Executive' => [
+                // Executive permissions
+                [
+                    'create_job_advert',
+                    'manage_job_advert',
+                    'vet_candidate',
+                    'view_applications',
+                    'apply_job_advert',
+
+                    'manage_employee',
+                    'create_employee',
+                    'edit_employee',
+                    'delete_employee',
+
+                    'manage_branch',
+                    'create_branch',
+                    'edit_branch',
+                    'delete_branch',
+
+                    'manage_department',
+                    'create_department',
+                    'edit_department',
+                    'delete_department',
+
+                    'manage_role',
+                    'create_role',
+                    'edit_role',
+                    'delete_role',
+
+                    'manage_permission',
+                    'create_permission',
+                    'edit_permission',
+                    'delete_permission',
+
+                    'manage_my_leave',
+                    'apply_for_leave',
+                    'edit_my_leave',
+                    'delete_my_leave',
+                    'export_my_leave',
+
+                    'manage_all_leaves',
+                    'edit_all_leaves',
+                    'delete_all_leaves',
+                    'export_all_leaves',
+
+                    'manage_other_attendance',
+                    'edit_other_attendance',
+                    'delete_other_attendance',
+                    'view_other_attendance',
+
+                    'manage_own_attendance',
+                    'mark_attendance',
+                    'edit_own_attendance',
+                    'delete_own_attendance',
+                    'view_own_attendance',
+
+                    'process_payroll',
+                    'generate_payslips',
+                    'manage_performance_reviews',
+                    'initiate_hiring_processes',
+                    'create_policies',
+                    'create_orientation_materials',
+                    'access_stress_monitoring_reports',
+                    'access_wellbeing_reports',
+                    'configure_external_payslip_sources',
+                ],
+            ],
+            'Manager N-1' => [
                 // HR Admin permissions
                 [
                     'create_job_advert',
@@ -240,7 +307,74 @@ class RolesAndPermissionsSeeder extends Seeder
                     'configure_external_payslip_sources',
                 ],
             ],
-            'New Employee' => [
+            'Manager N-2' => [
+                // HR Admin permissions
+                [
+                    'create_job_advert',
+                    'manage_job_advert',
+                    'vet_candidate',
+                    'view_applications',
+                    'apply_job_advert',
+
+                    'manage_employee',
+                    'create_employee',
+                    'edit_employee',
+                    'delete_employee',
+
+                    'manage_branch',
+                    'create_branch',
+                    'edit_branch',
+                    'delete_branch',
+
+                    'manage_department',
+                    'create_department',
+                    'edit_department',
+                    'delete_department',
+
+                    'manage_role',
+                    'create_role',
+                    'edit_role',
+                    'delete_role',
+
+                    'manage_permission',
+                    'create_permission',
+                    'edit_permission',
+                    'delete_permission',
+
+                    'manage_my_leave',
+                    'apply_for_leave',
+                    'edit_my_leave',
+                    'delete_my_leave',
+                    'export_my_leave',
+
+                    'manage_all_leaves',
+                    'edit_all_leaves',
+                    'delete_all_leaves',
+                    'export_all_leaves',
+
+                    'manage_other_attendance',
+                    'edit_other_attendance',
+                    'delete_other_attendance',
+                    'view_other_attendance',
+
+                    'manage_own_attendance',
+                    'mark_attendance',
+                    'edit_own_attendance',
+                    'delete_own_attendance',
+                    'view_own_attendance',
+
+                    'process_payroll',
+                    'generate_payslips',
+                    'manage_performance_reviews',
+                    'initiate_hiring_processes',
+                    'create_policies',
+                    'create_orientation_materials',
+                    'access_stress_monitoring_reports',
+                    'access_wellbeing_reports',
+                    'configure_external_payslip_sources',
+                ],
+            ],
+            'Employee' => [
                 [
                     'login',
                     'check_in',
@@ -269,25 +403,39 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create demo users for each role
         $users = [
             [
-                'first_name' => 'Super',
-                'other_names' => 'Admin',
+                'first_name' => 'Technical',
+                'other_names' => 'Developer',
                 'email' => 'kelvinramsiel@gmail.com',
                 'password' => Hash::make('kelvin1234'),
                 'role' => 'Super Administrator',
             ],
             [
-                'first_name' => 'HR',
+                'first_name' => 'Executive',
                 'other_names' => 'Admin',
-                'email' => 'hradmin@cadebeck.com',
-                'password' => Hash::make('HRAdmin123!'),
-                'role' => 'HR Administrator',
+                'email' => 'executiveadmin@cadebeck.com',
+                'password' => Hash::make('ExecutiveAdmin123!'),
+                'role' => 'Executive',
+            ],
+            [
+                'first_name' => 'Manager',
+                'other_names' => 'N-1',
+                'email' => 'manager1@cadebeck.com',
+                'password' => Hash::make('N-1Manager123!'),
+                'role' => 'Manager N-1',
+            ],
+            [
+                'first_name' => 'Manager',
+                'other_names' => 'N-2',
+                'email' => 'manager2@cadebeck.com',
+                'password' => Hash::make('N-2Manager123!'),
+                'role' => 'Manager N-2',
             ],
             [
                 'first_name' => 'New',
                 'other_names' => 'Employee',
                 'email' => 'employee@cadebeck.com',
-                'password' => Hash::make('Employee123!'),
-                'role' => 'New Employee',
+                'password' => Hash::make('employee123!'),
+                'role' => 'Employee',
             ],
         ];
 
