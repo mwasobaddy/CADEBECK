@@ -32,6 +32,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         'date_of_join' => '',
         'contract_type_id' => '',
         'supervisor_id' => '',
+        'basic_salary' => '',
     ];
     public ?Employee $employee = null;
     public bool $editing = false;
@@ -60,6 +61,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
+                'basic_salary' => $this->employee->basic_salary ?? '',
             ];
             $this->editing = true;
         }
@@ -109,6 +111,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.date_of_join' => ['required', 'date'],
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
             'form.supervisor_id' => ['nullable', 'exists:employees,id'],
+            'form.basic_salary' => ['required', 'numeric', 'min:0'],
         ];
         $this->validate($rules);
 
@@ -206,6 +209,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
+                'basic_salary' => $this->employee->basic_salary ?? '',
             ];
         } else {
             $this->form = [
@@ -227,6 +231,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'date_of_join' => '',
                 'contract_type_id' => '',
                 'supervisor_id' => '',
+                'basic_salary' => '',
             ];
         }
         $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
@@ -293,6 +298,20 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <a href="{{ route('employee.show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ $editing ? __('Edit Employee') : __('Add Employee') }}
                 </a>
+                @if($editing && $employee)
+                <a href="{{ route('payroll.employee-allowances', $employee->id) }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    {{ __('Payroll Allowances') }}
+                </a>
+                <a href="{{ route('payroll.employee-deductions', $employee->id) }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    {{ __('Payroll Deductions') }}
+                </a>
+                <a href="{{ route('payroll.employee-payslips', $employee->id) }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    {{ __('Payslips') }}
+                </a>
+                <a href="{{ route('payroll.employee-payroll-history', $employee->id) }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    {{ __('Payroll History') }}
+                </a>
+                @endif
             </div>
         </nav>
     </div>
@@ -461,6 +480,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <flux:select.option value="{{ $type->id }}">{{ $type->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.basic_salary"
+                    :label="__('Basic Salary (KES)')"
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="{{ __('Basic Salary') }}" />
             </div>
 
             <!-- Account Details -->
