@@ -83,7 +83,7 @@
 
                 <!-- Middle Column - Leave Management -->
                 <div class="lg:col-span-1">
-                    <livewire:leave.leave-manager />
+                    <livewire:own-leave.manage />
                 </div>
 
                 <!-- Right Column - Well-being -->
