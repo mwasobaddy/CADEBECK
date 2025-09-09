@@ -173,6 +173,23 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:view_my_payslips'])
             ->name('payroll.employee');
 
+        // Employee-specific payroll management routes
+        Volt::route('payroll/employees/{employeeId}/allowances', 'payroll.employee-allowances')
+            ->middleware(['auth', 'permission:manage_employee_payroll'])
+            ->name('payroll.employee-allowances');
+
+        Volt::route('payroll/employees/{employeeId}/deductions', 'payroll.employee-deductions')
+            ->middleware(['auth', 'permission:manage_employee_payroll'])
+            ->name('payroll.employee-deductions');
+
+        Volt::route('payroll/employees/{employeeId}/payslips', 'payroll.employee-payslips')
+            ->middleware(['auth', 'permission:view_employee_payslips'])
+            ->name('payroll.employee-payslips');
+
+        Volt::route('payroll/employees/{employeeId}/history', 'payroll.employee-payroll-history')
+            ->middleware(['auth', 'permission:view_employee_payroll_history'])
+            ->name('payroll.employee-payroll-history');
+
         // Settings routes
         Volt::route('settings/mail', 'settings.mail-configuration')
             ->middleware(['auth', 'permission:manage_settings'])
