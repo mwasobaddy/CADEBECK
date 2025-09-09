@@ -11,23 +11,24 @@ class Payslip extends Model
         'payroll_id',
         'employee_id',
         'payslip_number',
+        'payroll_period',
+        'pay_date',
+        'file_path',
+        'file_name',
         'payslip_data',
-        'pdf_path',
-        'email_sent',
-        'email_sent_at',
-        'viewed_at',
+        'is_emailed',
+        'emailed_at',
+        'is_downloaded',
         'downloaded_at',
-        'generated_at',
-        'generated_by',
     ];
 
     protected $casts = [
         'payslip_data' => 'array',
-        'email_sent' => 'boolean',
-        'email_sent_at' => 'datetime',
-        'viewed_at' => 'datetime',
+        'pay_date' => 'date',
+        'is_emailed' => 'boolean',
+        'emailed_at' => 'datetime',
+        'is_downloaded' => 'boolean',
         'downloaded_at' => 'datetime',
-        'generated_at' => 'datetime',
     ];
 
     // Relationships

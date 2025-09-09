@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->date('date_of_join')->nullable();
             $table->foreignId('contract_type_id')->constrained('contract_types')->onDelete('cascade');
             $table->foreignId('supervisor_id')->nullable()->constrained('employees')->onDelete('set null');
+            $table->decimal('basic_salary', 15, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
