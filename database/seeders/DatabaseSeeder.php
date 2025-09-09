@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ContractTypeSeeder::class,
             UserSeeder::class,
             EmployeeSeeder::class,
+            LeaveRequestSeeder::class,
         ]);
     }
 }
