@@ -19,12 +19,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $designation_id
  * @property string|null $date_of_join
  * @property int $contract_type_id
+ * @property float $basic_salary
  */
 class Employee extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id'
+        'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id', 'basic_salary'
     ];
     public function user()
     {
@@ -74,5 +75,39 @@ class Employee extends Model
     public function wellBeingResponses()
     {
         return $this->hasMany(WellBeingResponse::class);
+    }
+
+    // Payroll relationships
+    public function payrollAllowances()
+    {
+        return $this->hasMany(PayrollAllowance::class);
+    }
+
+    public function payrollDeductions()
+    {
+        return $this->hasMany(PayrollDeduction::class);
+    }
+
+    public function payrolls()
+    {
+        return $this->hasMany(Payroll::class);
+    }
+
+    public function payslips()
+    {
+        return $this->hasMany(Payslip::class);
+    }
+
+    public function employeeLoans()
+    {
+        return $this->hasMany(EmployeeLoan::class);
+    }
+
+    /**
+     * Scope for active employees (not soft deleted)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
     }
 }
