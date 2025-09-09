@@ -164,7 +164,27 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:edit_all_leaves'])
             ->name('all-leave.edit');
 
+        // Payroll routes
+        Volt::route('payroll/process', 'payroll.admin.process-payroll')
+            ->middleware(['auth', 'permission:process_payroll'])
+            ->name('payroll.process');
+
+        Volt::route('payroll/employee', 'payroll.employee.payslip-manager')
+            ->middleware(['auth', 'permission:view_my_payslips'])
+            ->name('payroll.employee');
+
+        // Settings routes
+        Volt::route('settings/mail', 'settings.mail-configuration')
+            ->middleware(['auth', 'permission:manage_settings'])
+            ->name('settings.mail');
+
     });
+});
+
+// Public routes for payslip downloads (with authentication)
+Route::middleware(['auth'])->group(function () {
+    Route::get('payslips/{payslip}/download', [App\Http\Controllers\PayslipController::class, 'download'])
+        ->name('payslip.download');
 });
 
 require __DIR__.'/auth.php';

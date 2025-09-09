@@ -100,6 +100,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_all_leaves',
             'export_all_leaves',
 
+            'manage_settings',
+            'process_payroll',
+            "view_my_payslips",
 
 
             'manage_other_attendance',
