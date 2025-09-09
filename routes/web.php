@@ -156,7 +156,14 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:edit_my_leave'])
             ->name('own-leave.edit');
 
-            
+        Volt::route('all-leave/manage', 'leave.all-manage')
+            ->middleware(['auth', 'permission:manage_all_leaves'])
+            ->name('all-leave.manage');
+
+        Volt::route('all-leave/{id}/edit', 'leave.all-show')
+            ->middleware(['auth', 'permission:edit_all_leaves'])
+            ->name('all-leave.edit');
+
     });
 });
 
