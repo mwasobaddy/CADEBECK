@@ -10,6 +10,7 @@ use App\Models\ContractType;
 use App\Models\User;
 use App\Models\Audit;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
@@ -30,6 +31,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         'designation_id' => '',
         'date_of_join' => '',
         'contract_type_id' => '',
+        'supervisor_id' => '',
     ];
     public ?Employee $employee = null;
     public bool $editing = false;
@@ -57,29 +59,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'designation_id' => $this->employee->designation_id,
                 'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
+                'supervisor_id' => $this->employee->supervisor_id,
             ];
-            $user = $this->employee->user;
-            if ($user) {
-                $this->form = [
-                    'first_name' => $user->first_name,
-                    'other_names' => $user->other_names,
-                    'email' => $user->email,
-                    'password' => '',
-                    'password_confirmation' => '',
-                    'role' => $user->roles->first()?->name ?? '',
-                    'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
-                    'gender' => $this->employee->gender,
-                    'mobile_number' => $this->employee->mobile_number,
-                    'home_address' => $this->employee->home_address,
-                    'staff_number' => $this->employee->staff_number,
-                    'location_id' => $this->employee->location_id,
-                    'branch_id' => $this->employee->branch_id,
-                    'department_id' => $this->employee->department_id,
-                    'designation_id' => $this->employee->designation_id,
-                    'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
-                    'contract_type_id' => $this->employee->contract_type_id,
-                ];
-            }
             $this->editing = true;
         }
     }
@@ -102,6 +83,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->form['department_id'] = '';
     }
 
+    // Add method to handle role change and reset supervisor
+    public function updatedFormRole(): void
+    {
+        $this->form['supervisor_id'] = '';
+    }
+
     public function save(): void
     {
         $rules = [
@@ -121,6 +108,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.designation_id' => ['required', 'exists:designations,id'],
             'form.date_of_join' => ['required', 'date'],
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
+            'form.supervisor_id' => ['nullable', 'exists:employees,id'],
         ];
         $this->validate($rules);
 
@@ -200,8 +188,13 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         if ($this->editing && $this->employee) {
             $this->form = [
-                'user_id' => $this->employee->user_id,
-                'date_of_birth' => $this->employee->date_of_birth,
+                'first_name' => $this->employee->user->first_name,
+                'other_names' => $this->employee->user->other_names,
+                'email' => $this->employee->user->email,
+                'password' => '',
+                'password_confirmation' => '',
+                'role' => $this->employee->user->roles->first()?->name ?? '',
+                'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
                 'gender' => $this->employee->gender,
                 'mobile_number' => $this->employee->mobile_number,
                 'home_address' => $this->employee->home_address,
@@ -210,12 +203,18 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'branch_id' => $this->employee->branch_id,
                 'department_id' => $this->employee->department_id,
                 'designation_id' => $this->employee->designation_id,
-                'date_of_join' => $this->employee->date_of_join,
+                'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
+                'supervisor_id' => $this->employee->supervisor_id,
             ];
         } else {
             $this->form = [
-                'user_id' => '',
+                'first_name' => '',
+                'other_names' => '',
+                'email' => '',
+                'password' => '',
+                'password_confirmation' => '',
+                'role' => '',
                 'date_of_birth' => '',
                 'gender' => '',
                 'mobile_number' => '',
@@ -227,6 +226,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'designation_id' => '',
                 'date_of_join' => '',
                 'contract_type_id' => '',
+                'supervisor_id' => '',
             ];
         }
         $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
@@ -238,6 +238,48 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function getDesignationsProperty() { return Designation::all(); }
     public function getContractTypesProperty() { return ContractType::all(); }
     public function getUsersProperty() { return User::all(); }
+
+    public function getAvailableSupervisorsProperty()
+    {
+        if (empty($this->form['role'])) {
+            return collect();
+        }
+
+        $supervisorRole = '';
+        switch ($this->form['role']) {
+            case 'Employee':
+                $supervisorRole = 'Manager N-2';
+                break;
+            case 'Manager N-2':
+                $supervisorRole = 'Manager N-1';
+                break;
+            case 'Manager N-1':
+                $supervisorRole = 'Executive';
+                break;
+            case 'Executive':
+                // Executives don't have supervisors
+                return collect();
+            default:
+                return collect();
+        }
+
+        return User::whereHas('roles', function ($query) use ($supervisorRole) {
+            $query->where('name', $supervisorRole);
+        })->with('employee')->get()->filter(function ($user) {
+            return $user->employee !== null;
+        });
+    }
+
+    public function getAvailableRolesProperty()
+    {
+        // Get all roles except the SuperAdmin role and order hierarchy (Executive, Manager N-1, Manager N-2, Employee)
+        $roles = Role::where('name', '!=', 'Super Administrator')->get();
+        $order = ['Executive', 'Manager N-1', 'Manager N-2', 'Employee'];
+        return $roles->sortBy(function ($role) use ($order) {
+            $index = array_search($role->name, $order);
+            return $index !== false ? $index : count($order);
+        })->values();
+    }
 };
 ?>
 
@@ -434,11 +476,26 @@ new #[Layout('components.layouts.app')] class extends Component {
                     placeholder="{{ __('Email') }}" />
             </div>
             <div>
-                <flux:select wire:model="form.role" :label="__('Role')" required :placeholder="__('Role')">
+                <flux:select wire:model.lazy="form.role" :label="__('Role')" required :placeholder="__('Role')">
                     <flux:select.option value="">{{ __('Select Role') }}</flux:select.option>
-                    <flux:select.option value="Super Administrator">Super Administrator</flux:select.option>
-                    <flux:select.option value="HR Administrator">HR Administrator</flux:select.option>
-                    <flux:select.option value="New Employee">New Employee</flux:select.option>
+                    @foreach($this->availableRoles as $role)
+                        <flux:select.option value="{{ $role->name }}">{{ $role->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model.lazy="form.supervisor_id"
+                    :label="__('Supervisor')"
+                    :placeholder="__('Select Supervisor')"
+                    :disabled="!$form['role'] || in_array($form['role'], ['Super Administrator', 'HR Administrator', 'Executive', 'New Employee'])"
+                >
+                    <flux:select.option value="">{{ __('Select Supervisor') }}</flux:select.option>
+                    @if($this->availableSupervisors)
+                        @foreach($this->availableSupervisors as $supervisor)
+                            <flux:select.option value="{{ $supervisor->employee->id }}">{{ $supervisor->first_name }} {{ $supervisor->other_names }} ({{ $supervisor->roles->first()?->name }})</flux:select.option>
+                        @endforeach
+                    @endif
                 </flux:select>
             </div>
             <div>
