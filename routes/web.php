@@ -144,7 +144,7 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:edit_user'])
             ->name('wellbeing.dashboard');
 
-        Volt::route('own-leave/manage', 'leave.leave-manager')
+        Volt::route('own-leave/manage', 'leave.own-manage')
             ->middleware(['auth', 'permission:manage_my_leave'])
             ->name('own-leave.manage');
 
