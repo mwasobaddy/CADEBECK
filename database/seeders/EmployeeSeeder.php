@@ -19,7 +19,7 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::whereNotIn('id', [1, 2, 3])->get();
+        $users = User::whereNotIn('id', [1])->get();
         $location = Location::first();
         $branch = Branch::first();
         $department = Department::first();

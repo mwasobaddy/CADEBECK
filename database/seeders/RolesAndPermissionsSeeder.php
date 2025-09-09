@@ -96,6 +96,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'manage_all_leaves',
             'edit_all_leaves',
+            'view_all_leaves',
             'delete_all_leaves',
             'export_all_leaves',
 
@@ -112,7 +113,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_own_attendance',
             'view_own_attendance',
 
-            // Super Administrator
+            // Developer
             'full_system_access',
             'create_onboarding_templates',
             'modify_onboarding_templates',
@@ -169,7 +170,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Roles
         $roles = [
-            'Super Administrator' => [
+            'Developer' => [
                 // All permissions
                 $permissions,
             ],
@@ -407,35 +408,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'other_names' => 'Developer',
                 'email' => 'kelvinramsiel@gmail.com',
                 'password' => Hash::make('kelvin1234'),
-                'role' => 'Super Administrator',
-            ],
-            [
-                'first_name' => 'Executive',
-                'other_names' => 'Admin',
-                'email' => 'executiveadmin@cadebeck.com',
-                'password' => Hash::make('ExecutiveAdmin123!'),
-                'role' => 'Executive',
-            ],
-            [
-                'first_name' => 'Manager',
-                'other_names' => 'N-1',
-                'email' => 'manager1@cadebeck.com',
-                'password' => Hash::make('N-1Manager123!'),
-                'role' => 'Manager N-1',
-            ],
-            [
-                'first_name' => 'Manager',
-                'other_names' => 'N-2',
-                'email' => 'manager2@cadebeck.com',
-                'password' => Hash::make('N-2Manager123!'),
-                'role' => 'Manager N-2',
-            ],
-            [
-                'first_name' => 'New',
-                'other_names' => 'Employee',
-                'email' => 'employee@cadebeck.com',
-                'password' => Hash::make('employee123!'),
-                'role' => 'Employee',
+                'role' => 'Developer',
             ],
         ];
 
