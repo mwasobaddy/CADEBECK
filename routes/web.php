@@ -146,15 +146,15 @@ Route::middleware(['auth'])->group(function () {
 
         Volt::route('own-leave/manage', 'leave.leave-manager')
             ->middleware(['auth', 'permission:manage_my_leave'])
-            ->name('leave.leave-manager');
+            ->name('own-leave.manage');
 
         Volt::route('leave/apply', 'leave.apply')
             ->middleware(['auth', 'permission:manage_my_leave'])
             ->name('leave.apply');
 
-        Volt::route('own-leave/request/{id}/edit', 'leave.apply')
-            ->middleware(['auth', 'permission:manage_my_leave'])
-            ->name('leave.request.edit');
+        Volt::route('own-leave/{id}/edit', 'leave.apply')
+            ->middleware(['auth', 'permission:edit_my_leave'])
+            ->name('own-leave.edit');
 
             
     });
