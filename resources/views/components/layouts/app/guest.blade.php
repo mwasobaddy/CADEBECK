@@ -12,7 +12,7 @@
             </a>
 
             <flux:navbar class="-mb-px max-lg:hidden">
-                <flux:navbar.item icon="briefcase" :href="route('careers')" :current="request()->routeIs('careers')" wire:navigate>
+                <flux:navbar.item icon="briefcase" :href="route('home')" :current="request()->routeIs('home')" wire:navigate>
                     {{ __('Careers') }}
                 </flux:navbar.item>
                 <flux:navbar.item icon="document-text" :href="route('applications')" :current="request()->routeIs('applications')" wire:navigate>
@@ -54,7 +54,7 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.group :heading="__('Explore')">
-                    <flux:navlist.item icon="briefcase" :href="route('careers')" :current="request()->routeIs('careers')" wire:navigate>
+                    <flux:navlist.item icon="briefcase" :href="route('home')" :current="request()->routeIs('home')" wire:navigate>
                         {{ __('Careers') }}
                     </flux:navlist.item>
                     <flux:navlist.item icon="document-text" :href="route('applications')" :current="request()->routeIs('applications')" wire:navigate>

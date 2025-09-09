@@ -20,6 +20,7 @@
                             <span>{{ __('Dashboard') }}</span>
                         </a>
                     </li>
+                    @if (Auth::user()->can('manage_employee') || Auth::user()->can('create_employee'))
                     <li x-data="{ open: {{ (request()->routeIs('employee.show') || request()->routeIs('employee.index') || request()->routeIs('employee.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
@@ -63,19 +64,12 @@
                                     </div>
                                 </li>
                                 @endcan
-                                @can('edit_employee')
-                                <li>
-                                    @if(!empty($slug))
-                                    <a href="{{ route('employee.edit', ['id' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('employee.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                                        {{ __('Edit Employee') }}
-                                    </a>
-                                    @endif
-                                </li>
-                                @endcan
                             </ul>
                         </div>
                     </li>
+                    @endif
+
+                    @if (Auth::user()->can('manage_user') || Auth::user()->can('create_user'))
                     <li x-data="{ open: {{ (request()->routeIs('user.show') || request()->routeIs('user.index') || request()->routeIs('user.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
@@ -95,6 +89,7 @@
                                 </svg>
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
+                                @can('manage_user')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -105,6 +100,8 @@
                                         </a>
                                     </div>
                                 </li>
+                                @endcan
+                                @can('create_user')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -115,17 +112,13 @@
                                         </a>
                                     </div>
                                 </li>
-                                <li>
-                                    @if(!empty($slug))
-                                    <a href="{{ route('user.edit', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('user.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                                        {{ __('Edit Advert') }}
-                                    </a>
-                                    @endif
-                                </li>
+                                @endcan
                             </ul>
                         </div>
                     </li>
+                    @endif
+
+                    @if (Auth::user()->can('manage_job_advert') || Auth::user()->can('create_job_advert'))
                     <li x-data="{ open: {{ (request()->routeIs('job.index') || request()->routeIs('job.show') || request()->routeIs('job.edit') || request()->routeIs('job.index.vetting')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
@@ -145,6 +138,7 @@
                                 </svg>
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
+                                @can('manage_job_advert')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -155,6 +149,8 @@
                                         </a>
                                     </div>
                                 </li>
+                                @endcan
+                                @can('create_job_advert')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -165,23 +161,13 @@
                                         </a>
                                     </div>
                                 </li>
-                                <li>
-                                    @if(!empty($slug))
-                                    <a href="{{ route('job.edit', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                                        {{ __('Edit Advert') }}
-                                    </a>
-                                    @endif
-                                    @if(!empty($slug))
-                                    <a href="{{ route('job.index.vetting', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('job.index.vetting') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                                        {{ __('Vetting') }}
-                                    </a>
-                                    @endif
-                                </li>
+                                @endcan
                             </ul>
                         </div>
                     </li>
+                    @endif
+
+                    @if (Auth::user()->can('manage_role') || Auth::user()->can('create_role'))
                     <li x-data="{ open: {{ (request()->routeIs('role.show') || request()->routeIs('role.index') || request()->routeIs('role.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
@@ -201,6 +187,7 @@
                                 </svg>
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
+                                @can('manage_role')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -211,6 +198,8 @@
                                         </a>
                                     </div>
                                 </li>
+                                @endcan
+                                @can('create_role')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
@@ -221,17 +210,13 @@
                                         </a>
                                     </div>
                                 </li>
-                                <li>
-                                    @if(!empty($slug))
-                                    <a href="{{ route('role.edit', ['slug' => $slug]) }}"
-                                    class="block px-2 py-1 rounded {{ request()->routeIs('role.edit') ? 'text-green-700 bg-green-100 font-semibold' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                                        {{ __('Edit Advert') }}
-                                    </a>
-                                    @endif
-                                </li>
+                                @endcan
                             </ul>
                         </div>
                     </li>
+                    @endif
+
+                    @if (Auth::user()->can('manage_location') || Auth::user()->can('create_location') || Auth::user()->can('manage_branch') || Auth::user()->can('create_branch') || Auth::user()->can('manage_department') || Auth::user()->can('create_department') || Auth::user()->can('manage_designation') || Auth::user()->can('create_designation'))
                     <li x-data="{ open: {{ (request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
@@ -260,15 +245,6 @@
                                     </div>
                                 </li>
                                 @endcan
-                                @can('create_location')
-                                <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('location.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('location.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
-                                        </svg>
-                                        <a href="{{ route('location.create') }}">{{ __('Create Location') }}</a>
-                                    </div>
-                                </li>
-                                @endcan
 
                                 @can('manage_branch')
                                 <li>
@@ -276,15 +252,6 @@
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('branch.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
                                         <a href="{{ route('branch.manage') }}">{{ __('Branches') }}</a>
-                                    </div>
-                                </li>
-                                @endcan
-                                @can('create_branch')
-                                <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('branch.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('branch.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
-                                        </svg>
-                                        <a href="{{ route('branch.create') }}">{{ __('Create Branch') }}</a>
                                     </div>
                                 </li>
                                 @endcan
@@ -298,12 +265,68 @@
                                     </div>
                                 </li>
                                 @endcan
-                                @can('create_department')
+
+                                @can('manage_designation')
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('department.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('department.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('designation.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('designation.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('department.create') }}">{{ __('Create Department') }}</a>
+                                        <a href="{{ route('designation.manage') }}">{{ __('Designations') }}</a>
+                                    </div>
+                                </li>
+                                @endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    @if (Auth::user()->can('manage_my_leave') || Auth::user()->can('apply_for_leave') || Auth::user()->can('manage_all_leaves') || Auth::user()->can('manage_leave_type') || Auth::user()->can('create_leave_type'))
+                    <li x-data="{ open: {{ (request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')) ? 'true' : 'false' }} }">
+                        <div class="flex flex-col">
+                            <button type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
+                                {{ request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')
+                                    ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
+                                    : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                                <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
+                                    {{ request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')
+                                        ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                                    <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
+                                </span>
+                                <span>{{ __("Leave") }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                                <p>My leave Requests</p>
+                                @can('manage_location')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('location.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('location.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                        </svg>
+                                        <a href="{{ route('location.manage') }}">{{ __('Apply Leave') }}</a>
+                                    </div>
+                                </li>
+                                @endcan
+                                @can('manage_branch')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('branch.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('branch.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                        </svg>
+                                        <a href="{{ route('branch.manage') }}">{{ __('Leave List') }}</a>
+                                    </div>
+                                </li>
+                                @endcan
+
+                                <p>Other leave Requests</p>
+                                @can('manage_department')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('department.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('department.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                        </svg>
+                                        <a href="{{ route('department.manage') }}">{{ __('All Leave List') }}</a>
                                     </div>
                                 </li>
                                 @endcan
@@ -317,18 +340,10 @@
                                     </div>
                                 </li>
                                 @endcan
-                                @can('create_designation')
-                                <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('designation.create') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('designation.create') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
-                                        </svg>
-                                        <a href="{{ route('designation.create') }}">{{ __('Create Designation') }}</a>
-                                    </div>
-                                </li>
-                                @endcan
                             </ul>
                         </div>
                     </li>
+                    @endif
                 </ul>
             </nav>
             {{-- <flux:spacer /> --}}
