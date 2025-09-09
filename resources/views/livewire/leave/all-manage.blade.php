@@ -55,46 +55,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         $user = Auth::user();
         $query = LeaveRequest::with(['employee.user', 'employee.supervisor', 'approver']);
 
-        // Apply hierarchical access control
-        if (!$user->hasRole(['Developer', 'Supervisor'])) {
-            if ($user->hasRole('Manager N-1')) {
-                // Manager N-1 can see requests from employees under them
-                $query->whereHas('employee', function ($q) use ($user) {
-                    $q->where(function ($subQuery) use ($user) {
-                        // Employees with role 'Employee' whose supervisor is 'Manager N-2' assigned to this Manager N-1
-                        $subQuery->whereHas('user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Employee');
-                        })->whereHas('supervisor.user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Manager N-2');
-                        })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                            $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                $userQuery->where('id', $user->id);
-                            });
-                        });
-
-                        // OR employees with role 'Manager N-2' whose supervisor is this Manager N-1
-                        $subQuery->orWhere(function ($managerQuery) use ($user) {
-                            $managerQuery->whereHas('user.roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'Manager N-2');
-                            })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                                $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                    $userQuery->where('id', $user->id);
-                                });
-                            });
-                        });
-                    });
-                });
-            } else {
-                // Other roles can only see their own requests
-                $employee = Employee::where('user_id', $user->id)->first();
-                if ($employee) {
-                    $query->where('employee_id', $employee->id);
-                } else {
-                    return LeaveRequest::where('id', 0)->paginate($this->perPage);
-                }
-            }
-        }
-        // Developer and Supervisor can see all requests (no additional filtering needed)
+        // Apply hierarchical access control using policy scope
+        $query = \App\Policies\LeaveRequestPolicy::scopeViewableBy($query, $user);
 
         // Apply search filter
         if ($this->search) {
@@ -214,44 +176,9 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $query = LeaveRequest::query();
 
-        // Apply the same hierarchical filtering as in getLeaveRequestsProperty
+        // Apply the same hierarchical filtering using policy scope
         $user = Auth::user();
-        if (!$user->hasRole(['Developer', 'Supervisor'])) {
-            if ($user->hasRole('Manager N-1')) {
-                $query->whereHas('employee', function ($q) use ($user) {
-                    $q->where(function ($subQuery) use ($user) {
-                        $subQuery->whereHas('user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Employee');
-                        })->whereHas('supervisor.user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Manager N-2');
-                        })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                            $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                $userQuery->where('id', $user->id);
-                            });
-                        });
-
-                        $subQuery->orWhere(function ($managerQuery) use ($user) {
-                            $managerQuery->whereHas('user.roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'Manager N-2');
-                            })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                                $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                    $userQuery->where('id', $user->id);
-                                });
-                            });
-                        });
-                    });
-                });
-            } else {
-                $employee = Employee::where('user_id', $user->id)->first();
-                if ($employee) {
-                    $query->where('employee_id', $employee->id);
-                } else {
-                    $this->selected = [];
-                    $this->updateSelectAllState();
-                    return;
-                }
-            }
-        }
+        $query = \App\Policies\LeaveRequestPolicy::scopeViewableBy($query, $user);
 
         // Apply search filter
         if ($this->search) {
@@ -346,44 +273,9 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->isLoadingExport = true;
         $query = LeaveRequest::with(['employee.user', 'approver']);
 
-        // Apply the same hierarchical filtering
+        // Apply the same hierarchical filtering using policy scope
         $user = Auth::user();
-        if (!$user->hasRole(['Developer', 'Supervisor'])) {
-            if ($user->hasRole('Manager N-1')) {
-                $query->whereHas('employee', function ($q) use ($user) {
-                    $q->where(function ($subQuery) use ($user) {
-                        $subQuery->whereHas('user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Employee');
-                        })->whereHas('supervisor.user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Manager N-2');
-                        })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                            $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                $userQuery->where('id', $user->id);
-                            });
-                        });
-
-                        $subQuery->orWhere(function ($managerQuery) use ($user) {
-                            $managerQuery->whereHas('user.roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'Manager N-2');
-                            })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                                $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                    $userQuery->where('id', $user->id);
-                                });
-                            });
-                        });
-                    });
-                });
-            } else {
-                $employee = Employee::where('user_id', $user->id)->first();
-                if ($employee) {
-                    $query->where('employee_id', $employee->id);
-                } else {
-                    $this->isLoadingExport = false;
-                    $this->dispatch('notify', ['type' => 'error', 'message' => __('No leave requests found to export.')]);
-                    return;
-                }
-            }
-        }
+        $query = \App\Policies\LeaveRequestPolicy::scopeViewableBy($query, $user);
 
         // Apply search filter
         if ($this->search) {
@@ -458,7 +350,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $leaveRequest = LeaveRequest::findOrFail($this->pendingEditId);
         $this->showEditModal = false;
         $this->isLoadingEdit = false;
-        $this->redirectRoute('leave.edit', ['id' => $leaveRequest->id]);
+        $this->redirectRoute('all-leave.edit', ['id' => $leaveRequest->id]);
     }
 
     public function deleteConfirmed(): void
@@ -572,7 +464,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('leave.all-manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.all-manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('all-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('all-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('All Leave Requests') }}
                 </a>
                 <a href="{{ route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
@@ -863,6 +755,16 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </td>
                                     <td class="px-3 py-4">
                                         <span class="flex gap-2">
+                                            @can('view_all_leaves')
+                                                <flux:button
+                                                    wire:click="confirmEdit({{ $leave->id }})"
+                                                    variant="primary"
+                                                    color="green"
+                                                    size="sm"
+                                                    icon="eye"
+                                                    :title="__('View')"
+                                                />
+                                            @endcan
                                             @can('edit_all_leaves')
                                                 @if($leave->status === 'pending')
                                                     <flux:button
@@ -875,19 +777,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                                                     />
                                                 @endif
                                             @endcan
-                                            @can('delete_all_leaves')
-                                                <flux:button
-                                                    wire:click="confirmDelete({{ $leave->id }})"
-                                                    variant="danger"
-                                                    color="red"
-                                                    size="sm"
-                                                    icon="trash"
-                                                    :title="__('Delete')"
-                                                />
-                                            @endcan
-                                            @if(!$leave->isPending())
-                                                <span class="text-gray-400 dark:text-gray-600 text-sm">{{ __('No actions available') }}</span>
-                                            @endif
                                         </span>
                                     </td>
                                 </tr>

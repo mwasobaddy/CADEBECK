@@ -144,7 +144,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $existingNotifications[] = $notification;
             session(['notifications' => $existingNotifications]);
         }
-        $this->redirectRoute('leave.all-manage');
+        $this->redirectRoute('all-leave.manage');
     }
 
     public function resetForm(): void
@@ -176,6 +176,22 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function approve(): void
     {
         if (!$this->editing || !$this->leaveRequest) return;
+
+        // Check if user can approve this leave request
+        if (!Auth::user()->can('approve', $this->leaveRequest)) {
+            $notification = [
+                'type' => 'error',
+                'message' => __('You do not have permission to approve this leave request.'),
+                'timestamp' => now()->timestamp,
+            ];
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
+            return;
+        }
 
         $this->leaveRequest->update([
             'status' => 'approved',
@@ -213,12 +229,28 @@ new #[Layout('components.layouts.app')] class extends Component {
         $existingNotifications[] = $notification;
         session(['notifications' => $existingNotifications]);
 
-        $this->redirectRoute('leave.all-manage');
+        $this->redirectRoute('all-leave.manage');
     }
 
     public function reject(): void
     {
         if (!$this->editing || !$this->leaveRequest) return;
+
+        // Check if user can approve this leave request (same logic as approve)
+        if (!Auth::user()->can('approve', $this->leaveRequest)) {
+            $notification = [
+                'type' => 'error',
+                'message' => __('You do not have permission to reject this leave request.'),
+                'timestamp' => now()->timestamp,
+            ];
+            $existingNotifications = session('notifications', []);
+            if (!is_array($existingNotifications)) {
+                $existingNotifications = [];
+            }
+            $existingNotifications[] = $notification;
+            session(['notifications' => $existingNotifications]);
+            return;
+        }
 
         $this->leaveRequest->update([
             'status' => 'rejected',
@@ -256,12 +288,17 @@ new #[Layout('components.layouts.app')] class extends Component {
         $existingNotifications[] = $notification;
         session(['notifications' => $existingNotifications]);
 
-        $this->redirectRoute('leave.all-manage');
+        $this->redirectRoute('all-leave.manage');
     }
 
     public function getLeaveRequestsProperty()
     {
         $query = LeaveRequest::query();
+
+        // Apply hierarchical access control using policy scope
+        $user = Auth::user();
+        $query = \App\Policies\LeaveRequestPolicy::scopeViewableBy($query, $user);
+
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('reason', 'like', "%{$this->search}%")
@@ -328,11 +365,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('leave.all-manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.all-manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a href="{{ route('all-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('all-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
                     {{ __('All Leave Requests') }}
                 </a>
-                <a href="{{ route('leave.all-show') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.all-show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
-                    {{ $editing ? __('Edit Leave Request') : __('Create Leave Request') }}
+                <a href="{{ $editing && $leaveRequest ? route('all-leave.edit', ['id' => $leaveRequest->id]) : route('all-leave.edit') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('all-leave.edit') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                    {{ $editing ? __('Review Leave Request') : __('Create Leave Request') }}
                 </a>
             </div>
         </nav>
@@ -347,7 +384,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
                 </svg>
                 <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
-                    {{ $editing ? __('Edit Leave Request') : __('Create Leave Request') }}
+                    {{ $editing ? __('Review Leave Request') : __('Create Leave Request') }}
                     <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
                 </h1>
             </div>
@@ -396,6 +433,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                         :label="__('Leave Type')"
                         required
                         :placeholder="__('Select Leave Type')"
+                        readonly
+                        disabled
                     >
                         <flux:select.option value="annual">{{ __('Annual Leave') }}</flux:select.option>
                         <flux:select.option value="sick">{{ __('Sick Leave') }}</flux:select.option>
@@ -411,6 +450,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         required
                         min="1"
                         placeholder="{{ __('Number of days') }}"
+                        readonly
                     />
                 </div>
                 <div>
@@ -420,6 +460,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         type="date"
                         required
                         placeholder="{{ __('Start Date') }}"
+                        readonly
                     />
                 </div>
                 <div>
@@ -429,6 +470,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         type="date"
                         required
                         placeholder="{{ __('End Date') }}"
+                        readonly
                     />
                 </div>
 
@@ -440,6 +482,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         required
                         rows="4"
                         placeholder="{{ __('Please provide detailed reason for your leave request...') }}"
+                        readonly
                     />
                 </div>
 
@@ -454,6 +497,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                         :label="__('Status')"
                         required
                         :placeholder="__('Select Status')"
+                        readonly
+                        disabled
                     >
                         <flux:select.option value="pending">{{ __('Pending') }}</flux:select.option>
                         <flux:select.option value="approved">{{ __('Approved') }}</flux:select.option>
@@ -474,31 +519,23 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <!-- Actions -->
                 <div class="flex items-end justify-end gap-3 md:col-span-2">
                     @if($editing && $this->leaveRequest && $this->leaveRequest->status === 'pending')
-                        <button type="button" wire:click="approve"
-                            class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            {{ __('Approve') }}
-                        </button>
-                        <button type="button" wire:click="reject"
-                            class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            {{ __('Reject') }}
-                        </button>
+                        @can('approve', $this->leaveRequest)
+                            <button type="button" wire:click="approve"
+                                class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ __('Approve') }}
+                            </button>
+                            <button type="button" wire:click="reject"
+                                class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                {{ __('Reject') }}
+                            </button>
+                        @endcan
                     @endif
-                    <button type="submit"
-                        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        {{ $editing ? __('Update') : __('Create') }}
-                        <flux:icon name="check" class="w-5 h-5" />
-                    </button>
-                    <button type="button" wire:click="resetForm"
-                        class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                        {{ __('Reset') }}
-                        <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
-                    </button>
                 </div>
             </form>
         </div>
