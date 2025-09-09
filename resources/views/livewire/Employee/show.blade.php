@@ -273,7 +273,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function getAvailableRolesProperty()
     {
         // Get all roles except the SuperAdmin role and order hierarchy (Executive, Manager N-1, Manager N-2, Employee)
-        $roles = Role::where('name', '!=', 'Super Administrator')->get();
+        $roles = Role::where('name', '!=', 'Developer')->get();
         $order = ['Executive', 'Manager N-1', 'Manager N-2', 'Employee'];
         return $roles->sortBy(function ($role) use ($order) {
             $index = array_search($role->name, $order);
@@ -488,7 +488,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     wire:model.lazy="form.supervisor_id"
                     :label="__('Supervisor')"
                     :placeholder="__('Select Supervisor')"
-                    :disabled="!$form['role'] || in_array($form['role'], ['Super Administrator', 'HR Administrator', 'Executive', 'New Employee'])"
+                    :disabled="!$form['role'] || in_array($form['role'], ['Developer', 'HR Administrator', 'Executive', 'New Employee'])"
                 >
                     <flux:select.option value="">{{ __('Select Supervisor') }}</flux:select.option>
                     @if($this->availableSupervisors)
