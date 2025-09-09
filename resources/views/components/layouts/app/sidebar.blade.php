@@ -215,7 +215,7 @@
                         </div>
                     </li>
                     @endif
-
+                    
                     @if (Auth::user()->can('manage_location') || Auth::user()->can('create_location') || Auth::user()->can('manage_branch') || Auth::user()->can('create_branch') || Auth::user()->can('manage_department') || Auth::user()->can('create_department') || Auth::user()->can('manage_designation') || Auth::user()->can('create_designation'))
                     <li x-data="{ open: {{ (request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
@@ -281,16 +281,16 @@
                     @endif
 
                     @if (Auth::user()->can('manage_my_leave') || Auth::user()->can('apply_for_leave') || Auth::user()->can('manage_all_leaves') || Auth::user()->can('manage_leave_type') || Auth::user()->can('create_leave_type'))
-                    <li x-data="{ open: {{ (request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ (request()->routeIs('own-leave.manage') || request()->routeIs('leave.apply') || request()->routeIs('own-leave.edit') || request()->routeIs('all-leave.manage') || request()->routeIs('all-leave.edit')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
                                 @click="open = !open"
                                 class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
-                                {{ request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')
+                                {{ request()->routeIs('own-leave.manage') || request()->routeIs('leave.apply') || request()->routeIs('own-leave.edit') || request()->routeIs('all-leave.manage') || request()->routeIs('all-leave.edit')
                                     ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
                                     : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                 <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
-                                    {{ request()->routeIs('location.create') || request()->routeIs('location.manage') || request()->routeIs('location.edit') || request()->routeIs('branch.create') || request()->routeIs('branch.manage') || request()->routeIs('branch.edit') || request()->routeIs('department.create') || request()->routeIs('department.manage') || request()->routeIs('department.edit') || request()->routeIs('designation.create') || request()->routeIs('designation.manage') || request()->routeIs('designation.edit')
+                                    {{ request()->routeIs('own-leave.manage') || request()->routeIs('leave.apply') || request()->routeIs('own-leave.edit') || request()->routeIs('all-leave.manage') || request()->routeIs('all-leave.edit')
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
@@ -300,43 +300,45 @@
                                 </svg>
                             </button>
                             <ul x-show="open" x-transition class="pl-8 mt-2">
-                                <p>My leave Requests</p>
-                                @can('manage_location')
+                                <li class="mb-2">
+                                    <div class="flex items-center gap-2 px-2 py-1">
+                                        <flux:icon name="document" variant="solid" class="w-4 h-4 text-green-600 dark:text-green-400" />
+                                        <span class="font-semibold text-zinc-700 dark:text-zinc-200">{{ __('My Requests') }}</span>
+                                    </div>
+                                    <flux:menu.separator class="my-2 border-green-600 dark:border-green-400" />
+                                </li>
+                                @can('apply_for_leave')
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('location.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('location.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('leave.apply') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('leave.apply') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('location.manage') }}">{{ __('Apply Leave') }}</a>
+                                        <a href="{{ route('leave.apply') }}">{{ __('Apply Leave') }}</a>
                                     </div>
                                 </li>
                                 @endcan
-                                @can('manage_branch')
+                                @can('manage_my_leave')
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('branch.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('branch.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('own-leave.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('own-leave.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('branch.manage') }}">{{ __('Leave List') }}</a>
-                                    </div>
-                                </li>
-                                @endcan
-
-                                <p>Other leave Requests</p>
-                                @can('manage_department')
-                                <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('department.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('department.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
-                                        </svg>
-                                        <a href="{{ route('department.manage') }}">{{ __('All Leave List') }}</a>
+                                        <a href="{{ route('own-leave.manage') }}">{{ __('Leave List') }}</a>
                                     </div>
                                 </li>
                                 @endcan
 
-                                @can('manage_designation')
+                                <li class="mb-2">
+                                    <div class="flex items-center gap-2 px-2 py-1">
+                                        <flux:icon name="document" variant="solid" class="w-4 h-4 text-green-600 dark:text-green-400" />
+                                        <span class="font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Other Requests') }}</span>
+                                    </div>
+                                    <flux:menu.separator class="my-2 border-green-600 dark:border-green-400" />
+                                </li>
+                                @can('manage_all_leaves')
                                 <li>
-                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('designation.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
-                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('designation.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('all-leave.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('all-leave.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('designation.manage') }}">{{ __('Designations') }}</a>
+                                        <a href="{{ route('all-leave.manage') }}">{{ __('All Leave List') }}</a>
                                     </div>
                                 </li>
                                 @endcan
@@ -346,7 +348,6 @@
                     @endif
                 </ul>
             </nav>
-            {{-- <flux:spacer /> --}}
             
             <!-- Desktop User Menu -->
             <flux:dropdown class="hidden lg:block" position="bottom" align="start">
