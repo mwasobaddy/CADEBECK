@@ -13,6 +13,9 @@ new #[Layout('components.layouts.app')] class extends Component {
     public int $perPage = 10;
     public ?Payslip $selectedPayslip = null;
     public bool $showPayslipModal = false;
+    public bool $showFilters = false;
+    public string $sortField = 'created_at';
+    public string $sortDirection = 'desc';
 
     public function mount(): void
     {
@@ -20,6 +23,22 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!Auth::user()->hasRole('Employee')) {
             abort(403, 'Access denied. Only employees can view payslips.');
         }
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+        $this->resetPage();
+    }
+
+    public function toggleFilters(): void
+    {
+        $this->showFilters = !$this->showFilters;
     }
 
     public function viewPayslip(Payslip $payslip): void
@@ -90,7 +109,26 @@ new #[Layout('components.layouts.app')] class extends Component {
             });
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($this->perPage);
+        $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
+        if ($this->sortField === 'payslip_number') {
+            $query->orderBy('payslip_number', $direction);
+        } elseif ($this->sortField === 'period') {
+            $query->whereHas('payroll', function($q) use ($direction) {
+                $q->orderBy('payroll_period', $direction);
+            });
+        } elseif ($this->sortField === 'pay_date') {
+            $query->whereHas('payroll', function($q) use ($direction) {
+                $q->orderBy('pay_date', $direction);
+            });
+        } elseif ($this->sortField === 'net_pay') {
+            $query->whereHas('payroll', function($q) use ($direction) {
+                $q->orderBy('net_pay', $direction);
+            });
+        } else {
+            $query->orderBy('created_at', $direction);
+        }
+
+        return $query->paginate($this->perPage);
     }
 
     public function getPeriodsProperty()
@@ -104,7 +142,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 };
 ?>
 
-<div class="relative max-w-7xl mx-auto md:px-4 md:py-8">
+<div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
     <!-- SVG Blobs Background -->
     <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
         <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#blob1)" />
@@ -136,114 +174,161 @@ new #[Layout('components.layouts.app')] class extends Component {
         </nav>
     </div>
 
-    <!-- Main Content -->
-    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
-        <div class="flex items-center gap-3 mb-8">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500 tracking-tight drop-shadow-lg relative inline-block">
-                {{ __('My Payslips') }}
-                <span class="absolute -bottom-2 left-0 w-[120px] h-1 rounded-full bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500"></span>
-            </h1>
+    <!-- Card Container for Table -->
+    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500 tracking-tight drop-shadow-lg relative inline-block">
+                    {{ __('My Payslips') }}
+                    <span class="absolute -bottom-2 left-0 w-[120px] h-1 rounded-full bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500"></span>
+                </h1>
+            </div>
         </div>
 
-        <!-- Filters -->
-        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <flux:input
-                    wire:model.live="search"
-                    :label="__('Search Payslips')"
-                    type="text"
-                    placeholder="{{ __('Search by payslip number or period...') }}"
-                />
+        <!-- Search and Filters -->
+        <div class="flex flex-wrap gap-8 items-center mb-6">
+            <div class="relative w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                </span>
+                <input type="text" wire:model.live.debounce.300ms="search"
+                    class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                    placeholder="{{ __('Search payslips...') }}">
             </div>
-            <div>
-                <flux:select
-                    wire:model.live="periodFilter"
-                    :placeholder="__('All Periods')"
-                    :label="__('Filter by Period')"
-                >
-                    <flux:select.option value="">{{ __('All Periods') }}</flux:select.option>
-                    @foreach($this->periods as $period)
-                        <flux:select.option value="{{ $period }}">{{ $period }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            </div>
-            <div>
-                <flux:select
-                    wire:model.live="perPage"
-                    :label="__('Items per page')"
-                >
-                    <flux:select.option value="10">10</flux:select.option>
-                    <flux:select.option value="25">25</flux:select.option>
-                    <flux:select.option value="50">50</flux:select.option>
-                </flux:select>
-            </div>
+            <button type="button" wire:click="toggleFilters"
+                class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"></path>
+                </svg>
+                <span class="hidden lg:inline">{{ __('Filters') }}</span>
+            </button>
         </div>
+
+        <!-- Filter Options -->
+        @if ($showFilters)
+            <div class="flex flex-wrap gap-6 mb-6 items-center animate-fade-in">
+                <select wire:model.live="periodFilter"
+                    class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                    <option value="">{{ __('All Periods') }}</option>
+                    @foreach($this->periods as $period)
+                        <option value="{{ $period }}">{{ $period }}</option>
+                    @endforeach
+                </select>
+                <select wire:model.live="perPage"
+                    class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        @endif
 
         <!-- Payslips Table -->
-        <div class="overflow-x-auto">
-            <table class="w-full table-auto border-collapse">
+        <div class="overflow-x-auto bg-transparent">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                 <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-800">
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <tr class="h-16 bg-zinc-800/5 dark:bg-white/10 text-zinc-600 dark:text-white/70">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('payslip_number')">
                             {{ __('Payslip Number') }}
+                            @if($this->sortField === 'payslip_number')
+                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    @if($sortDirection === 'asc')
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    @endif
+                                </svg>
+                            @endif
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('period')">
                             {{ __('Period') }}
+                            @if($this->sortField === 'period')
+                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    @if($sortDirection === 'asc')
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    @endif
+                                </svg>
+                            @endif
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('pay_date')">
                             {{ __('Pay Date') }}
+                            @if($this->sortField === 'pay_date')
+                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    @if($sortDirection === 'asc')
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    @endif
+                                </svg>
+                            @endif
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('net_pay')">
                             {{ __('Net Pay') }}
+                            @if($this->sortField === 'net_pay')
+                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    @if($sortDirection === 'asc')
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    @endif
+                                </svg>
+                            @endif
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">
                             {{ __('Status') }}
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">
                             {{ __('Actions') }}
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody>
                     @forelse($this->payslips as $payslip)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                            <td class="px-5 py-4 text-gray-900 dark:text-white font-bold">
                                 {{ $payslip->payslip_number }}
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300">
                                 {{ $payslip->payroll->payroll_period }}
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300">
                                 {{ $payslip->payroll->pay_date?->format('M d, Y') }}
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                KES {{ number_format($payslip->payroll->net_pay, 2) }}
+                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-semibold">
+                                <span class="text-green-600 dark:text-green-400">
+                                    KES {{ number_format($payslip->payroll->net_pay, 2) }}
+                                </span>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td class="px-5 py-4">
                                 @if($payslip->email_sent_at)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                         {{ __('Emailed') }}
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
                                         {{ __('Generated') }}
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-5 py-4">
                                 <div class="flex items-center gap-2">
                                     <button wire:click="viewPayslip({{ $payslip->id }})"
-                                        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                        class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                         </svg>
                                     </button>
                                     <button wire:click="downloadPayslip({{ $payslip->id }})"
-                                        class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
+                                        class="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 transition">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                         </svg>
@@ -253,11 +338,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                {{ __('No payslips found.') }}
+                            <td colspan="6" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <div class="flex flex-col items-center gap-2">
+                                    <svg class="w-8 h-8 text-gray-300 dark:text-zinc-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    {{ __('No payslips found.') }}
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -275,14 +362,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <!-- Payslip Modal -->
     @if($showPayslipModal && $selectedPayslip)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition p-4">
+            <div class="bg-white dark:bg-zinc-900 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-zinc-800">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
                             {{ __('Payslip Details') }}
                         </h2>
-                        <button wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <button wire:click="closeModal" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -290,89 +380,124 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </div>
 
                     <!-- Payslip Preview -->
-                    <div class="border rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                        <div class="text-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <div class="border rounded-xl p-6 bg-gradient-to-br from-gray-50/80 to-blue-50/80 dark:from-gray-800/80 dark:to-gray-700/80 backdrop-blur-md">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
                                 {{ $selectedPayslip->payslip_number }}
                             </h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 font-semibold">
                                 {{ $selectedPayslip->payroll->payroll_period }}
                             </p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ __('Earnings') }}</h4>
-                                <div class="space-y-1 text-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg p-4 border border-green-200 dark:border-green-800">
+                                <h4 class="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                    </svg>
+                                    {{ __('Earnings') }}
+                                </h4>
+                                <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
                                         <span>{{ __('Basic Salary') }}:</span>
-                                        <span>KES {{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
+                                        <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
                                     </div>
                                     @if($selectedPayslip->payroll->total_allowances > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('Total Allowances') }}:</span>
-                                            <span>KES {{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
+                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
                                         </div>
                                     @endif
-                                    <div class="flex justify-between font-semibold border-t pt-1">
+                                    <div class="flex justify-between font-bold border-t pt-2 text-green-600 dark:text-green-400">
                                         <span>{{ __('Gross Pay') }}:</span>
                                         <span>KES {{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ __('Deductions') }}</h4>
-                                <div class="space-y-1 text-sm">
+                            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg p-4 border border-red-200 dark:border-red-800">
+                                <h4 class="font-bold text-red-900 dark:text-red-100 mb-3 flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path>
+                                    </svg>
+                                    {{ __('Deductions') }}
+                                </h4>
+                                <div class="space-y-2 text-sm">
                                     @if($selectedPayslip->payroll->paye_tax > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('PAYE Tax') }}:</span>
-                                            <span>KES {{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
+                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->nhif_deduction > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('NHIF') }}:</span>
-                                            <span>KES {{ number_format($selectedPayslip->payroll->nhif_deduction, 2) }}</span>
+                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->nhif_deduction, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->nssf_deduction > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('NSSF') }}:</span>
-                                            <span>KES {{ number_format($selectedPayslip->payroll->nssf_deduction, 2) }}</span>
+                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->nssf_deduction, 2) }}</span>
                                         </div>
                                     @endif
-                                    <div class="flex justify-between font-semibold border-t pt-1">
-                                        <span>{{ __('Total Deductions') }}:</span>
-                                        <span>KES {{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
+                                    @if($selectedPayslip->payroll->total_deductions > 0)
+                                        <div class="flex justify-between">
+                                            <span>{{ __('Total Deductions') }}:</span>
+                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
+                                        </div>
+                                    @endif
+                                    <div class="flex justify-between font-bold border-t pt-2 text-red-600 dark:text-red-400">
+                                        <span>{{ __('Net Pay') }}:</span>
+                                        <span>KES {{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                KES {{ number_format($selectedPayslip->payroll->net_pay, 2) }}
-                            </div>
-                            <div class="text-sm text-green-600 dark:text-green-400 font-semibold">
-                                {{ __('NET PAY') }}
+                        <!-- Employee Information -->
+                        <div class="mt-6 p-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg border border-blue-200 dark:border-blue-800">
+                            <h4 class="font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                {{ __('Employee Information') }}
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div class="flex justify-between">
+                                    <span>{{ __('Employee ID') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->employee->staff_number ?? 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>{{ __('Name') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->employee->user->first_name ?? '' }} {{ $selectedPayslip->payroll->employee->user->other_names ?? '' }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>{{ __('Department') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->employee->department->name ?? 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>{{ __('Designation') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->employee->designation->name ?? 'N/A' }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex items-center justify-end gap-3 mt-6">
-                        <button wire:click="downloadPayslip({{ $selectedPayslip->id }})"
-                            class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition-all duration-200">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            {{ __('Download PDF') }}
-                        </button>
-                        <button wire:click="closeModal"
-                            class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-semibold shadow transition-all duration-200">
-                            {{ __('Close') }}
-                        </button>
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button wire:click="downloadPayslip({{ $selectedPayslip->id }})"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                {{ __('Download PDF') }}
+                            </button>
+                            <button wire:click="closeModal"
+                                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                                {{ __('Close') }}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
