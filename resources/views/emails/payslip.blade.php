@@ -16,7 +16,7 @@
 </p>
 
 <p style="margin-bottom: 20px;">
-    Your payslip for the period <strong>{{ $payslip->payroll_period ?? 'N/A' }}</strong> has been generated and is attached to this email.
+    Your complete payslip details for the period <strong>{{ $payslip->payroll_period ?? 'N/A' }}</strong> are shown below.
 </p>
 
 {{-- Payroll Summary Panel --}}
@@ -50,7 +50,166 @@
 <table class="info" width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #bfdbfe; background-color: #eff6ff; margin-bottom: 20px;">
     <tr>
         <td style="padding: 15px;">
-            <strong style="color: #1e40af;">📎 Your payslip PDF is attached to this email for your records.</strong>
+            <strong style="color: #1e40af;">� Your complete payslip details are below:</strong>
+        </td>
+    </tr>
+</table>
+
+{{-- Employee Details --}}
+<table width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #e5e7eb; background-color: #f9fafb; margin-bottom: 20px;">
+    <tr>
+        <td style="padding: 20px;">
+            <h3 style="color: #1e40af; margin-bottom: 15px; font-size: 16px;">Employee Information</h3>
+            <table width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td style="padding: 5px 10px; width: 120px;"><strong>Employee ID:</strong></td>
+                    <td style="padding: 5px 10px;">{{ $employee->staff_number ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 10px;"><strong>Name:</strong></td>
+                    <td style="padding: 5px 10px;">{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 10px;"><strong>Department:</strong></td>
+                    <td style="padding: 5px 10px;">{{ $employee->department->name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 10px;"><strong>Designation:</strong></td>
+                    <td style="padding: 5px 10px;">{{ $employee->designation->name ?? 'N/A' }}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+{{-- Earnings Section --}}
+<table width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #10b981; background-color: #f0fdf4; margin-bottom: 20px;">
+    <tr>
+        <td style="padding: 20px;">
+            <h3 style="color: #065f46; margin-bottom: 15px; font-size: 16px;">Earnings</h3>
+            <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #dcfce7;">
+                        <th style="padding: 10px; border: 1px solid #bbf7d0; text-align: left; font-weight: bold; color: #065f46;">Description</th>
+                        <th style="padding: 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold; color: #065f46;">Amount (KES)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Basic Salary</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->basic_salary ?? 0, 2) }}</td>
+                    </tr>
+                    @if(($payroll->house_allowance ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">House Allowance</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->transport_allowance ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Transport Allowance</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->medical_allowance ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Medical Allowance</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->overtime_amount ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Overtime Allowance</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->bonus_amount ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Bonus</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->other_allowances ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0;">Other Allowances</td>
+                        <td style="padding: 8px 10px; border: 1px solid #bbf7d0; text-align: right; font-weight: bold;">{{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr style="background-color: #bbf7d0; font-weight: bold;">
+                        <td style="padding: 10px; border: 1px solid #10b981; color: #065f46;"><strong>Total Earnings</strong></td>
+                        <td style="padding: 10px; border: 1px solid #10b981; text-align: right; color: #065f46;"><strong>{{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+
+{{-- Deductions Section --}}
+<table width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #ef4444; background-color: #fef2f2; margin-bottom: 20px;">
+    <tr>
+        <td style="padding: 20px;">
+            <h3 style="color: #991b1b; margin-bottom: 15px; font-size: 16px;">Deductions</h3>
+            <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #fecaca;">
+                        <th style="padding: 10px; border: 1px solid #fca5a5; text-align: left; font-weight: bold; color: #991b1b;">Description</th>
+                        <th style="padding: 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold; color: #991b1b;">Amount (KES)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(($payroll->paye_tax ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">PAYE Tax</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->nhif_deduction ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">NHIF Contribution</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->nssf_deduction ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">NSSF Contribution</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->insurance_deduction ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">Insurance Premium</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->loan_deduction ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">Loan Repayment</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($payroll->other_deductions ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5;">Other Deductions</td>
+                        <td style="padding: 8px 10px; border: 1px solid #fca5a5; text-align: right; font-weight: bold;">{{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr style="background-color: #fca5a5; font-weight: bold;">
+                        <td style="padding: 10px; border: 1px solid #dc2626; color: #991b1b;"><strong>Total Deductions</strong></td>
+                        <td style="padding: 10px; border: 1px solid #dc2626; text-align: right; color: #991b1b;"><strong>{{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+
+{{-- Net Pay Section --}}
+<table width="100%" cellspacing="0" cellpadding="0" style="border: 2px solid #059669; background-color: #ecfdf5; margin-bottom: 20px;">
+    <tr>
+        <td style="padding: 30px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #059669; margin-bottom: 10px;">KES {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
+            <div style="font-size: 14px; color: #065f46; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">NET PAY</div>
         </td>
     </tr>
 </table>
