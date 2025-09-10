@@ -233,6 +233,8 @@ class RolesAndPermissionsSeeder extends Seeder
                     'edit_own_attendance',
                     'delete_own_attendance',
                     'view_own_attendance',
+            
+                    'view_my_payslips',
 
                     'process_payroll',
                     'generate_payslips',
@@ -301,6 +303,9 @@ class RolesAndPermissionsSeeder extends Seeder
                     'delete_own_attendance',
                     'view_own_attendance',
 
+
+                    'view_my_payslips',
+
                     'process_payroll',
                     'generate_payslips',
                     'manage_performance_reviews',
@@ -368,6 +373,9 @@ class RolesAndPermissionsSeeder extends Seeder
                     'delete_own_attendance',
                     'view_own_attendance',
 
+
+                    'view_my_payslips',
+
                     'process_payroll',
                     'generate_payslips',
                     'manage_performance_reviews',
@@ -394,6 +402,9 @@ class RolesAndPermissionsSeeder extends Seeder
                     'download_payslips',
                     'access_stress_monitoring_tools',
                     'complete_wellbeing_surveys',
+            
+                    // corrected permissions
+                    'view_my_payslips',
                 ],
             ],
         ];
