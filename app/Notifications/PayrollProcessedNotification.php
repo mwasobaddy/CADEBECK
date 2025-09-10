@@ -5,22 +5,22 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Models\Payslip;
+use App\Models\Payroll;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class PayslipNotification extends Notification
+class PayrollProcessedNotification extends Notification
 {
     use Queueable;
 
-    public Payslip $payslip;
+    public Payroll $payroll;
     public string $subject;
     public string $message;
 
-    public function __construct(Payslip $payslip, ?string $subject = null, ?string $message = null)
+    public function __construct(Payroll $payroll, ?string $subject = null, ?string $message = null)
     {
-        $this->payslip = $payslip;
-        $this->subject = $subject ?? __('Your Payslip for') . ' ' . $payslip->payroll_period;
-        $this->message = $message ?? __('Your payslip has been generated and is attached to this email.');
+        $this->payroll = $payroll;
+        $this->subject = $subject ?? 'Payroll Processed for ' . $payroll->payroll_period;
+        $this->message = $message ?? 'Your payroll has been processed and your payslip will be available soon.';
     }
 
     public function via($notifiable)
@@ -30,8 +30,7 @@ class PayslipNotification extends Notification
 
     public function toMail($notifiable)
     {
-        $payslip = $this->payslip;
-        $payroll = $payslip->payroll;
+        $payroll = $this->payroll;
         $employee = $payroll->employee;
 
         try {
@@ -41,8 +40,7 @@ class PayslipNotification extends Notification
 
             $mail = (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip', [
-                    'payslip' => $payslip,
+                ->view('emails.payroll-processed', [
                     'payroll' => $payroll,
                     'employee' => $employee,
                 ]);
@@ -52,14 +50,13 @@ class PayslipNotification extends Notification
                 'mime' => 'application/pdf',
             ]);
 
-            \Log::info('Payslip PDF attachment added to email', ['filename' => $filename]);
+            \Log::info('Full payslip PDF attachment added to email', ['filename' => $filename]);
 
             return $mail;
 
         } catch (\Exception $e) {
-            \Log::error('Failed to generate or attach PDF for payslip', [
+            \Log::error('Failed to generate or attach PDF', [
                 'error' => $e->getMessage(),
-                'payslip_id' => $payslip->id,
                 'payroll_id' => $payroll->id,
                 'employee_id' => $employee->id
             ]);
@@ -67,8 +64,7 @@ class PayslipNotification extends Notification
             // Return email without attachment if PDF generation fails
             return (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip', [
-                    'payslip' => $payslip,
+                ->view('emails.payroll-processed', [
                     'payroll' => $payroll,
                     'employee' => $employee,
                 ]);
@@ -78,8 +74,8 @@ class PayslipNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            'payslip_id' => $this->payslip->id,
-            'payroll_period' => $this->payslip->payroll_period,
+            'payroll_id' => $this->payroll->id,
+            'payroll_period' => $this->payroll->payroll_period,
             'subject' => $this->subject,
             'message' => $this->message,
         ];
@@ -88,7 +84,7 @@ class PayslipNotification extends Notification
     /**
      * Generate payslip PDF for notification
      */
-    protected function generatePayslipPDF($payroll)
+    protected function generatePayslipPDF(Payroll $payroll)
     {
         try {
             // Load employee with all necessary relationships
@@ -101,7 +97,7 @@ class PayslipNotification extends Notification
 
             $data = $this->getPayslipData($payroll);
 
-            \Log::info('Generating PDF with data for payslip notification', [
+            \Log::info('Generating PDF with data', [
                 'payroll_id' => $payroll->id,
                 'employee_id' => $payroll->employee->id,
                 'data_keys' => array_keys($data)
@@ -117,7 +113,7 @@ class PayslipNotification extends Notification
                     'defaultMediaType' => 'print',
                 ]);
 
-            \Log::info('PDF generated successfully for payslip notification', [
+            \Log::info('PDF generated successfully', [
                 'payroll_id' => $payroll->id,
                 'pdf_size' => strlen($pdf->output())
             ]);
@@ -125,7 +121,7 @@ class PayslipNotification extends Notification
             return $pdf;
 
         } catch (\Exception $e) {
-            \Log::error('PDF generation failed for payslip notification', [
+            \Log::error('PDF generation failed', [
                 'error' => $e->getMessage(),
                 'payroll_id' => $payroll->id,
                 'trace' => $e->getTraceAsString()
@@ -137,7 +133,7 @@ class PayslipNotification extends Notification
     /**
      * Calculate taxes for payroll if not already calculated
      */
-    protected function calculateTaxes($payroll): void
+    protected function calculateTaxes(Payroll $payroll): void
     {
         $taxService = app(\App\Services\TaxCalculationService::class);
         $taxCalculation = $taxService->calculateAllTaxes(
@@ -163,7 +159,7 @@ class PayslipNotification extends Notification
     /**
      * Get payslip data for PDF generation
      */
-    protected function getPayslipData($payroll): array
+    protected function getPayslipData(Payroll $payroll): array
     {
         $employee = $payroll->employee;
 
@@ -219,7 +215,7 @@ class PayslipNotification extends Notification
     /**
      * Generate unique payslip filename
      */
-    protected function generatePayslipFilename($payroll): string
+    protected function generatePayslipFilename(Payroll $payroll): string
     {
         $employee = $payroll->employee;
         $period = str_replace('/', '-', $payroll->payroll_period);
@@ -231,7 +227,7 @@ class PayslipNotification extends Notification
     /**
      * Generate unique payslip number
      */
-    protected function generatePayslipNumber($payroll): string
+    protected function generatePayslipNumber(Payroll $payroll): string
     {
         $employee = $payroll->employee;
         $period = str_replace('/', '-', $payroll->payroll_period);
