@@ -382,7 +382,7 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('payroll.employee') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('payroll.employee') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('payroll.employee') }}">{{ __('View My Payslips') }}</a>
+                                        <a href="{{ route('payroll.employee') }}">{{ __('My Payslips') }}</a>
                                     </div>
                                 </li>
                                 @endcan
