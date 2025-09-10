@@ -5,7 +5,9 @@ use App\Models\Payroll;
 use App\Models\Employee;
 use App\Services\PayrollProcessingService;
 use App\Services\PayslipService;
+use App\Notifications\PayrollProcessedNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -69,9 +71,43 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->processing = false;
 
             if ($result['success']) {
+                // Send notifications to all processed employees
+                $processedPayrolls = Payroll::with(['employee.user'])
+                    ->where('payroll_period', $this->selectedPeriod)
+                    ->where('status', 'processed')
+                    ->get();
+
+                $notificationCount = 0;
+                $notificationErrors = 0;
+
+                foreach ($processedPayrolls as $payroll) {
+                    try {
+                        // Check if employee has a user and email
+                        if ($payroll->employee && $payroll->employee->user && $payroll->employee->user->email) {
+                            $payroll->employee->notify(new PayrollProcessedNotification($payroll));
+                            $notificationCount++;
+                        } else {
+                            \Log::warning('Employee missing user or email', [
+                                'employee_id' => $payroll->employee->id ?? null,
+                                'payroll_id' => $payroll->id
+                            ]);
+                            $notificationErrors++;
+                        }
+                    } catch (\Exception $e) {
+                        // Log notification error but don't fail the entire process
+                        \Log::warning('Failed to send payroll notification', [
+                            'error' => $e->getMessage(),
+                            'employee_id' => $payroll->employee->id ?? null,
+                            'user_email' => $payroll->employee->user->email ?? 'N/A',
+                            'payroll_id' => $payroll->id
+                        ]);
+                        $notificationErrors++;
+                    }
+                }
+
                 $this->dispatch('notify', [
                     'type' => 'success',
-                    'message' => "Payroll processed successfully! {$result['processed_count']} employees processed."
+                    'message' => "Payroll processed successfully! {$result['processed_count']} employees processed, {$notificationCount} notified, {$notificationErrors} errors."
                 ]);
             } else {
                 $this->dispatch('notify', [
@@ -218,6 +254,31 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($this->perPage);
+    }
+
+    public function downloadPayslip(Payslip $payslip)
+    {
+        // Ensure admin can download any payslip
+        if (!Auth::user()->can('process_payroll')) {
+            abort(403, 'Access denied. Only payroll administrators can download payslips.');
+        }
+
+        if (Storage::disk('public')->exists($payslip->file_path)) {
+            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
+        }
+
+        // If file doesn't exist, regenerate it
+        $payslipService = app(PayslipService::class);
+        $newPayslip = $payslipService->regeneratePayslip($payslip);
+
+        if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
+            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
+        }
+
+        $this->dispatch('notify', [
+            'type' => 'error',
+            'message' => 'Payslip file could not be generated. Please contact the system administrator.'
+        ]);
     }
 
     public function getPayrollSummaryProperty()
@@ -476,16 +537,18 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 @endif
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex items-center gap-2">
-                                    @if($payroll->payslip)
-                                        <a href="{{ route('payslip.download', $payroll->payslip->id) }}"
-                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                        </a>
-                                    @endif
-                                </div>
+                                @if($payroll->payslip)
+                                    <button wire:click="downloadPayslip({{ $payroll->payslip->id }})"
+                                        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </button>
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500 text-sm">
+                                        {{ __('No payslip') }}
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @empty
