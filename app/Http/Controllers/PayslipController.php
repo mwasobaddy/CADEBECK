@@ -25,14 +25,13 @@ class PayslipController extends Controller
 
         // Log the download for audit purposes
         \App\Models\Audit::create([
-            'user_id' => Auth::id(),
+            'actor_id' => Auth::id(),
             'action' => 'payslip_download',
-            'model_type' => Payslip::class,
-            'model_id' => $payslip->id,
-            'old_values' => null,
-            'new_values' => ['downloaded_at' => now()],
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'target_type' => Payslip::class,
+            'target_id' => $payslip->id,
+            'details' => json_encode([
+                'downloaded_at' => now(),
+            ]),
         ]);
 
         // Return the file for download

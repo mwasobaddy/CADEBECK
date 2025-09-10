@@ -240,17 +240,14 @@ class PayslipService
 
             // Log the email sending
             \App\Models\Audit::create([
-                'user_id' => auth()->id(),
+                'actor_id' => auth()->id(),
                 'action' => 'payslip_email_sent',
-                'model_type' => Payslip::class,
-                'model_id' => $payslip->id,
-                'old_values' => null,
-                'new_values' => [
+                'target_type' => Payslip::class,
+                'target_id' => $payslip->id,
+                'details' => json_encode([
                     'email_sent_at' => now(),
                     'recipient_email' => $user->email,
-                ],
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
+                ]),
             ]);
 
             return true;
@@ -264,16 +261,13 @@ class PayslipService
 
             // Log the error
             \App\Models\Audit::create([
-                'user_id' => auth()->id(),
+                'actor_id' => auth()->id(),
                 'action' => 'payslip_email_failed',
-                'model_type' => Payslip::class,
-                'model_id' => $payslip->id,
-                'old_values' => null,
-                'new_values' => [
+                'target_type' => Payslip::class,
+                'target_id' => $payslip->id,
+                'details' => json_encode([
                     'error_message' => $e->getMessage(),
-                ],
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
+                ]),
             ]);
 
             return false;
