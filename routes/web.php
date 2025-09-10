@@ -169,7 +169,7 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:process_payroll'])
             ->name('payroll.process');
 
-        Volt::route('payroll/employee', 'payroll.employee.payslip-manager')
+        Volt::route('payroll/employee', 'payroll.employee.payslips')
             ->middleware(['auth', 'permission:view_my_payslips'])
             ->name('payroll.employee');
 
