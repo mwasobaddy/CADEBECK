@@ -48,10 +48,12 @@ class TestPayrollNotification extends Command
         $employeeName = trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? ''));
         $this->info("Testing payroll notification for employee: {$employeeName} (ID: {$employee->id})");
 
-        // Create a test payroll record
+        // Create a test payroll record with unique period
+        $uniquePeriod = now()->format('m/Y') . '_' . time(); // Add timestamp to make it unique
+        
         $payroll = Payroll::create([
             'employee_id' => $employee->id,
-            'payroll_period' => now()->format('m/Y'),
+            'payroll_period' => $uniquePeriod,
             'pay_date' => now()->endOfMonth(),
             'basic_salary' => 50000,
             'gross_pay' => 55000,
