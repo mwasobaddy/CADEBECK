@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * @property int $id
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Employee extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, Notifiable;
     protected $fillable = [
         'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id', 'basic_salary'
     ];
@@ -101,6 +102,19 @@ class Employee extends Model
     public function employeeLoans()
     {
         return $this->hasMany(EmployeeLoan::class);
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     */
+    public function routeNotificationForMail($notification)
+    {
+        // Ensure user relationship is loaded
+        if (!$this->relationLoaded('user')) {
+            $this->load('user');
+        }
+
+        return $this->user?->email;
     }
 
     /**

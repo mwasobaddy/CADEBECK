@@ -28,6 +28,44 @@ Route::middleware(['auth'])->group(function () {
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
+
+    // Test route for payroll notifications
+    Route::get('/test-payroll-notification', function () {
+        $employee = auth()->user()->employee ?? \App\Models\Employee::first();
+
+        if (!$employee) {
+            return response()->json(['error' => 'No employee found'], 404);
+        }
+
+        // Create a test payroll record
+        $payroll = \App\Models\Payroll::create([
+            'employee_id' => $employee->id,
+            'payroll_period' => now()->format('m/Y'),
+            'pay_date' => now()->endOfMonth(),
+            'basic_salary' => 50000,
+            'gross_pay' => 55000,
+            'net_pay' => 48000,
+            'status' => 'processed',
+        ]);
+
+        try {
+            $employee->notify(new \App\Notifications\PayrollProcessedNotification($payroll));
+            $payroll->delete(); // Clean up
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payroll notification sent successfully!',
+                'employee' => $employee->first_name . ' ' . $employee->last_name,
+                'email' => $employee->user->email ?? 'N/A'
+            ]);
+        } catch (\Exception $e) {
+            $payroll->delete(); // Clean up
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    })->name('test.payroll.notification');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
     Route::middleware(['verified'])->group(function () {
