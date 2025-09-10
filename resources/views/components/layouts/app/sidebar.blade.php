@@ -346,6 +346,50 @@
                         </div>
                     </li>
                     @endif
+                    
+                    @if (Auth::user()->can('process_payroll') || Auth::user()->can('view_my_payslips'))
+                    <li x-data="{ open: {{ (request()->routeIs('payroll.process') || request()->routeIs('payroll.employee')) ? 'true' : 'false' }} }">
+                        <div class="flex flex-col">
+                            <button type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
+                                {{ request()->routeIs('payroll.process') || request()->routeIs('payroll.employee')
+                                    ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
+                                    : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                                <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
+                                    {{ request()->routeIs('payroll.process') || request()->routeIs('payroll.employee')
+                                        ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                                    <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
+                                </span>
+                                <span>{{ __("Payroll") }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                                @can('process_payroll')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('payroll.process') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('payroll.process') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                        </svg>
+                                        <a href="{{ route('payroll.process') }}">{{ __('Process Payroll') }}</a>
+                                    </div>
+                                </li>
+                                @endcan
+
+                                @can('view_my_payslips')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('payroll.employee') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('payroll.employee') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                        </svg>
+                                        <a href="{{ route('payroll.employee') }}">{{ __('View My Payslips') }}</a>
+                                    </div>
+                                </li>
+                                @endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
                 </ul>
             </nav>
             
