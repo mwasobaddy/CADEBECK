@@ -17,7 +17,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function mount(): void
     {
         // Ensure only employees can access their own payslips
-        if (!Auth::user()->hasRole('employee')) {
+        if (!Auth::user()->hasRole('Employee')) {
             abort(403, 'Access denied. Only employees can view payslips.');
         }
     }
@@ -33,22 +33,33 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->showPayslipModal = true;
     }
 
-    public function downloadPayslip(Payslip $payslip): void
+    public function downloadPayslip(Payslip $payslip)
     {
         // Ensure employee can only download their own payslips
         if ($payslip->employee_id !== Auth::user()->employee->id) {
-            abort(403, 'Access denied. You can only download your own payslips.');
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Access denied. You can only download your own payslips.')
+            ]);
+            return;
         }
 
         if (Storage::disk('public')->exists($payslip->file_path)) {
-            return Storage::disk('public')->download($payslip->file_path, $payslip->file_name);
+            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
         }
 
         // If file doesn't exist, regenerate it
         $payslipService = app(PayslipService::class);
         $newPayslip = $payslipService->regeneratePayslip($payslip);
 
-        return Storage::disk('public')->download($newPayslip->file_path, $newPayslip->file_name);
+        if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
+            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
+        }
+
+        $this->dispatch('notify', [
+            'type' => 'error',
+            'message' => __('Payslip file could not be generated. Please contact HR.')
+        ]);
     }
 
     public function closeModal(): void
@@ -59,7 +70,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getPayslipsProperty()
     {
-        $query = Payslip::with(['payroll.employee'])
+        $query = Payslip::with(['payroll.employee.user', 'payroll.employee.department', 'payroll.employee.designation', 'payroll.employee.branch'])
             ->whereHas('payroll', function($q) {
                 $q->where('employee_id', Auth::user()->employee->id);
             });

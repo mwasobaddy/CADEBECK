@@ -25,6 +25,9 @@ class PayslipService
      */
     public function generatePayslip(Payroll $payroll): Payslip
     {
+        // Load employee with all necessary relationships
+        $payroll->load(['employee.user', 'employee.department', 'employee.designation', 'employee.branch']);
+
         // Calculate tax details if not already calculated
         if (!$payroll->paye_tax || !$payroll->nhif_deduction || !$payroll->nssf_deduction) {
             $this->calculateTaxes($payroll);
@@ -88,12 +91,17 @@ class PayslipService
     {
         $data = $this->getPayslipData($payroll);
 
+        // Debug: Log the data being passed to the template
+        \Log::info('Payslip PDF Data:', $data);
+
         $pdf = Pdf::loadView('payslips.template', $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
-                'defaultFont' => 'Arial',
+                'defaultFont' => 'DejaVu Sans',
                 'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
+                'isRemoteEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+                'defaultMediaType' => 'print',
             ]);
 
         return $pdf;
@@ -104,7 +112,19 @@ class PayslipService
      */
     protected function getPayslipData(Payroll $payroll): array
     {
-        $employee = $payroll->employee;
+        $employee = $payroll->employee()->with('user', 'department', 'designation', 'branch')->first();
+
+        // Debug logging
+        \Log::info('Employee data for payslip:', [
+            'employee_id' => $employee?->id,
+            'employee_staff_number' => $employee?->staff_number,
+            'user_exists' => $employee?->user ? 'yes' : 'no',
+            'user_first_name' => $employee?->user?->first_name,
+            'user_other_names' => $employee?->user?->other_names,
+            'department' => $employee?->department?->name,
+            'designation' => $employee?->designation?->name,
+        ]);
+
         $company = [
             'name' => 'CADEBECK HR Management',
             'address' => 'Nairobi, Kenya',
@@ -112,16 +132,20 @@ class PayslipService
             'email' => 'hr@cadebeck.com',
         ];
 
+        $employeeData = [
+            'id' => $employee?->id ?? 'N/A',
+            'name' => $employee?->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'N/A',
+            'employee_number' => $employee?->staff_number ?? 'N/A',
+            'department' => $employee?->department?->name ?? 'N/A',
+            'designation' => $employee?->designation?->name ?? 'N/A',
+            'branch' => $employee?->branch?->name ?? 'N/A',
+        ];
+
+        \Log::info('Employee data array:', $employeeData);
+
         return [
             'company' => $company,
-            'employee' => [
-                'id' => $employee->id,
-                'name' => $employee->first_name . ' ' . $employee->last_name,
-                'employee_number' => $employee->employee_number,
-                'department' => $employee->department?->name ?? 'N/A',
-                'designation' => $employee->designation?->name ?? 'N/A',
-                'branch' => $employee->branch?->name ?? 'N/A',
-            ],
+            'employee' => $employeeData,
             'payroll' => [
                 'period' => $payroll->payroll_period,
                 'pay_date' => $payroll->pay_date?->format('M d, Y') ?? 'N/A',
@@ -173,7 +197,7 @@ class PayslipService
         $period = str_replace('/', '-', $payroll->payroll_period);
         $uniqueId = strtoupper(Str::random(6));
 
-        return "PSL-{$employee->employee_number}-{$period}-{$uniqueId}";
+        return "PSL-{$employee->staff_number}-{$period}-{$uniqueId}";
     }
 
     /**
@@ -285,8 +309,8 @@ class PayslipService
         // Delete old file
         $this->deletePayslipFile($payslip);
 
-        // Get payroll
-        $payroll = $payslip->payroll;
+        // Get payroll with all necessary relationships
+        $payroll = $payslip->payroll()->with(['employee.user', 'employee.department', 'employee.designation', 'employee.branch'])->first();
 
         // Generate new PDF
         return $this->generatePayslip($payroll);

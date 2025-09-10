@@ -53,9 +53,9 @@
         }
 
         .payslip-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             margin-bottom: 30px;
         }
 
@@ -93,7 +93,10 @@
             flex: 1;
             color: #111827;
             font-size: 12px;
+            font-weight: 500;
+            word-wrap: break-word;
         }
+        
 
         .salary-section {
             margin-bottom: 30px;
@@ -256,19 +259,19 @@
             <h4>Employee Details</h4>
             <div class="info-row">
                 <span class="info-label">Employee ID:</span>
-                <span class="info-value">{{ $employee['employee_number'] }}</span>
+                <span class="info-value">{{ $employee['employee_number'] ?? 'N/A' }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Name:</span>
-                <span class="info-value">{{ $employee['name'] }}</span>
+                <span class="info-value">{{ $employee['name'] ?? 'N/A' }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Department:</span>
-                <span class="info-value">{{ $employee['department'] }}</span>
+                <span class="info-value">{{ $employee['department'] ?? 'N/A' }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Designation:</span>
-                <span class="info-value">{{ $employee['designation'] }}</span>
+                <span class="info-value">{{ $employee['designation'] ?? 'N/A' }}</span>
             </div>
         </div>
 
