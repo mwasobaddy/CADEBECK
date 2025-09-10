@@ -41,7 +41,7 @@ class PayslipNotification extends Notification
 
             $mail = (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip', [
+                ->view('emails.payslip-modern', [
                     'payslip' => $payslip,
                     'payroll' => $payroll,
                     'employee' => $employee,
@@ -67,7 +67,7 @@ class PayslipNotification extends Notification
             // Return email without attachment if PDF generation fails
             return (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip', [
+                ->view('emails.payslip-modern', [
                     'payslip' => $payslip,
                     'payroll' => $payroll,
                     'employee' => $employee,

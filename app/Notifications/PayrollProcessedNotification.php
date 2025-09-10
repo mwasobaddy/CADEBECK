@@ -40,7 +40,7 @@ class PayrollProcessedNotification extends Notification
 
             $mail = (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payroll-processed', [
+                ->view('emails.payroll-processed-modern', [
                     'payroll' => $payroll,
                     'employee' => $employee,
                 ]);
@@ -64,7 +64,7 @@ class PayrollProcessedNotification extends Notification
             // Return email without attachment if PDF generation fails
             return (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payroll-processed', [
+                ->view('emails.payroll-processed-modern', [
                     'payroll' => $payroll,
                     'employee' => $employee,
                 ]);
