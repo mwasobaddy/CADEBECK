@@ -137,7 +137,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $q->where('payroll_period', 'like', "%{$this->search}%")
                   ->orWhereHas('employee', function($eq) {
                       $eq->where('first_name', 'like', "%{$this->search}%")
-                         ->orWhere('last_name', 'like', "%{$this->search}%")
+                         ->orWhere('other_names', 'like', "%{$this->search}%")
                          ->orWhere('staff_number', 'like', "%{$this->search}%");
                   });
             });
@@ -320,7 +320,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $q->where('payroll_period', 'like', "%{$this->search}%")
                   ->orWhereHas('employee', function($eq) {
                       $eq->where('first_name', 'like', "%{$this->search}%")
-                         ->orWhere('last_name', 'like', "%{$this->search}%")
+                         ->orWhere('other_names', 'like', "%{$this->search}%")
                          ->orWhere('staff_number', 'like', "%{$this->search}%");
                   });
             });
@@ -334,7 +334,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         if ($this->sortField === 'employee') {
             $query->leftJoin('employees', 'payrolls.employee_id', '=', 'employees.id')
                   ->select('payrolls.*')
-                  ->orderByRaw("CONCAT(employees.first_name, ' ', employees.last_name) $direction");
+                  ->orderByRaw("CONCAT(employees.first_name, ' ', employees.other_names) $direction");
         } else {
             $field = in_array($this->sortField, ['payroll_period', 'gross_pay', 'net_pay', 'status', 'created_at']) 
                    ? $this->sortField : 'created_at';
@@ -375,7 +375,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $csvData = "Employee Number,Employee Name,Period,Gross Pay,Net Pay,Status\n";
         foreach ($payrolls as $payroll) {
             $csvData .= '"' . $payroll->employee->staff_number . '","' .
-                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->last_name) . '","' .
+                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->other_names) . '","' .
                        $payroll->payroll_period . '","' .
                        $payroll->gross_pay . '","' .
                        $payroll->net_pay . '","' .
@@ -398,7 +398,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $q->where('payroll_period', 'like', "%{$this->search}%")
                   ->orWhereHas('employee', function($eq) {
                       $eq->where('first_name', 'like', "%{$this->search}%")
-                         ->orWhere('last_name', 'like', "%{$this->search}%")
+                         ->orWhere('other_names', 'like', "%{$this->search}%")
                          ->orWhere('staff_number', 'like', "%{$this->search}%");
                   });
             });
@@ -411,7 +411,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $csvData = "Employee Number,Employee Name,Period,Gross Pay,Net Pay,Status\n";
         foreach ($payrolls as $payroll) {
             $csvData .= '"' . $payroll->employee->staff_number . '","' .
-                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->last_name) . '","' .
+                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->other_names) . '","' .
                        $payroll->payroll_period . '","' .
                        $payroll->gross_pay . '","' .
                        $payroll->net_pay . '","' .
@@ -470,7 +470,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     </div>
 
     <!-- Process Payroll Section -->
-    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40 mb-8">
+    <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40 mb-8">
         <div class="flex items-center gap-3 mb-6">
             <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -537,7 +537,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     @can('process_payroll')
         <!-- Payroll Management Section -->
-        <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
+        <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
             <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                 <div class="flex items-center gap-3 mb-8">
                     <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -550,7 +550,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button" wire:click="exportAll"
-                        class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
                         @if ($isLoadingExport) disabled @endif>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -609,8 +609,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <!-- Bulk Actions Bar -->
             @if (count($selected) > 0)
-                <div class="flex items-center justify-between mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
+                    <div class="flex items-center gap-2 py-2">
                         <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
                             {{ count($selected) }} {{ __('item(s) selected') }}
                         </span>
@@ -667,7 +667,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                         @if($selectAll)
                                             bg-pink-500 text-white p-[2px]
                                         @else
-                                            bg-transparent text-pink-500 border border-gray-200/50 p-[6px]
+                                            bg-transparent text-pink-500 border border-gray-500 p-[6px]
                                         @endif
                                         flex items-center gap-2"
                                 >
@@ -779,10 +779,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </td>
                                     <td class="px-5 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate flex items-center gap-3">
                                         <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-300 font-bold text-lg">
-                                            {{ strtoupper(substr($payroll->employee->user->first_name, 0, 1) . substr($payroll->employee->user->last_name, 0, 1)) }}
+                                            {{ strtoupper(substr($payroll->employee->user->first_name, 0, 1) . substr($payroll->employee->user->other_names, 0, 1)) }}
                                         </span>
                                         <span>
-                                            <span class="block font-semibold text-base">{{ $payroll->employee->user->first_name }} {{ $payroll->employee->user->last_name }}</span>
+                                            <span class="block font-semibold text-base">{{ $payroll->employee->user->first_name }} {{ $payroll->employee->user->other_names }}</span>
                                             <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $payroll->employee->staff_number }}</span>
                                         </span>
                                     </td>
