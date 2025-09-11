@@ -21,16 +21,16 @@
                         </a>
                     </li>
                     @if (Auth::user()->can('manage_employee') || Auth::user()->can('create_employee'))
-                    <li x-data="{ open: {{ (request()->routeIs('employee.show') || request()->routeIs('employee.index') || request()->routeIs('employee.edit')) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ (request()->routeIs('employee.*')) ? 'true' : 'false' }} }">
                         <div class="flex flex-col">
                             <button type="button"
                                 @click="open = !open"
                                 class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold
-                                {{ request()->routeIs('employee.show') || request()->routeIs('employee.index') || request()->routeIs('employee.edit')
+                                {{ request()->routeIs('employee.*')
                                     ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200'
                                     : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
                                 <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2
-                                    {{ request()->routeIs('employee.show') || request()->routeIs('employee.index') || request()->routeIs('employee.edit')
+                                    {{ request()->routeIs('employee.*')
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="users" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
@@ -52,6 +52,31 @@
                                     </div>
                                 </li>
                                 @endcan
+                                @if (request()->routeIs('employee.edit') || request()->routeIs('employee.payroll.*'))
+                                @can('edit_employee')
+                                <li>
+                                    <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('employee.edit') || request()->routeIs('employee.payroll.*') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
+                                        <svg class="w-2 h-2 mr-2 {{ request()->routeIs('employee.edit') || request()->routeIs('employee.payroll.*') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10"/>
+                                        </svg>
+                                        <a href="">
+                                            {{ __('Edit') }}
+                                            @if (request()->routeIs('employee.edit'))
+                                                {{ __('Employee') }}
+                                            @elseif (request()->routeIs('employee.payroll.allowances.*') || request()->routeIs('employee.payroll.allowances'))
+                                                {{ __('Allowances') }}
+                                            @elseif (request()->routeIs('employee.payroll.deductions.*') || request()->routeIs('employee.payroll.deductions'))
+                                                {{ __('Deductions') }}
+                                            @elseif (request()->routeIs('employee.payroll.payslips.*') || request()->routeIs('employee.payroll.payslips'))
+                                                {{ __('Payslips') }}
+                                            @elseif (request()->routeIs('employee.payroll.history.*') || request()->routeIs('employee.payroll.history'))
+                                                {{ __('Payroll History') }}
+                                            @endif
+                                        </a>
+                                    </div>
+                                </li>
+                                @endcan
+                                @else
                                 @can('create_employee')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('employee.show') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
@@ -64,6 +89,7 @@
                                     </div>
                                 </li>
                                 @endcan
+                                @endif
                             </ul>
                         </div>
                     </li>
