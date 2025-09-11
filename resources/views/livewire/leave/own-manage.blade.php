@@ -463,10 +463,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a wire:navigate href="{{ route('own-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('own-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a wire:navigate href="{{ route('own-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('own-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
                     {{ __('Leave Manager') }}
                 </a>
-                <a wire:navigate href="{{ route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-none' : '' }}">
+                <a wire:navigate href="{{ route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
                     {{ __('New Leave Request') }}
                 </a>
             </div>
@@ -474,7 +474,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     </div>
 
     <!-- Main Card Container -->
-    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40 mb-8">
+    <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40 mb-8">
         <!-- Header -->
         <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
             <div class="flex items-center gap-3">
@@ -486,14 +486,14 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <div class="flex items-center gap-3">
                 <button type="button" wire:click="exportLeaveRequests"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
+                    class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                     <span class="hidden lg:inline">{{ __('Export') }}</span>
                 </button>
                 <a href="{{ route('leave.apply') }}"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                     </svg>
@@ -589,8 +589,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('My Leave Requests') }}</h3>
 
         @if (count($selected) > 0)
-            <div class="flex items-center justify-between mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
-                <div class="flex items-center gap-2">
+            <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
+                <div class="flex items-center gap-2 py-2">
                     <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
                         {{ count($selected) }} {{ __('item(s) selected') }}
                     </span>
@@ -636,7 +636,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     @if($selectAll)
                                         bg-pink-500 text-white p-[2px]
                                     @else
-                                        bg-transparent text-pink-500 border border-gray-200/50 p-[6px]
+                                        bg-transparent text-pink-500 border border-gray-500 p-[6px]
                                     @endif
                                     flex items-center gap-2"
                             >
