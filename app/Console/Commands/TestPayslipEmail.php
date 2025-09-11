@@ -111,11 +111,11 @@ class TestPayslipEmail extends Command
         $payslip = Payslip::where('employee_id', $employee->id)->first();
 
         if (!$payslip) {
-            $this->error("❌ No payslips found for employee {$employee->first_name} {$employee->last_name}.");
+            $this->error("❌ No payslips found for employee {$employee->first_name} {$employee->other_names}.");
             return;
         }
 
-        $this->info("📤 Sending payslip email to {$employee->first_name} {$employee->last_name}...");
+        $this->info("📤 Sending payslip email to {$employee->first_name} {$employee->other_names}...");
 
         $result = $payslipService->sendPayslipEmail($payslip);
 
