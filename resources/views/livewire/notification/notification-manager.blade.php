@@ -102,7 +102,7 @@ new class extends Component {
 
 <div class="fixed bottom-4 right-4 space-y-4 z-50">
     @foreach ($notifications as $index => $notification)
-        <div class="p-4 rounded shadow-lg text-white @if($notification['type'] === 'success') bg-green-500 @elseif($notification['type'] === 'error') bg-red-500 @elseif($notification['type'] === 'info') bg-blue-500 @else bg-gray-700 @endif"
+        <div class="p-4 rounded shadow-lg text-white @if($notification['type'] === 'success') bg-green-500 @elseif($notification['type'] === 'error') bg-red-500 @elseif($notification['type'] === 'info') bg-yellow-500 @else bg-gray-700 @endif"
              x-data="{ show: true }"
              x-show="show"
              x-transition:enter="transition ease-out duration-300"
