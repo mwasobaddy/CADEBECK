@@ -104,6 +104,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'process_payroll',
             'view_my_payslips',
             'manage_employee_payroll',
+            'view_employee_payroll_history',
+            'view_employee_payslips',
+
+            'manage_allowance',
+            'create_allowance',
+            'edit_allowance',
+            'delete_allowance',
+            'export_allowance',
 
 
             'manage_other_attendance',
