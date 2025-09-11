@@ -422,7 +422,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @can('import_role')
                         <!-- Import Button -->
                         <button type="button" onclick="document.getElementById('import-file').click()"
-                            class="flex items-center gap-2 px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
+                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
                             </svg>
@@ -434,7 +434,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @can('export_role')
                         <!-- Export All Button -->
                         <button type="button" wire:click="exportAll"
-                            class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
                             @if ($isLoadingExport) disabled @endif>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -445,7 +445,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </button>
                     @endcan
 
-                    <a href="{{ route('role.show') }}" class="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <a href="{{ route('role.show') }}" class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -493,8 +493,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 @endif
                 
                 @if (count($selected) > 0)
-                    <div class="flex items-center justify-between mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
-                        <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
+                        <div class="flex items-center gap-2 py-2">
                             <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
                                 {{ count($selected) }} {{ __('item(s) selected') }}
                             </span>
@@ -541,7 +541,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                         @if($selectAll)
                                             bg-pink-500 text-white p-[2px]
                                         @else
-                                            bg-transparent text-pink-500 border border-gray-200/50 p-[6px]
+                                            bg-transparent text-pink-500 border border-gray-500 p-[6px]
                                         @endif
                                         flex items-center gap-2"
                                 >
