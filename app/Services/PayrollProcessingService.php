@@ -45,7 +45,7 @@ class PayrollProcessingService
                 } catch (\Exception $e) {
                     $errors[] = [
                         'employee_id' => $employee->id,
-                        'employee_name' => $employee->first_name . ' ' . $employee->last_name,
+                        'employee_name' => $employee->first_name . ' ' . $employee->other_names,
                         'error' => $e->getMessage(),
                     ];
                 }
@@ -294,7 +294,7 @@ class PayrollProcessingService
             } catch (\Exception $e) {
                 $errors[] = [
                     'payroll_id' => $payroll->id,
-                    'employee_name' => $payroll->employee->first_name . ' ' . $payroll->employee->last_name,
+                    'employee_name' => $payroll->employee->first_name . ' ' . $payroll->employee->other_names,
                     'error' => $e->getMessage(),
                 ];
             }
@@ -323,7 +323,7 @@ class PayrollProcessingService
             } catch (\Exception $e) {
                 $errors[] = [
                     'payroll_id' => $payroll->id,
-                    'employee_name' => $payroll->employee->first_name . ' ' . $payroll->employee->last_name,
+                    'employee_name' => $payroll->employee->first_name . ' ' . $payroll->employee->other_names,
                     'error' => $e->getMessage(),
                 ];
             }

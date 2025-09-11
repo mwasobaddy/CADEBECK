@@ -194,7 +194,7 @@ class TaxCalculationService
         // For now, return a template structure
         return [
             'employee_id' => $employee->id,
-            'employee_name' => $employee->first_name . ' ' . $employee->last_name,
+            'employee_name' => $employee->first_name . ' ' . $employee->other_names,
             'period' => $period,
             'tax_summary' => [
                 'total_gross_pay' => 0,
