@@ -6,16 +6,24 @@ use App\Models\Payroll;
 use App\Services\PayslipService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Livewire\WithPagination;
 
 new #[Layout('components.layouts.app')] class extends Component {
+    use WithPagination;
+
+    public bool $showFilters = false;
     public string $search = '';
     public string $periodFilter = '';
     public int $perPage = 10;
     public ?Payslip $selectedPayslip = null;
     public bool $showPayslipModal = false;
-    public bool $showFilters = false;
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
+    public bool $isSearching = false;
+    public bool $isFiltering = false;
+    public bool $isPaginating = false;
+    public bool $isLoadingData = false;
+    public bool $isLoadingDownload = false;
 
     public function mount(): void
     {
@@ -39,52 +47,6 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function toggleFilters(): void
     {
         $this->showFilters = !$this->showFilters;
-    }
-
-    public function viewPayslip(Payslip $payslip): void
-    {
-        // Ensure employee can only view their own payslips
-        if ($payslip->employee_id !== Auth::user()->employee->id) {
-            abort(403, 'Access denied. You can only view your own payslips.');
-        }
-
-        $this->selectedPayslip = $payslip;
-        $this->showPayslipModal = true;
-    }
-
-    public function downloadPayslip(Payslip $payslip)
-    {
-        // Ensure employee can only download their own payslips
-        if ($payslip->employee_id !== Auth::user()->employee->id) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => __('Access denied. You can only download your own payslips.')
-            ]);
-            return;
-        }
-
-        if (Storage::disk('public')->exists($payslip->file_path)) {
-            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
-        }
-
-        // If file doesn't exist, regenerate it
-        $payslipService = app(PayslipService::class);
-        $newPayslip = $payslipService->regeneratePayslip($payslip);
-
-        if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
-            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
-        }
-
-        $this->dispatch('notify', [
-            'type' => 'error',
-            'message' => __('Payslip file could not be generated. Please contact HR.')
-        ]);
-    }
-
-    public function closeModal(): void
-    {
-        $this->showPayslipModal = false;
-        $this->selectedPayslip = null;
     }
 
     public function getPayslipsProperty()
@@ -139,24 +101,113 @@ new #[Layout('components.layouts.app')] class extends Component {
             ->sort()
             ->reverse();
     }
+
+    public function updatedSearch(): void
+    {
+        $this->isSearching = true;
+        $this->resetPage();
+        $this->isSearching = false;
+    }
+
+    public function updatedPeriodFilter(): void
+    {
+        $this->isFiltering = true;
+        $this->resetPage();
+        $this->isFiltering = false;
+    }
+
+    public function updatedPage(): void
+    {
+        $this->isPaginating = true;
+        $this->isPaginating = false;
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function viewPayslip(Payslip $payslip): void
+    {
+        // Ensure employee can only view their own payslips
+        if ($payslip->employee_id !== Auth::user()->employee->id) {
+            abort(403, 'Access denied. You can only view your own payslips.');
+        }
+
+        $this->selectedPayslip = $payslip;
+        $this->showPayslipModal = true;
+    }
+
+    public function downloadPayslip(Payslip $payslip)
+    {
+        // Ensure employee can only download their own payslips
+        if ($payslip->employee_id !== Auth::user()->employee->id) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Access denied. You can only download your own payslips.')
+            ]);
+            return;
+        }
+
+        $this->isLoadingDownload = true;
+
+        if (Storage::disk('public')->exists($payslip->file_path)) {
+            $this->isLoadingDownload = false;
+            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
+        }
+
+        // If file doesn't exist, regenerate it
+        $payslipService = app(PayslipService::class);
+        $newPayslip = $payslipService->regeneratePayslip($payslip);
+
+        if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
+            $this->isLoadingDownload = false;
+            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
+        }
+
+        $this->isLoadingDownload = false;
+        $this->dispatch('notify', [
+            'type' => 'error',
+            'message' => __('Payslip file could not be generated. Please contact HR.')
+        ]);
+    }
+
+    public function closeModal(): void
+    {
+        $this->showPayslipModal = false;
+        $this->selectedPayslip = null;
+    }
+
+    public function shouldShowSkeleton(): bool
+    {
+        return $this->isLoadingDownload || 
+               $this->isSearching || 
+               $this->isFiltering || 
+               $this->isPaginating ||
+               $this->isLoadingData;
+    }
 };
 ?>
 
 <div class="relative max-w-6xl mx-auto md:px-4 md:py-8">
     <!-- SVG Blobs Background -->
-    <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
+    <svg class="fixed -top-24 right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400"
+        fill="none">
         <ellipse cx="200" cy="200" rx="180" ry="120" fill="url(#blob1)" />
         <defs>
-            <radialGradient id="blob1" cx="0" cy="0" r="1" gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+            <radialGradient id="blob1" cx="0" cy="0" r="1"
+                gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#38bdf8" />
                 <stop offset="1" stop-color="#6366f1" />
             </radialGradient>
         </defs>
     </svg>
-    <svg class="fixed -bottom-24 -right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0" viewBox="0 0 400 400" fill="none">
+    <svg class="fixed -bottom-24 -right-32 w-96 h-96 opacity-30 blur-2xl pointer-events-none z-0"
+        viewBox="0 0 400 400" fill="none">
         <ellipse cx="200" cy="200" rx="160" ry="100" fill="url(#blob2)" />
         <defs>
-            <radialGradient id="blob2" cx="0" cy="0" r="1" gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
+            <radialGradient id="blob2" cx="0" cy="0" r="1"
+                gradientTransform="rotate(90 200 200) scale(200 200)" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#34d399" />
                 <stop offset="1" stop-color="#f472b6" />
             </radialGradient>
@@ -167,70 +218,74 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">
+                <a href="{{ route('payroll.employee') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('payroll.employee') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
                     {{ __('My Payslips') }}
-                </h1>
+                </a>
             </div>
         </nav>
     </div>
 
     <!-- Card Container for Table -->
-    <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
+    <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-            <div class="flex items-center gap-3">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="flex items-center gap-3 mb-8">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500 tracking-tight drop-shadow-lg relative inline-block">
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
                     {{ __('My Payslips') }}
-                    <span class="absolute -bottom-2 left-0 w-[120px] h-1 rounded-full bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500"></span>
+                    <span class="absolute -bottom-2 left-0 w-[120px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
                 </h1>
             </div>
         </div>
 
         <!-- Search and Filters -->
-        <div class="flex flex-wrap gap-8 items-center mb-6">
-            <div class="relative w-80">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+        <div>
+            <div class="flex flex-wrap gap-8 items-center">
+                <div class="relative w-80">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                    </span>
+                    <input type="text" wire:model.live.debounce.300ms="search"
+                        class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                        placeholder="{{ __('Search payslips...') }}">
+                </div>
+                <button type="button" wire:click="toggleFilters"
+                    class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"></path>
                     </svg>
-                </span>
-                <input type="text" wire:model.live.debounce.300ms="search"
-                    class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
-                    placeholder="{{ __('Search payslips...') }}">
+                    <span class="hidden lg:inline">{{ __('Filters') }}</span>
+                </button>
             </div>
-            <button type="button" wire:click="toggleFilters"
-                class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"></path>
-                </svg>
-                <span class="hidden lg:inline">{{ __('Filters') }}</span>
-            </button>
         </div>
 
         <!-- Filter Options -->
-        @if ($showFilters)
-            <div class="flex flex-wrap gap-6 mb-6 items-center animate-fade-in">
-                <select wire:model.live="periodFilter"
-                    class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                    <option value="">{{ __('All Periods') }}</option>
-                    @foreach($this->periods as $period)
-                        <option value="{{ $period }}">{{ $period }}</option>
-                    @endforeach
-                </select>
-                <select wire:model.live="perPage"
-                    class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-        @endif
+        <div>
+            @if ($showFilters ?? false)
+                <div class="flex flex-wrap gap-6 mt-6 items-center animate-fade-in">
+                    <select wire:model.live="periodFilter"
+                        class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                        <option value="">{{ __('All Periods') }}</option>
+                        @foreach($this->periods as $period)
+                            <option value="{{ $period }}">{{ $period }}</option>
+                        @endforeach
+                    </select>
+                    <select wire:model.live="perPage"
+                        class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            @endif
+        </div>
 
         <!-- Payslips Table -->
-        <div class="overflow-x-auto bg-transparent">
+        <div class="overflow-x-auto bg-transparent mt-6">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                 <thead>
                     <tr class="h-16 bg-zinc-800/5 dark:bg-white/10 text-zinc-600 dark:text-white/70">
@@ -291,73 +346,105 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($this->payslips as $payslip)
-                        <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
-                            <td class="px-5 py-4 text-gray-900 dark:text-white font-bold">
-                                {{ $payslip->payslip_number }}
-                            </td>
-                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300">
-                                {{ $payslip->payroll->payroll_period }}
-                            </td>
-                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300">
-                                {{ $payslip->payroll->pay_date?->format('M d, Y') }}
-                            </td>
-                            <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-semibold">
-                                <span class="text-green-600 dark:text-green-400">
-                                    KES {{ number_format($payslip->payroll->net_pay, 2) }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-4">
-                                @if($payslip->email_sent_at)
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        {{ __('Emailed') }}
+                    @if($this->shouldShowSkeleton())
+                        @for($i = 0; $i < $perPage; $i++)
+                            <tr class="animate-pulse border-b border-gray-200 dark:border-gray-700">
+                                <td class="px-5 py-4">
+                                    <div class="h-4 w-32 bg-blue-100 dark:bg-zinc-800 rounded"></div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="h-4 w-24 bg-blue-100 dark:bg-zinc-800 rounded"></div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="h-4 w-28 bg-blue-100 dark:bg-zinc-800 rounded"></div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="h-4 w-24 bg-green-100 dark:bg-zinc-800 rounded"></div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="h-6 w-16 bg-gray-100 dark:bg-zinc-800 rounded-full"></div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex gap-2">
+                                        <div class="h-8 w-8 bg-gray-100 dark:bg-zinc-800 rounded"></div>
+                                        <div class="h-8 w-8 bg-gray-100 dark:bg-zinc-800 rounded"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endfor
+                    @else
+                        @forelse(($this->payslips ?? []) as $payslip)
+                            <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                                <td class="px-5 py-4 text-gray-900 dark:text-white font-bold">
+                                    {{ $payslip->payslip_number }}
+                                </td>
+                                <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-semibold">
+                                    {{ $payslip->payroll->payroll_period }}
+                                </td>
+                                <td class="px-5 py-4 font-semibold">
+                                    <span class="truncate text-blue-600 dark:text-blue-400">
+                                        {{ $payslip->payroll->pay_date?->translatedFormat('j M Y') }}
                                     </span>
-                                @else
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                                        {{ __('Generated') }}
+                                </td>
+                                <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-bold">
+                                    <span class="text-green-600 dark:text-green-400">
+                                        KES {{ number_format($payslip->payroll->net_pay, 2) }}
                                     </span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-4">
-                                <div class="flex items-center gap-2">
-                                    <button wire:click="viewPayslip({{ $payslip->id }})"
-                                        class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </td>
+                                <td class="px-5 py-4">
+                                    @if($payslip->email_sent_at)
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                            {{ __('Emailed') }}
+                                        </span>
+                                    @else
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shadow bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            {{ __('Generated') }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-4">
+                                    <span class="flex gap-2">
+                                        <flux:button
+                                            wire:click="viewPayslip({{ $payslip->id }})"
+                                            variant="primary"
+                                            color="blue"
+                                            size="sm"
+                                            icon="eye"
+                                        />
+                                        <flux:button
+                                            wire:click="downloadPayslip({{ $payslip->id }})"
+                                            variant="primary"
+                                            color="green"
+                                            size="sm"
+                                            icon="arrow-down-tray"
+                                            :disabled="$isLoadingDownload"
+                                        />
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-8 h-8 text-gray-300 dark:text-zinc-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                         </svg>
-                                    </button>
-                                    <button wire:click="downloadPayslip({{ $payslip->id }})"
-                                        class="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-                                <div class="flex flex-col items-center gap-2">
-                                    <svg class="w-8 h-8 text-gray-300 dark:text-zinc-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    {{ __('No payslips found.') }}
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
+                                        {{ __('No payslips found.') }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    @endif
                 </tbody>
             </table>
-        </div>
-
-        <!-- Pagination -->
-        @if($this->payslips->hasPages())
+            
+            <!-- Pagination -->
             <div class="mt-6">
-                {{ $this->payslips->links() }}
+                @if($this->payslips && !$this->shouldShowSkeleton())
+                    {{ $this->payslips->links() }}
+                @endif
             </div>
-        @endif
+        </div>
     </div>
 
     <!-- Payslip Modal -->
@@ -487,11 +574,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <!-- Action Buttons -->
                         <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <button wire:click="downloadPayslip({{ $selectedPayslip->id }})"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                                @if ($isLoadingDownload) disabled @endif>
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                {{ __('Download PDF') }}
+                                {{ $isLoadingDownload ? __('Downloading...') : __('Download PDF') }}
                             </button>
                             <button wire:click="closeModal"
                                 class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
