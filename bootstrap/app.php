@@ -11,9 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [
+            \App\Http\Middleware\TempFileCleanup::class,
+        ]);
+
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'temp.cleanup' => \App\Http\Middleware\TempFileCleanup::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
