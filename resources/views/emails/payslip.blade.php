@@ -64,47 +64,47 @@
                     <tbody>
                         <tr>
                             <td><strong>Basic Salary</strong></td>
-                            <td><strong>KES {{ number_format($payroll->basic_salary ?? 0, 2) }}</strong></td>
+                            <td><strong>USD {{ number_format($payroll->basic_salary ?? 0, 2) }}</strong></td>
                         </tr>
                         @if(($payroll->house_allowance ?? 0) > 0)
                         <tr>
                             <td>House Allowance</td>
-                            <td>KES {{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->transport_allowance ?? 0) > 0)
                         <tr>
                             <td>Transport Allowance</td>
-                            <td>KES {{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->medical_allowance ?? 0) > 0)
                         <tr>
                             <td>Medical Allowance</td>
-                            <td>KES {{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->overtime_amount ?? 0) > 0)
                         <tr>
                             <td>Overtime Allowance</td>
-                            <td>KES {{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->bonus_amount ?? 0) > 0)
                         <tr>
                             <td>Bonus</td>
-                            <td>KES {{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->other_allowances ?? 0) > 0)
                         <tr>
                             <td>Other Allowances</td>
-                            <td>KES {{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         <tr class="total-row">
                             <td><strong>Total Earnings</strong></td>
-                            <td><strong>KES {{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
+                            <td><strong>USD {{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -123,49 +123,49 @@
                         @if(($payroll->paye_tax ?? 0) > 0)
                         <tr>
                             <td>PAYE Tax</td>
-                            <td>KES {{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->nhif_deduction ?? 0) > 0)
                         <tr>
                             <td>NHIF Contribution</td>
-                            <td>KES {{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->nssf_deduction ?? 0) > 0)
                         <tr>
                             <td>NSSF Contribution</td>
-                            <td>KES {{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->insurance_deduction ?? 0) > 0)
                         <tr>
                             <td>Insurance Premium</td>
-                            <td>KES {{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->loan_deduction ?? 0) > 0)
                         <tr>
                             <td>Loan Repayment</td>
-                            <td>KES {{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         @if(($payroll->other_deductions ?? 0) > 0)
                         <tr>
                             <td>Other Deductions</td>
-                            <td>KES {{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
+                            <td>USD {{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
                         </tr>
                         @endif
                         <tr class="total-row">
                             <td><strong>Total Deductions</strong></td>
-                            <td><strong>KES {{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
+                            <td><strong>USD {{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="net-pay">
-                <div class="amount">KES {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
+                <div class="amount">USD {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
                 <div class="label">Net Pay</div>
             </div>
 

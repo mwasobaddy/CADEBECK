@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll Processed - CADEBECK HR</title>
+    <title>Payroll Approval Initiated - CADEBECK HR</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8fafc; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -28,22 +28,31 @@
         .net-pay { text-align: center; background: #ecfdf5; padding: 25px; margin: 20px 0; border-radius: 8px; border: 2px solid #10b981; }
         .net-pay .amount { font-size: 32px; font-weight: bold; color: #059669; margin-bottom: 5px; }
         .net-pay .label { font-size: 14px; color: #065f46; text-transform: uppercase; letter-spacing: 1px; }
+        .status-box { text-align: center; background: #fef3c7; padding: 25px; margin: 20px 0; border-radius: 8px; border: 2px solid #f59e0b; }
+        .status-box .status { font-size: 24px; font-weight: bold; color: #d97706; margin-bottom: 5px; }
+        .status-box .label { font-size: 14px; color: #92400e; text-transform: uppercase; letter-spacing: 1px; }
         .button { text-align: center; margin: 30px 0; }
         .button a { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; }
         .footer { text-align: center; padding: 20px; background: #f9fafb; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
         .emoji { font-size: 20px; margin-right: 8px; }
+        .alert { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
+        .alert strong { color: #92400e; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><span class="emoji">✅</span>Payroll Processed Successfully</h1>
+            <h1><span class="emoji">⏳</span>Payroll Processing Initiated</h1>
         </div>
 
         <div class="content">
             <div class="section">
                 <p>Hello <strong>{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'Employee' }}</strong>,</p>
-                <p>Your payroll has been processed for the period <strong>{{ $payroll->payroll_period ?? 'N/A' }}</strong>. Your complete payslip details are shown below.</p>
+                <p>Your payroll has been initiated for processing for the period <strong>{{ $payroll->payroll_period ?? 'N/A' }}</strong>. Your payroll details are currently being reviewed and will be finalized soon.</p>
+            </div>
+
+            <div class="alert">
+                <strong>⚠️ Important:</strong> You will receive another notification once your payroll has been fully processed and your payment has been initiated.
             </div>
 
             <div class="section">
@@ -173,12 +182,27 @@
                 <div class="label">Net Pay</div>
             </div>
 
+            <div class="status-box">
+                <div class="status">Under Review</div>
+                <div class="label">Current Status</div>
+            </div>
+
             <div class="section">
-                <p><strong>⚠️ Important:</strong> If you notice any discrepancies in your payroll details, please contact the HR department immediately.</p>
+                <p><strong>What happens next?</strong></p>
+                <ul>
+                    <li>Your payroll details will be reviewed by the HR team</li>
+                    <li>Any necessary adjustments will be made</li>
+                    <li>You will receive a final notification once processing is complete</li>
+                    <li>Payment will be initiated according to your payment schedule</li>
+                </ul>
             </div>
 
             <div class="button">
-                <a href="mailto:hr@cadebeck.com">Contact HR Department</a>
+                <a href="{{ route('employee.payroll-history') }}">View Payroll History</a>
+            </div>
+
+            <div class="section">
+                <p>If you have any questions about your payroll or need to discuss any details, please contact the HR department.</p>
             </div>
         </div>
 

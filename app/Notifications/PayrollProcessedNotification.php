@@ -25,24 +25,25 @@ class PayrollProcessedNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
     {
-        $payroll = $this->payroll;
-        $employee = $payroll->employee;
-
         try {
-            // Generate the full payslip PDF
+            // Set strict timeouts for this operation
+            set_time_limit(30); // 30 seconds total for this notification
+            ini_set('max_execution_time', 30);
+
+            // Generate the full payslip PDF with timeout
             $pdf = $this->generatePayslipPDF($payroll);
             $filename = $this->generatePayslipFilename($payroll);
 
             $mail = (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payroll-processed-modern', [
+                ->view('emails.payroll-processed', [
                     'payroll' => $payroll,
-                    'employee' => $employee,
+                    'employee' => $payroll->employee,
                 ]);
 
             // Attach the PDF payslip
@@ -57,16 +58,16 @@ class PayrollProcessedNotification extends Notification
         } catch (\Exception $e) {
             \Log::error('Failed to generate or attach PDF', [
                 'error' => $e->getMessage(),
-                'payroll_id' => $payroll->id,
-                'employee_id' => $employee->id
+                'payroll_id' => $this->payroll->id,
+                'employee_id' => $this->payroll->employee->id
             ]);
 
             // Return email without attachment if PDF generation fails
             return (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payroll-processed-modern', [
-                    'payroll' => $payroll,
-                    'employee' => $employee,
+                ->view('emails.payroll-processed', [
+                    'payroll' => $this->payroll,
+                    'employee' => $this->payroll->employee,
                 ]);
         }
     }
@@ -78,6 +79,8 @@ class PayrollProcessedNotification extends Notification
             'payroll_period' => $this->payroll->payroll_period,
             'subject' => $this->subject,
             'message' => $this->message,
+            'type' => 'payroll_processed',
+            'action_url' => route('employee.payroll-history'),
         ];
     }
 
@@ -103,7 +106,7 @@ class PayrollProcessedNotification extends Notification
                 'data_keys' => array_keys($data)
             ]);
 
-            $pdf = Pdf::loadView('payslips.template', $data)
+            $pdf = Pdf::loadView('PDF-Templates.payslip', $data)
                 ->setPaper('a4', 'portrait')
                 ->setOptions([
                     'defaultFont' => 'DejaVu Sans',
@@ -111,7 +114,12 @@ class PayrollProcessedNotification extends Notification
                     'isRemoteEnabled' => false,
                     'isFontSubsettingEnabled' => true,
                     'defaultMediaType' => 'print',
+                    'dpi' => 96, // Lower DPI for faster generation
+                    'defaultPaperSize' => 'a4',
                 ]);
+
+            // Add timeout to PDF generation (5 seconds max)
+            set_time_limit(5);
 
             \Log::info('PDF generated successfully', [
                 'payroll_id' => $payroll->id,

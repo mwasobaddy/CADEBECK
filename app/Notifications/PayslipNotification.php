@@ -25,11 +25,15 @@ class PayslipNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
     {
+        // Set timeout limits to prevent hanging
+        set_time_limit(30);
+        ini_set('max_execution_time', 30);
+
         $payslip = $this->payslip;
         $payroll = $payslip->payroll;
         $employee = $payroll->employee;
@@ -41,7 +45,7 @@ class PayslipNotification extends Notification
 
             $mail = (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip-modern', [
+                ->view('emails.payslip', [
                     'payslip' => $payslip,
                     'payroll' => $payroll,
                     'employee' => $employee,
@@ -67,7 +71,7 @@ class PayslipNotification extends Notification
             // Return email without attachment if PDF generation fails
             return (new MailMessage)
                 ->subject($this->subject)
-                ->view('emails.payslip-modern', [
+                ->view('emails.payslip', [
                     'payslip' => $payslip,
                     'payroll' => $payroll,
                     'employee' => $employee,
@@ -82,6 +86,8 @@ class PayslipNotification extends Notification
             'payroll_period' => $this->payslip->payroll_period,
             'subject' => $this->subject,
             'message' => $this->message,
+            'type' => 'payslip_generated',
+            'action_url' => route('employee.payroll-history'),
         ];
     }
 
@@ -107,7 +113,7 @@ class PayslipNotification extends Notification
                 'data_keys' => array_keys($data)
             ]);
 
-            $pdf = Pdf::loadView('payslips.template', $data)
+            $pdf = Pdf::loadView('PDF-Templates.payslip', $data)
                 ->setPaper('a4', 'portrait')
                 ->setOptions([
                     'defaultFont' => 'DejaVu Sans',
