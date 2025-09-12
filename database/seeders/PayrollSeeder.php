@@ -108,7 +108,7 @@ class PayrollSeeder extends Seeder
 
         // Calculate tax (PAYE) - simplified Kenyan tax calculation
         $taxableIncome = $grossPay;
-        $personalRelief = 2400; // KES 2,400
+        $personalRelief = 2400; // USD 2,400
         $taxableAfterRelief = max(0, $taxableIncome - $personalRelief);
 
         $payeTax = $this->calculatePAYE($taxableAfterRelief);
@@ -206,7 +206,7 @@ class PayrollSeeder extends Seeder
      */
     private function generateBasicSalary(): float
     {
-        // Kenyan salary ranges (KES)
+        // Kenyan salary ranges (USD)
         $salaryRanges = [
             ['min' => 15000, 'max' => 30000], // Entry level
             ['min' => 30000, 'max' => 50000], // Junior
@@ -264,7 +264,7 @@ class PayrollSeeder extends Seeder
         // NHIF deduction (based on salary brackets)
         $deductions['nhif'] = $this->calculateNHIF($basicSalary);
 
-        // NSSF deduction (6% of pensionable salary, max KES 1,080)
+        // NSSF deduction (6% of pensionable salary, max USD 1,080)
         $pensionableSalary = min($basicSalary, 18000); // Max pensionable is 18,000
         $deductions['nssf'] = round($pensionableSalary * 0.06, 2);
 

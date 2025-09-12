@@ -33,5 +33,12 @@ class ContractTypeSeeder extends Seeder
             'name' => 'Internship',
             'description' => 'Internship contract',
         ]);
+        // add a retired contract type
+        ContractType::firstOrCreate([
+            'code' => 'RETRD',
+        ], [
+            'name' => 'Retired',
+            'description' => 'Retired employee contract',
+        ]);
     }
 }

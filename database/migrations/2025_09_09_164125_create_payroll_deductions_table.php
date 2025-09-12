@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payroll_deductions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->foreignId('payroll_id')->constrained()->onDelete('cascade');
+            $table->foreignId('payroll_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('deduction_type'); // paye, nhif, nssf, insurance, loan, etc.
             $table->string('description');
             $table->decimal('amount', 15, 2);

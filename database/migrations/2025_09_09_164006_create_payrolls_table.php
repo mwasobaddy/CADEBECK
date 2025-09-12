@@ -46,7 +46,7 @@ return new class extends Migration
 
             // Tax Information
             $table->decimal('taxable_income', 15, 2)->default(0);
-            $table->decimal('personal_relief', 15, 2)->default(2400); // KES 2,400
+            $table->decimal('personal_relief', 15, 2)->default(2400); // USD 2,400
             $table->decimal('insurance_relief', 15, 2)->default(0);
             $table->decimal('total_relief', 15, 2)->default(0);
 

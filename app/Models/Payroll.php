@@ -130,7 +130,7 @@ class Payroll extends Model
         return $this->status === 'paid';
     }
 
-    public function markAsProcessed(User $user = null): void
+    public function markAsProcessed(?User $user = null): void
     {
         $this->update([
             'status' => 'processed',

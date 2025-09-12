@@ -11,6 +11,7 @@ class PayrollDeduction extends Model
         'employee_id',
         'payroll_id',
         'deduction_type',
+        'description',
         'amount',
         'is_recurring',
         'effective_date',

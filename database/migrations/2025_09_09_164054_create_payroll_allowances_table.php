@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payroll_allowances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->foreignId('payroll_id')->constrained()->onDelete('cascade');
+            $table->foreignId('payroll_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('allowance_type'); // house, transport, medical, overtime, bonus, etc.
             $table->string('description');
             $table->decimal('amount', 15, 2);

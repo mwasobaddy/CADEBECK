@@ -11,6 +11,7 @@ class PayrollAllowance extends Model
         'employee_id',
         'payroll_id',
         'allowance_type',
+        'description',
         'amount',
         'is_recurring',
         'effective_date',
