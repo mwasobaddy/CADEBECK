@@ -65,7 +65,7 @@ class TestPayrollNotification extends Command
         $this->info("Sending notification...");
 
         try {
-            $employee->notify(new PayrollProcessedNotification($payroll));
+            $employee->user->notify(new PayrollProcessedNotification($payroll));
             $this->info("✅ Notification sent successfully!");
             $this->info("Check your mail logs or email service for the notification.");
         } catch (\Exception $e) {

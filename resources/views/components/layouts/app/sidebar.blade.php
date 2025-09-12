@@ -69,7 +69,7 @@
                                                 {{ __('Deductions') }}
                                             @elseif (request()->routeIs('employee.payroll.payslips.*') || request()->routeIs('employee.payroll.payslips'))
                                                 {{ __('Payslips') }}
-                                            @elseif (request()->routeIs('employee.payroll.history.*') || request()->routeIs('employee.payroll.history'))
+                                            @elseif (request()->routeIs('employee.payroll-history.*') || request()->routeIs('employee.payroll-history'))
                                                 {{ __('Payroll History') }}
                                             @endif
                                         </a>
