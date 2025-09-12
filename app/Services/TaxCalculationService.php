@@ -13,10 +13,10 @@ class TaxCalculationService
      */
     public function calculatePAYE(float $taxableIncome, int $dependents = 0): array
     {
-        // Personal relief: KES 2,400 per month
+        // Personal relief: USD 2,400 per month
         $personalRelief = 2400;
 
-        // Insurance relief: Up to KES 5,000 per month
+        // Insurance relief: Up to USD 5,000 per month
         $insuranceRelief = 0; // This will be calculated separately
 
         // Total relief

@@ -48,11 +48,12 @@ class PayslipService
             [
                 'employee_id' => $payroll->employee_id,
                 'payslip_number' => $this->generatePayslipNumber($payroll),
+                'payroll_period' => $payroll->payroll_period,
+                'pay_date' => $payroll->pay_date,
                 'file_path' => $filePath,
                 'file_name' => $filename,
                 'payslip_data' => $this->getPayslipData($payroll),
                 'generated_at' => now(),
-                'status' => 'generated',
             ]
         );
 
@@ -94,7 +95,7 @@ class PayslipService
         // Debug: Log the data being passed to the template
         \Log::info('Payslip PDF Data:', $data);
 
-        $pdf = Pdf::loadView('payslips.template', $data)
+        $pdf = Pdf::loadView('PDF-Templates.payslip', $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
@@ -205,8 +206,12 @@ class PayslipService
      */
     protected function storePayslipPDF($pdf, string $filename): string
     {
-        $path = "payslips/{$filename}";
+        // Store in temp folder for temporary access
+        $path = "temp/payslips/{$filename}";
         Storage::disk('public')->put($path, $pdf->output());
+
+        // Schedule cleanup after 24 hours
+        $this->scheduleTempFileCleanup($path);
 
         return $path;
     }
@@ -214,7 +219,7 @@ class PayslipService
     /**
      * Send payslip via email
      */
-    public function sendPayslipEmail(Payslip $payslip, string $subject = null, string $message = null): bool
+    public function sendPayslipEmail(Payslip $payslip, ?string $subject = null, ?string $message = null): bool
     {
         try {
             $employee = $payslip->payroll->employee;
@@ -308,5 +313,52 @@ class PayslipService
 
         // Generate new PDF
         return $this->generatePayslip($payroll);
+    }
+
+    /**
+     * Schedule cleanup of temp file after 24 hours
+     */
+    protected function scheduleTempFileCleanup(string $filePath): void
+    {
+        // Use Laravel's queue to schedule cleanup
+        \Illuminate\Support\Facades\Queue::later(
+            now()->addDay(),
+            new \App\Jobs\DeleteTempPayslipFile($filePath)
+        );
+    }
+
+    /**
+     * Check if payslip file exists, regenerate if not
+     */
+    public function ensurePayslipFileExists(Payslip $payslip): string
+    {
+        if (Storage::disk('public')->exists($payslip->file_path)) {
+            return $payslip->file_path;
+        }
+
+        // File doesn't exist, regenerate it
+        $regeneratedPayslip = $this->regeneratePayslip($payslip);
+
+        return $regeneratedPayslip->file_path;
+    }
+
+    /**
+     * Clean up old temp files (can be called by a scheduled job)
+     */
+    public function cleanupOldTempFiles(int $daysOld = 1): int
+    {
+        $tempPath = 'temp/payslips';
+        $files = Storage::disk('public')->files($tempPath);
+        $deletedCount = 0;
+
+        foreach ($files as $file) {
+            $filePath = storage_path('app/public/' . $file);
+            if (file_exists($filePath) && filemtime($filePath) < now()->subDays($daysOld)->timestamp) {
+                Storage::disk('public')->delete($file);
+                $deletedCount++;
+            }
+        }
+
+        return $deletedCount;
     }
 }
