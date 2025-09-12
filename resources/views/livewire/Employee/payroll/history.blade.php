@@ -3,6 +3,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use App\Models\Payroll;
 use App\Models\Employee;
+use App\Models\PayrollAllowance;
+use App\Models\PayrollDeduction;
 use Livewire\WithPagination;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -26,10 +28,29 @@ new #[Layout('components.layouts.app')] class extends Component {
     public bool $selectAll = false;
     public bool $showBulkDeleteModal = false;
     public bool $editing = true;
+    public string $search = '';
+    public bool $showFilters = false;
 
-    public function mount($employeeId): void
+    public function mount(): void
     {
-        $this->employee = Employee::findOrFail($employeeId);
+        // Get the authenticated user
+        $user = auth()->user();
+
+        if (!$user) {
+            abort(403, 'Unauthorized access. Please log in to view payroll history.');
+        }
+
+        // Find the employee record for the current user
+        $this->employee = Employee::where('user_id', $user->id)->first();
+
+        if (!$this->employee) {
+            abort(404, 'Employee record not found. Please contact HR for assistance.');
+        }
+
+        // Additional authorization check using policy
+        if (!$user->can('viewPayrollHistory', $this->employee)) {
+            abort(403, 'Access denied. You do not have permission to view this payroll history.');
+        }
     }
 
     public function sortBy($field)
@@ -55,9 +76,21 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->selectedPayroll = null;
     }
 
+    public function toggleFilters(): void
+    {
+        $this->showFilters = !$this->showFilters;
+    }
+
     public function getPayrollsProperty()
     {
         $query = $this->employee->payrolls();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('payroll_period', 'like', '%' . $this->search . '%')
+                  ->orWhere('status', 'like', '%' . $this->search . '%');
+            });
+        }
 
         if ($this->selectedPeriod) {
             $query->where('payroll_period', $this->selectedPeriod);
@@ -82,6 +115,40 @@ new #[Layout('components.layouts.app')] class extends Component {
             ->pluck('payroll_period');
     }
 
+    public function getActiveAllowancesProperty()
+    {
+        return PayrollAllowance::where('employee_id', $this->employee->id)
+            ->where('status', 'active')
+            ->where('effective_date', '<=', now())
+            ->where(function($query) {
+                $query->where('end_date', '>=', now())
+                      ->orWhereNull('end_date');
+            })
+            ->get();
+    }
+
+    public function getActiveDeductionsProperty()
+    {
+        return PayrollDeduction::where('employee_id', $this->employee->id)
+            ->where('status', 'active')
+            ->where('effective_date', '<=', now())
+            ->where(function($query) {
+                $query->where('end_date', '>=', now())
+                      ->orWhereNull('end_date');
+            })
+            ->get();
+    }
+
+    public function getPayrollAllowances($payrollId)
+    {
+        return PayrollAllowance::where('payroll_id', $payrollId)->get();
+    }
+
+    public function getPayrollDeductions($payrollId)
+    {
+        return PayrollDeduction::where('payroll_id', $payrollId)->get();
+    }
+
     public function updatedSelectedPeriod(): void
     {
         $this->isFiltering = true;
@@ -96,6 +163,14 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->resetPage();
         $this->updateSelectAllState();
         $this->isFiltering = false;
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->isSearching = true;
+        $this->resetPage();
+        $this->updateSelectAllState();
+        $this->isSearching = false;
     }
 
     public function updatedPage(): void
@@ -146,6 +221,13 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function selectAllData(): void
     {
         $query = $this->employee->payrolls();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('payroll_period', 'like', '%' . $this->search . '%')
+                  ->orWhere('status', 'like', '%' . $this->search . '%');
+            });
+        }
 
         if ($this->selectedPeriod) {
             $query->where('payroll_period', $this->selectedPeriod);
@@ -216,6 +298,13 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         $this->isLoadingExport = true;
         $query = $this->employee->payrolls()->with(['employee.user', 'payslips']);
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('payroll_period', 'like', '%' . $this->search . '%')
+                  ->orWhere('status', 'like', '%' . $this->search . '%');
+            });
+        }
 
         if ($this->selectedPeriod) {
             $query->where('payroll_period', $this->selectedPeriod);
@@ -323,7 +412,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" 
                         class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 border
-                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
+                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
                     <flux:icon name="ellipsis-vertical" variant="solid" class="w-5 h-5" />
                 </button>
                 
@@ -363,8 +452,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Payslips') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll.history', $employee->id) }}" 
-                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                        <a href="{{ route('employee.payroll-history', $employee->id) }}" 
+                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -379,96 +468,119 @@ new #[Layout('components.layouts.app')] class extends Component {
     <!-- Main Content Card -->
     <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <!-- Header with Icon -->
-        <div class="flex items-center gap-3 mb-8">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        <div class="flex justify-between mb-8 items-center">
+            <div class="flex items-center">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
             </svg>
-            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-green-500 tracking-tight drop-shadow-lg relative inline-block">
-                {{ __('Payroll History') }}
-                <span class="absolute -bottom-2 left-0 w-[140px] h-1 rounded-full bg-gradient-to-r from-blue-800 via-blue-500 to-green-500"></span>
+            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
+                {{ __('Allowances for') }} {{ $employee->user->first_name }}
+                <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
             </h2>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex items-center justify-between mb-6 gap-4">
-            <div class="flex items-center gap-3">
-                <!-- No create button for history as it's read-only -->
             </div>
+
             <div class="flex items-center gap-3">
-                <button type="button" wire:click="exportAll"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                    @if ($isLoadingExport) disabled @endif>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <span class="hidden lg:inline">
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                    </span>
-                </button>
+                @can('export_payroll')
+                    <button type="button" wire:click="exportAll"
+                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                        @if ($isLoadingExport) disabled @endif>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="hidden lg:inline">
+                            {{ __('Export All') }}
+                        </span>
+                    </button>
+                @endcan
             </div>
         </div>
 
-        <!-- Filters -->
+        <!-- Search and Filters -->
         <div class="flex flex-wrap gap-6 items-center mb-6">
+            <div class="relative w-80">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                </svg>
+            </span>
+            <input type="text" wire:model.live.debounce.300ms="search"
+                class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                placeholder="{{ __('Search payroll records...') }}">
+            </div>
+            
+            <button type="button" wire:click="toggleFilters"
+            class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"></path>
+            </svg>
+            <span class="hidden lg:inline">{{ __('Filters') }}</span>
+            </button>
+        </div>
+
+        <!-- Advanced Filters -->
+        @if ($showFilters)
+        <div class="flex flex-wrap gap-6 mt-6 items-center animate-fade-in">
             <select wire:model.live="selectedPeriod"
-                class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-blue-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                <option value="">{{ __('All Periods') }}</option>
-                @foreach($this->payrollPeriods as $period)
-                <option value="{{ $period }}">{{ $period }}</option>
-                @endforeach
+            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+            <option value="">{{ __('All Periods') }}</option>
+            @foreach($this->payrollPeriods as $period)
+            <option value="{{ $period }}">{{ $period }}</option>
+            @endforeach
             </select>
 
             <select wire:model.live="selectedStatus"
-                class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-blue-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                <option value="">{{ __('All Status') }}</option>
-                <option value="pending">{{ __('Pending') }}</option>
-                <option value="processed">{{ __('Processed') }}</option>
-                <option value="paid">{{ __('Paid') }}</option>
+            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+            <option value="">{{ __('All Status') }}</option>
+            <option value="pending">{{ __('Pending') }}</option>
+            <option value="processed">{{ __('Processed') }}</option>
+            <option value="paid">{{ __('Paid') }}</option>
             </select>
 
             <select wire:model.live="perPage"
-                class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-blue-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
+            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
             </select>
         </div>
+        @endif
 
         @if (count($selected) > 0)
-            <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-green-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
-                <div class="flex items-center gap-2 py-2">
-                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
-                        {{ count($selected) }} {{ __('item(s) selected') }}
-                    </span>
-                    @if(count($selected) < ($this->payrolls ? $this->payrolls->total() : 0))
-                        <button type="button" wire:click="selectAllData"
-                            class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                            {{ __('Select all') }} {{ $this->payrolls ? $this->payrolls->total() : 0 }} {{ __('items') }}
-                        </button>
-                    @endif
-                </div>
-                <div class="flex items-center gap-3">
-                    <button type="button" wire:click="exportSelected"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                        @if ($isLoadingExport) disabled @endif>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                    </button>
-                    <button type="button" wire:click="bulkDeleteConfirm"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        {{ __('Delete Selected') }}
-                    </button>
-                </div>
+            <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
+            <div class="flex items-center gap-2 py-2">
+                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                {{ count($selected) }} {{ __('item(s) selected') }}
+                </span>
+                @if(count($selected) < ($this->payrolls ? $this->payrolls->total() : 0))
+                <button type="button" wire:click="selectAllData"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    {{ __('Select all') }} {{ $this->payrolls ? $this->payrolls->total() : 0 }} {{ __('items') }}
+                </button>
+                @endif
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="exportSelected"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                @if ($isLoadingExport) disabled @endif>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
+                </button>
+                <button type="button" wire:click="bulkDeleteConfirm"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                {{ __('Delete Selected') }}
+                </button>
+            </div>
             </div>
         @endif
 
         <!-- Table -->
-        <div class="overflow-x-auto bg-transparent">
+        <div class="overflow-x-auto bg-transparent mt-6">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                 <thead>
                     <tr class="h-16 bg-zinc-800/5 dark:bg-white/10 text-zinc-600 dark:text-white/70">
@@ -595,22 +707,34 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             <span class="text-blue-600 dark:text-blue-400">
-                                KES {{ number_format($payroll->basic_salary, 2) }}
+                                USD {{ number_format($payroll->basic_salary, 2) }}
                             </span>
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             <span class="text-green-600 dark:text-green-400">
-                                +KES {{ number_format($payroll->total_allowances, 2) }}
+                                @if($payroll->status === 'draft')
+                                    {{ __('Draft') }}
+                                @else
+                                    +USD {{ number_format($payroll->total_allowances, 2) }}
+                                @endif
                             </span>
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             <span class="text-red-600 dark:text-red-400">
-                                -KES {{ number_format($payroll->total_deductions, 2) }}
+                                @if($payroll->status === 'draft')
+                                    {{ __('Draft') }}
+                                @else
+                                    -USD {{ number_format($payroll->total_deductions, 2) }}
+                                @endif
                             </span>
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-bold">
                             <span class="text-lg text-green-600 dark:text-green-400">
-                                KES {{ number_format($payroll->net_pay, 2) }}
+                                @if($payroll->status === 'draft')
+                                    {{ __('Draft') }}
+                                @else
+                                    USD {{ number_format($payroll->net_pay, 2) }}
+                                @endif
                             </span>
                         </td>
                         <td class="px-4 py-4">
@@ -626,13 +750,78 @@ new #[Layout('components.layouts.app')] class extends Component {
                             </span>
                         </td>
                         <td class="px-4 py-4">
-                            <button wire:click="viewPayrollDetails({{ $payroll->id }})"
-                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                            </button>
+                            <div class="flex items-center gap-2 py-2">
+                                <flux:button
+                                    wire:click="viewPayrollDetails({{ $payroll->id }})"
+                                    variant="primary"
+                                    color="green"
+                                    size="sm"
+                                    icon="eye"
+                                    title="{{ __('View Payroll Details') }}"
+                                />
+
+                                @can('edit_payroll')
+                                    @if($payroll->status !== 'paid')
+                                    <flux:button
+                                        wire:click="confirmEdit({{ $payroll->id }})"
+                                        variant="primary"
+                                        color="blue"
+                                        size="sm"
+                                        icon="pencil-square"
+                                        title="{{ __('Edit Payroll') }}"
+                                    />
+                                    @else
+                                    <flux:button
+                                        disabled
+                                        variant="primary"
+                                        color="gray"
+                                        size="sm"
+                                        icon="pencil-square"
+                                        title="{{ __('Cannot edit paid payroll') }}"
+                                    />
+                                    @endif
+                                @else
+                                <flux:button
+                                    disabled
+                                    variant="primary"
+                                    color="gray"
+                                    size="sm"
+                                    icon="pencil-square"
+                                    title="{{ __('No permission to edit payroll') }}"
+                                />
+                                @endcan
+
+                                @can('delete_payroll')
+                                    @if($payroll->status !== 'paid')
+                                    <flux:button
+                                        wire:click="confirmDelete({{ $payroll->id }})"
+                                        variant="danger"
+                                        color="red"
+                                        size="sm"
+                                        icon="trash"
+                                        title="{{ __('Delete Payroll') }}"
+                                    />
+                                    @else
+                                    <flux:button
+                                        disabled
+                                        variant="danger"
+                                        color="gray"
+                                        size="sm"
+                                        icon="trash"
+                                        title="{{ __('Cannot delete paid payroll') }}"
+                                    />
+                                    @endif
+                                @else
+                                <flux:button
+                                    disabled
+                                    variant="primary"
+                                    color="gray"
+                                    size="sm"
+                                    icon="trash"
+                                    title="{{ __('No permission to delete payroll') }}"
+                                />
+                                @endcan
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -660,8 +849,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <!-- Payroll Details Modal -->
     @if($showDetailsModal && $selectedPayroll)
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-        <div class="relative p-8 border shadow-2xl rounded-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl w-full max-w-2xl border-blue-100 dark:border-zinc-700">
+    <div class="fixed inset-0 z-50 flex items-start overflow-y-auto lg:py-8 justify-center bg-black/40 backdrop-blur-sm transition">
+        <div class="bg-white dark:bg-zinc-900 backdrop-blur-xl rounded-2xl shadow-2xl p-8 max-w-4xl w-full border border-gray-100 dark:border-zinc-800">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -675,67 +864,257 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </svg>
                 </button>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Basic Information -->
-                <div class="space-y-4">
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                        {{ __('Basic Information') }}
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Period') }}:</span>
-                            <span class="font-medium text-gray-900 dark:text-white">{{ $selectedPayroll->payroll_period }}</span>
+
+            <div class="space-y-6">
+                <!-- Employee Info -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                    <h4 class="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">{{ __('Employee Information') }}</h4>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Pay Date') }}:</span>
-                            <span class="font-medium text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($selectedPayroll->pay_date)->format('M d, Y') }}</span>
+                        <div>
+                            <p class="font-semibold text-blue-900 dark:text-blue-100">
+                                {{ $selectedPayroll->employee->user->first_name }} {{ $selectedPayroll->employee->user->other_names }}
+                            </p>
+                            <p class="text-sm text-blue-700 dark:text-blue-300">
+                                {{ __('Staff Number') }}: {{ $selectedPayroll->employee->staff_number }}
+                            </p>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Status') }}:</span>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                @if($selectedPayroll->status === 'paid')
-                                    bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
-                                @elseif($selectedPayroll->status === 'processed')
-                                    bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
-                                @else
-                                    bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
-                                @endif">
-                                {{ ucfirst($selectedPayroll->status) }}
-                            </span>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Payroll Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{ __('Period') }}</h4>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                            {{ $selectedPayroll->payroll_period }}
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{ __('Pay Date') }}</h4>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                            {{ \Carbon\Carbon::parse($selectedPayroll->pay_date)->format('M d, Y') }}
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{ __('Status') }}</h4>
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full
+                            @if($selectedPayroll->status === 'paid')
+                                bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                            @elseif($selectedPayroll->status === 'processed')
+                                bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                            @else
+                                bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                            @endif">
+                            {{ ucfirst($selectedPayroll->status) }}
+                        </span>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                        <h4 class="text-sm font-medium text-green-700 dark:text-green-300 mb-2">{{ __('Net Pay') }}</h4>
+                        <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                            USD {{ number_format($selectedPayroll->net_pay, 2) }}
+                        </p>
                     </div>
                 </div>
 
                 <!-- Salary Breakdown -->
-                <div class="space-y-4">
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                        {{ __('Salary Breakdown') }}
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}:</span>
-                            <span class="font-medium text-blue-600 dark:text-blue-400">KES {{ number_format($selectedPayroll->basic_salary, 2) }}</span>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Earnings -->
+                    <div class="bg-white dark:bg-zinc-800/50 rounded-xl p-6 border border-gray-200 dark:border-zinc-700">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                            {{ __('Earnings') }}
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}</span>
+                                <span class="font-semibold text-blue-600 dark:text-blue-400">USD {{ number_format($selectedPayroll->basic_salary, 2) }}</span>
+                            </div>
+
+                            @if($selectedPayroll->house_allowance > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('House Allowance') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->house_allowance, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->transport_allowance > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Transport Allowance') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->transport_allowance, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->medical_allowance > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Medical Allowance') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->medical_allowance, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->other_allowances > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Other Allowances') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->other_allowances, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->overtime_amount > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Overtime') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->overtime_amount, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->bonus_amount > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Bonus') }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->bonus_amount, 2) }}</span>
+                            </div>
+                            @endif
+
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ __('Gross Pay') }}</span>
+                                    <span class="font-bold text-lg text-purple-600 dark:text-purple-400">USD {{ number_format($selectedPayroll->gross_pay, 2) }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Total Allowances') }}:</span>
-                            <span class="font-medium text-green-600 dark:text-green-400">+KES {{ number_format($selectedPayroll->total_allowances, 2) }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">{{ __('Total Deductions') }}:</span>
-                            <span class="font-medium text-red-600 dark:text-red-400">-KES {{ number_format($selectedPayroll->total_deductions, 2) }}</span>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
-                            <div class="flex justify-between">
-                                <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Net Pay') }}:</span>
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400">KES {{ number_format($selectedPayroll->net_pay, 2) }}</span>
+                    </div>
+
+                    <!-- Deductions -->
+                    <div class="bg-white dark:bg-zinc-800/50 rounded-xl p-6 border border-gray-200 dark:border-zinc-700">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-5v2m0 0v2m0-2h2m-2 0h-2"></path>
+                            </svg>
+                            {{ __('Deductions') }}
+                        </h4>
+                        <div class="space-y-3">
+                            @if($selectedPayroll->paye_tax > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('PAYE Tax') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->paye_tax, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->nhif_deduction > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('NHIF') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->nhif_deduction, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->nssf_deduction > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('NSSF') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->nssf_deduction, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->insurance_deduction > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Insurance') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->insurance_deduction, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->loan_deduction > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Loan Deduction') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->loan_deduction, 2) }}</span>
+                            </div>
+                            @endif
+
+                            @if($selectedPayroll->other_deductions > 0)
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Other Deductions') }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->other_deductions, 2) }}</span>
+                            </div>
+                            @endif
+
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ __('Total Deductions') }}</span>
+                                    <span class="font-bold text-lg text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->total_deductions, 2) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex justify-end mt-8">
+                <!-- Allowances/Deductions Details -->
+                @if($selectedPayroll->status !== 'draft')
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Linked Allowances -->
+                    <div class="bg-white dark:bg-zinc-800/50 rounded-xl p-6 border border-gray-200 dark:border-zinc-700">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ __('Linked Allowances') }}
+                        </h4>
+                        @php
+                            $linkedAllowances = $this->getPayrollAllowances($selectedPayroll->id);
+                        @endphp
+                        @if($linkedAllowances->count() > 0)
+                            <div class="space-y-3">
+                                @foreach($linkedAllowances as $allowance)
+                                    <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                        <div>
+                                            <span class="font-medium text-green-900 dark:text-green-100">{{ $allowance->allowance_type }}</span>
+                                            <span class="text-sm text-green-700 dark:text-green-300 ml-2">({{ $allowance->description }})</span>
+                                        </div>
+                                        <span class="font-semibold text-green-600 dark:text-green-400">USD {{ number_format($allowance->amount, 2) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-gray-600 dark:text-gray-400 text-center py-4">{{ __('No allowances linked to this payroll.') }}</p>
+                        @endif
+                    </div>
+
+                    <!-- Linked Deductions -->
+                    <div class="bg-white dark:bg-zinc-800/50 rounded-xl p-6 border border-gray-200 dark:border-zinc-700">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-5v2m0 0v2m0-2h2m-2 0h-2"></path>
+                            </svg>
+                            {{ __('Linked Deductions') }}
+                        </h4>
+                        @php
+                            $linkedDeductions = $this->getPayrollDeductions($selectedPayroll->id);
+                        @endphp
+                        @if($linkedDeductions->count() > 0)
+                            <div class="space-y-3">
+                                @foreach($linkedDeductions as $deduction)
+                                    <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                        <div>
+                                            <span class="font-medium text-red-900 dark:text-red-100">{{ $deduction->deduction_type }}</span>
+                                            <span class="text-sm text-red-700 dark:text-red-300 ml-2">({{ $deduction->description }})</span>
+                                        </div>
+                                        <span class="font-semibold text-red-600 dark:text-red-400">USD {{ number_format($deduction->amount, 2) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-gray-600 dark:text-gray-400 text-center py-4">{{ __('No deductions linked to this payroll.') }}</p>
+                        @endif
+                    </div>
+                </div>
+                @endif
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button wire:click="closeDetailsModal"
                         class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
                     {{ __('Close') }}
@@ -762,21 +1141,31 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </svg>
                 </button>
             </div>
-            
+
             <div class="mb-6">
-                <p class="text-gray-600 dark:text-gray-400">
-                    {{ __('Are you sure you want to delete') }} <strong>{{ count($this->selected) }}</strong> {{ __('selected payroll records? This action cannot be undone.') }}
-                </p>
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-red-800 dark:text-red-200 font-medium">{{ __('Warning') }}</p>
+                            <p class="text-red-700 dark:text-red-300 text-sm mt-1">
+                                {{ __('Are you sure you want to delete') }} <strong>{{ count($this->selected) }}</strong> {{ __('selected payroll records? This action cannot be undone.') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end gap-4">
                 <button wire:click="$set('showBulkDeleteModal', false)"
-                        class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
+                        class="px-6 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-800 dark:text-white rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
                     {{ __('Cancel') }}
                 </button>
                 <button wire:click="bulkDelete"
                         wire:loading.attr="disabled"
-                        class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="px-6 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     <span wire:loading.remove>{{ __('Delete Selected') }}</span>
                     <span wire:loading class="flex items-center gap-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
