@@ -62,7 +62,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function openCreateModal(): void
     {
-        $this->redirectRoute('employee.payroll.allowances.create', ['employeeId' => $this->employee->id]);
+        $this->redirectRoute('employee.payroll.allowances.create', ['employeeId' => $this->employee->id], navigate: true);
     }
 
     public function closeCreateModal(): void
@@ -208,7 +208,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $allowance = PayrollAllowance::findOrFail($this->pendingEditId);
         $this->showEditModal = false;
         $this->isLoadingEdit = false;
-        $this->redirectRoute('employee.payroll.allowances.edit', ['employeeId' => $this->employee->id, 'allowanceId' => $allowance->id]);
+        $this->redirectRoute('employee.payroll.allowances.edit', ['employeeId' => $this->employee->id, 'allowanceId' => $allowance->id], navigate: true);
     }
 
     public function viewConfirmed(): void
@@ -217,7 +217,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $allowance = PayrollAllowance::findOrFail($this->pendingViewId);
         $this->showViewModal = false;
         $this->isLoadingView = false;
-        $this->redirectRoute('employee.allowance.view', ['employeeId' => $this->employee->id, 'allowanceId' => $allowance->id]);
+        $this->redirectRoute('employee.allowance.view', ['employeeId' => $this->employee->id, 'allowanceId' => $allowance->id], navigate: true);
     }
 
     public function confirmReactivate($allowanceId): void
@@ -529,7 +529,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" 
                         class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 border
-                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
+                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
                     <flux:icon name="ellipsis-vertical" variant="solid" class="w-5 h-5" />
                 </button>
                 
@@ -569,8 +569,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Payslips') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll.history', $employee->id) }}" 
-                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                        <a href="{{ route('employee.payroll-history') }}" 
+                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -817,7 +817,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-semibold">
                             <span class="text-green-600 dark:text-green-400">
-                                KES {{ number_format($allowance->amount, 2) }}
+                                USD {{ number_format($allowance->amount, 2) }}
                             </span>
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white">
@@ -848,7 +848,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     color="blue"
                                     size="sm"
                                     icon="pencil-square"
-                                    title="{{ __('Edit Allowance') }}"
+                                    title="{{ __('Edit') }}"
                                 />
                                 @else
                                 <flux:button
@@ -1030,7 +1030,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div class="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
                         <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{ __('Amount') }}</h4>
                         <p class="text-lg font-semibold text-green-600 dark:text-green-400">
-                            KES {{ number_format($viewAllowance->amount, 2) }}
+                            USD {{ number_format($viewAllowance->amount, 2) }}
                         </p>
                     </div>
 
@@ -1110,7 +1110,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <button wire:click="editConfirmed"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                     @if ($isLoadingEdit) disabled @endif>
-                    {{ $isLoadingEdit ? __('Loading...') : __('Edit Allowance') }}
+                    {{ $isLoadingEdit ? __('Loading...') : __('Edit') }}
                 </button>
                 <button wire:click="$set('showEditModal', false)"
                     class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">

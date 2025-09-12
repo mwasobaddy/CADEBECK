@@ -185,7 +185,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->processing = false;
 
             if ($result['success']) {
-                // Send notifications to all processed employees
+                // Send notifications to all processed employees synchronously
                 $processedPayrolls = Payroll::with(['employee.user'])
                     ->where('payroll_period', $this->selectedPeriod)
                     ->where('status', 'processed')
@@ -197,8 +197,33 @@ new #[Layout('components.layouts.app')] class extends Component {
                 foreach ($processedPayrolls as $payroll) {
                     try {
                         if ($payroll->employee && $payroll->employee->user && $payroll->employee->user->email) {
-                            $payroll->employee->notify(new PayrollProcessedNotification($payroll));
+                            // Create database notification first (always succeeds)
+                            \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                                'id' => \Illuminate\Support\Str::uuid(),
+                                'type' => 'App\\Notifications\\PayrollProcessedNotification',
+                                'notifiable_type' => 'App\\Models\\User',
+                                'notifiable_id' => $payroll->employee->user->id,
+                                'data' => json_encode([
+                                    'payroll_id' => $payroll->id,
+                                    'payroll_period' => $payroll->payroll_period,
+                                    'subject' => 'Payroll Processing Completed',
+                                    'message' => 'Your payroll for ' . $payroll->payroll_period . ' has been processed and is ready for review.',
+                                    'type' => 'payroll_processed',
+                                    'action_url' => route('employee.payroll-history'),
+                                ]),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+
+                            // Send email notification synchronously (notify the related User)
+                            $payroll->employee->user->notify(new PayrollProcessedNotification($payroll));
+
                             $notificationCount++;
+
+                            // Add delay to avoid Mailtrap rate limiting (2 seconds between emails)
+                            if ($notificationCount < $processedPayrolls->count()) {
+                                sleep(2);
+                            }
                         } else {
                             \Log::warning('Employee missing user or email', [
                                 'employee_id' => $payroll->employee->id ?? null,
@@ -219,7 +244,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
                 $this->dispatch('notify', [
                     'type' => 'success',
-                    'message' => "Payroll processed successfully! {$result['processed_count']} employees processed, {$notificationCount} notified, {$notificationErrors} errors."
+                    'message' => "Payroll processed successfully! {$result['processed_count']} employees processed, {$notificationCount} notifications sent, {$notificationErrors} errors."
                 ]);
             } else {
                 $this->dispatch('notify', [
@@ -240,7 +265,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         if (empty($this->selected)) {
             $this->dispatch('notify', [
-                'type' => 'warning',
+                'type' => 'error',
                 'message' => 'Please select payrolls first.'
             ]);
             return;
@@ -256,50 +281,157 @@ new #[Layout('components.layouts.app')] class extends Component {
             return;
         }
 
-        $payrolls = Payroll::whereIn('id', $this->selected)->get();
+        $payrolls = Payroll::with(['employee.user', 'employee.department', 'employee.designation'])
+            ->whereIn('id', $this->selected)
+            ->get();
         $payrollService = app(PayrollProcessingService::class);
 
         switch ($this->bulkAction) {
             case 'approve':
-                $result = $payrollService->bulkApprovePayrolls($payrolls, Auth::user());
+                // Only process payrolls with 'draft' status
+                $filteredPayrolls = $payrolls->where('status', 'draft');
+                if ($filteredPayrolls->isEmpty()) {
+                    $this->dispatch('notify', [
+                        'type' => 'error',
+                        'message' => 'No draft payrolls found in selection. Only draft payrolls can be approved.'
+                    ]);
+                    $this->showBulkActionsModal = false;
+                    $this->selected = [];
+                    $this->selectAll = false;
+                    $this->updateSelectAllState();
+                    return;
+                }
+
+                $result = $payrollService->bulkApprovePayrolls($filteredPayrolls, Auth::user());
                 if ($result['approved_count'] > 0) {
                     $this->dispatch('notify', [
                         'type' => 'success',
-                        'message' => "{$result['approved_count']} payrolls approved successfully."
+                        'message' => "{$result['approved_count']} payrolls approved successfully. {$result['notifications_sent']} notifications sent."
                     ]);
                 }
                 break;
 
             case 'mark_paid':
-                $result = $payrollService->bulkMarkAsPaid($payrolls);
-                if ($result['paid_count'] > 0) {
+                // Only process payrolls with 'processed' status
+                $filteredPayrolls = $payrolls->filter(function($payroll) {
+                    return $payroll->status === 'processed';
+                });
+
+                // Debug: Log the statuses of selected payrolls
+                \Log::info('Bulk mark as paid - Selected payrolls', [
+                    'selected_ids' => $this->selected,
+                    'payroll_statuses' => $payrolls->map(function($p) {
+                        return ['id' => $p->id, 'status' => $p->status];
+                    })->toArray(),
+                    'filtered_count' => $filteredPayrolls->count()
+                ]);
+
+                if ($filteredPayrolls->isEmpty()) {
                     $this->dispatch('notify', [
-                        'type' => 'success',
-                        'message' => "{$result['paid_count']} payrolls marked as paid and payslips generated."
+                        'type' => 'error',
+                        'message' => 'No processed payrolls found in selection. Only processed payrolls can be marked as paid.'
+                    ]);
+                    $this->showBulkActionsModal = false;
+                    $this->selected = [];
+                    $this->selectAll = false;
+                    $this->updateSelectAllState();
+                    return;
+                }
+
+                try {
+                    $result = $payrollService->bulkMarkAsPaid($filteredPayrolls);
+
+                    if ($result['paid_count'] > 0) {
+                        $message = "{$result['paid_count']} payrolls marked as paid, payslips generated.";
+                        if ($result['notifications_sent'] > 0) {
+                            $message .= " {$result['notifications_sent']} rich email notifications sent.";
+                        }
+                        if ($result['notification_errors'] > 0) {
+                            $message .= " {$result['notification_errors']} notification errors.";
+                        }
+
+                        $this->dispatch('notify', [
+                            'type' => 'success',
+                            'message' => $message
+                        ]);
+                    }
+
+                    if ($result['error_count'] > 0) {
+                        $errorMessage = "{$result['error_count']} payrolls failed to be marked as paid.";
+                        if (!empty($result['errors'])) {
+                            $errorDetails = collect($result['errors'])->pluck('error')->join('; ');
+                            $errorMessage .= " Errors: " . $errorDetails;
+                        }
+
+                        $this->dispatch('notify', [
+                            'type' => 'error',
+                            'message' => $errorMessage
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    $this->dispatch('notify', [
+                        'type' => 'error',
+                        'message' => 'Error marking payrolls as paid: ' . $e->getMessage()
                     ]);
                 }
                 break;
 
             case 'send_payslips':
-                $payslipService = app(PayslipService::class);
                 $sent = 0;
                 $failed = 0;
 
                 foreach ($payrolls as $payroll) {
-                    if ($payroll->payslip) {
-                        $result = $payslipService->sendPayslipEmail($payroll->payslip);
-                        if ($result) {
-                            $sent++;
-                        } else {
+                    if ($payroll->payslip && $payroll->employee && $payroll->employee->user && $payroll->employee->user->email) {
+                        try {
+                            // Create database notification first (always succeeds)
+                            \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                                'id' => \Illuminate\Support\Str::uuid(),
+                                'type' => 'App\\Notifications\\PayslipNotification',
+                                'notifiable_type' => 'App\\Models\\User',
+                                'notifiable_id' => $payroll->employee->user->id,
+                                'data' => json_encode([
+                                    'payslip_id' => $payroll->payslip->id,
+                                    'payroll_period' => $payroll->payroll_period,
+                                    'subject' => 'Your Payslip is Ready',
+                                    'message' => 'Your payslip for ' . $payroll->payroll_period . ' is now available for download.',
+                                    'type' => 'payslip_generated',
+                                    'action_url' => route('employee.payroll-history'),
+                                ]),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+
+                        // Send email notification synchronously
+                        $payroll->employee->user->notify(new \App\Notifications\PayslipNotification(
+                            $payroll->payslip,
+                            'Your Payslip is Ready',
+                            'Your payslip for ' . $payroll->payroll_period . ' is now available for download.'
+                        ));
+
+                        $sent++;
+                        } catch (\Exception $e) {
+                            \Log::warning('Failed to queue payslip notification', [
+                                'payroll_id' => $payroll->id,
+                                'employee_id' => $payroll->employee->id ?? null,
+                                'error' => $e->getMessage()
+                            ]);
                             $failed++;
                         }
+                    } else {
+                        $failed++;
                     }
                 }
 
                 if ($sent > 0) {
                     $this->dispatch('notify', [
                         'type' => 'success',
-                        'message' => "{$sent} payslips sent successfully."
+                        'message' => "{$sent} payslip notifications sent successfully."
+                    ]);
+                }
+                if ($failed > 0) {
+                    $this->dispatch('notify', [
+                        'type' => 'warning',
+                        'message' => "{$failed} payslip notifications failed to queue."
                     ]);
                 }
                 break;
@@ -350,15 +482,13 @@ new #[Layout('components.layouts.app')] class extends Component {
             abort(403, 'Access denied. Only payroll administrators can download payslips.');
         }
 
-        if (Storage::disk('public')->exists($payslip->file_path)) {
-            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
-        }
-
         $payslipService = app(PayslipService::class);
-        $newPayslip = $payslipService->regeneratePayslip($payslip);
 
-        if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
-            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
+        // Ensure payslip file exists (will regenerate if deleted)
+        $filePath = $payslipService->ensurePayslipFileExists($payslip);
+
+        if (Storage::disk('public')->exists($filePath)) {
+            return response()->download(storage_path('app/public/' . $filePath), $payslip->file_name);
         }
 
         $this->dispatch('notify', [
@@ -374,8 +504,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         $csvData = "Employee Number,Employee Name,Period,Gross Pay,Net Pay,Status\n";
         foreach ($payrolls as $payroll) {
-            $csvData .= '"' . $payroll->employee->staff_number . '","' .
-                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->other_names) . '","' .
+            $csvData .= '"' . ($payroll->employee ? $payroll->employee->staff_number : 'N/A') . '","' .
+                       str_replace('"', '""', ($payroll->employee ? $payroll->employee->first_name . ' ' . $payroll->employee->other_names : 'N/A')) . '","' .
                        $payroll->payroll_period . '","' .
                        $payroll->gross_pay . '","' .
                        $payroll->net_pay . '","' .
@@ -410,8 +540,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         $csvData = "Employee Number,Employee Name,Period,Gross Pay,Net Pay,Status\n";
         foreach ($payrolls as $payroll) {
-            $csvData .= '"' . $payroll->employee->staff_number . '","' .
-                       str_replace('"', '""', $payroll->employee->first_name . ' ' . $payroll->employee->other_names) . '","' .
+            $csvData .= '"' . ($payroll->employee ? $payroll->employee->staff_number : 'N/A') . '","' .
+                       str_replace('"', '""', ($payroll->employee ? $payroll->employee->first_name . ' ' . $payroll->employee->other_names : 'N/A')) . '","' .
                        $payroll->payroll_period . '","' .
                        $payroll->gross_pay . '","' .
                        $payroll->net_pay . '","' .
@@ -519,15 +649,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="text-sm text-blue-600">{{ __('Employees') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600">KES {{ number_format($this->payrollSummary['total_gross_pay'], 2) }}</div>
+                        <div class="text-2xl font-bold text-green-600">USD {{ number_format($this->payrollSummary['total_gross_pay'], 2) }}</div>
                         <div class="text-sm text-green-600">{{ __('Total Gross Pay') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-red-600">KES {{ number_format($this->payrollSummary['total_deductions'], 2) }}</div>
+                        <div class="text-2xl font-bold text-red-600">USD {{ number_format($this->payrollSummary['total_deductions'], 2) }}</div>
                         <div class="text-sm text-red-600">{{ __('Total Deductions') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-purple-600">KES {{ number_format($this->payrollSummary['total_net_pay'], 2) }}</div>
+                        <div class="text-2xl font-bold text-purple-600">USD {{ number_format($this->payrollSummary['total_net_pay'], 2) }}</div>
                         <div class="text-sm text-purple-600">{{ __('Total Net Pay') }}</div>
                     </div>
                 </div>
@@ -620,8 +750,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 {{ __('Select all') }} {{ $this->payrolls ? $this->payrolls->total() : 0 }} {{ __('items') }}
                             </button>
                         @endif
+                        <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                            </svg>
+                            Actions apply only to eligible statuses
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap mt-2 md:mt-0">
                         <button type="button" wire:click="exportSelected"
                             class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
                             @if ($isLoadingExport) disabled @endif>
@@ -636,6 +773,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
                             </svg>
                             {{ __('Approve Selected') }}
+                            <span class="text-xs bg-yellow-200 dark:bg-yellow-800 px-1.5 py-0.5 rounded text-yellow-800 dark:text-yellow-200 ml-1">
+                                Draft only
+                            </span>
                         </button>
                         <button type="button" wire:click="confirmBulkAction('mark_paid')"
                             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 backdrop-blur-sm transition">
@@ -643,6 +783,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                             </svg>
                             {{ __('Mark as Paid') }}
+                            <span class="text-xs bg-green-600 px-1.5 py-0.5 rounded text-white ml-1">
+                                Processed only
+                            </span>
                         </button>
                         <button type="button" wire:click="confirmBulkAction('send_payslips')"
                             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 backdrop-blur-sm transition">
@@ -779,11 +922,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </td>
                                     <td class="px-5 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate flex items-center gap-3">
                                         <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-300 font-bold text-lg">
-                                            {{ strtoupper(substr($payroll->employee->user->first_name, 0, 1) . substr($payroll->employee->user->other_names, 0, 1)) }}
+                                            {{ $payroll->employee && $payroll->employee->user ? strtoupper(substr($payroll->employee->user->first_name, 0, 1) . substr($payroll->employee->user->other_names, 0, 1)) : 'N/A' }}
                                         </span>
                                         <span>
-                                            <span class="block font-semibold text-base">{{ $payroll->employee->user->first_name }} {{ $payroll->employee->user->other_names }}</span>
-                                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $payroll->employee->staff_number }}</span>
+                                            <span class="block font-semibold text-base">{{ $payroll->employee && $payroll->employee->user ? $payroll->employee->user->first_name . ' ' . $payroll->employee->user->other_names : 'N/A' }}</span>
+                                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $payroll->employee ? $payroll->employee->staff_number : 'N/A' }}</span>
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 font-semibold">
@@ -793,12 +936,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </td>
                                     <td class="px-5 py-4 font-semibold">
                                         <span class="text-green-600 dark:text-green-400">
-                                            KES {{ number_format($payroll->gross_pay, 2) }}
+                                            USD {{ number_format($payroll->gross_pay, 2) }}
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 font-semibold">
                                         <span class="text-purple-600 dark:text-purple-400">
-                                            KES {{ number_format($payroll->net_pay, 2) }}
+                                            USD {{ number_format($payroll->net_pay, 2) }}
                                         </span>
                                     </td>
                                     <td class="px-5 py-4">
@@ -914,9 +1057,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </h3>
                 <p class="mb-6 text-zinc-700 dark:text-zinc-300 font-semibold">
                     @if($bulkAction === 'approve')
-                        {{ __('Are you sure you want to approve the selected payrolls?') }}
+                        {{ __('Are you sure you want to approve the selected payrolls? Only draft payrolls will be processed.') }}
                     @elseif($bulkAction === 'mark_paid')
-                        {{ __('Are you sure you want to mark the selected payrolls as paid?') }}
+                        {{ __('Are you sure you want to mark the selected payrolls as paid? Only processed payrolls will be processed.') }}
                     @elseif($bulkAction === 'send_payslips')
                         {{ __('Are you sure you want to send payslips for the selected payrolls?') }}
                     @endif

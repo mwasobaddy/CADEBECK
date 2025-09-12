@@ -8,8 +8,10 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\ContractType;
 use App\Models\User;
+use App\Models\Payroll;
 use App\Models\Audit;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 use Spatie\Permission\Models\Role;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -33,6 +35,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         'contract_type_id' => '',
         'supervisor_id' => '',
         'basic_salary' => '',
+        'pay_date' => '',
     ];
     public ?Employee $employee = null;
     public bool $editing = false;
@@ -42,6 +45,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         if ($id) {
             $this->employee = Employee::findOrFail($id);
+            $payroll = Payroll::where('employee_id', $this->employee->id)->first();
             $this->form = [
                 'first_name' => $this->employee->user->first_name,
                 'other_names' => $this->employee->user->other_names,
@@ -49,7 +53,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => '',
                 'password_confirmation' => '',
                 'role' => $this->employee->user->roles->first()?->name ?? '',
-                'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
+                'date_of_birth' => $this->employee->date_of_birth ? Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
                 'gender' => $this->employee->gender,
                 'mobile_number' => $this->employee->mobile_number,
                 'home_address' => $this->employee->home_address,
@@ -58,13 +62,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'branch_id' => $this->employee->branch_id,
                 'department_id' => $this->employee->department_id,
                 'designation_id' => $this->employee->designation_id,
-                'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
+                'date_of_join' => $this->employee->date_of_join ? Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
                 'basic_salary' => $this->employee->basic_salary ?? '',
+                'pay_date' => $payroll?->pay_date ? Carbon::parse($payroll->pay_date)->format('Y-m-d') : '',
             ];
             $this->editing = true;
         }
+    }
+
+    public function cancel(): void
+    {
+        $this->redirectRoute('employee.index', navigate: true);
     }
 
     public function updatedFormUserId($value): void
@@ -112,6 +122,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
             'form.supervisor_id' => ['nullable', 'exists:employees,id'],
             'form.basic_salary' => ['required', 'numeric', 'min:0'],
+            'form.pay_date' => ['required', 'date'],
         ];
         $this->validate($rules);
 
@@ -128,22 +139,34 @@ new #[Layout('components.layouts.app')] class extends Component {
                 $user->syncRoles([$this->form['role']]);
             }
             $this->employee->update($this->form);
-            
-            // Log the create action
+
+            // Update or create payroll record for employee
+            $payroll = Payroll::firstOrNew(['employee_id' => $this->employee->id]);
+            $payroll->basic_salary = $this->form['basic_salary'];
+            $payroll->payroll_period = $this->form['date_of_join'];
+            $payroll->pay_date = $this->form['pay_date'];
+            // take gross pay from the existing payroll or set to basic salary if not set
+            $payroll->gross_pay = $payroll->gross_pay ?? $this->form['basic_salary'];
+            $payroll->net_pay = $payroll->net_pay ?? $this->form['basic_salary']; // This should ideally consider allowances and deductions
+            // Add other payroll fields as needed
+
+            $payroll->save();
+
+            // Log the update action
             Audit::create([
                 'actor_id' => Auth::id(),
                 'action' => 'update',
                 'target_type' => Employee::class,
-                'target_id' => $employee->id,
+                'target_id' => $this->employee->id,
                 'details' => json_encode($this->form),
             ]);
-            
+
             $notification = [
                 'type' => 'success',
                 'message' => __('Employee updated successfully.'),
                 'timestamp' => now()->timestamp,
             ];
-            
+
             $existingNotifications = session('notifications', []);
             if (!is_array($existingNotifications)) {
                 $existingNotifications = [];
@@ -160,23 +183,34 @@ new #[Layout('components.layouts.app')] class extends Component {
             $user->assignRole($this->form['role']);
             $employeeData = $this->form;
             $employeeData['user_id'] = $user->id;
-            Employee::create($employeeData);
-            
+            $newEmployee = Employee::create($employeeData);
+
+            // Create payroll record for new employee
+            Payroll::create([
+                'employee_id' => $newEmployee->id,
+                'basic_salary' => $newEmployee->basic_salary,
+                'payroll_period' => $newEmployee->date_of_join,
+                'pay_date' => $this->form['pay_date'],
+                'gross_pay' => $newEmployee->basic_salary, // Assuming gross pay is same as basic salary initially
+                'net_pay' => $newEmployee->basic_salary, // This should ideally consider allowances and deductions
+                // Add other payroll fields as needed
+            ]);
+
             // Log the create action
             Audit::create([
                 'actor_id' => Auth::id(),
                 'action' => 'create',
                 'target_type' => Employee::class,
-                'target_id' => $employee->id,
+                'target_id' => $newEmployee->id,
                 'details' => json_encode($this->form),
             ]);
-            
+
             $notification = [
                 'type' => 'success',
                 'message' => __('Employee created successfully.'),
                 'timestamp' => now()->timestamp,
             ];
-            
+
             $existingNotifications = session('notifications', []);
             if (!is_array($existingNotifications)) {
                 $existingNotifications = [];
@@ -184,7 +218,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $existingNotifications[] = $notification;
             session(['notifications' => $existingNotifications]);
         }
-        $this->redirectRoute('employee.index');
+        $this->redirectRoute('employee.index', navigate: true);
     }
 
     public function resetForm(): void
@@ -197,7 +231,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => '',
                 'password_confirmation' => '',
                 'role' => $this->employee->user->roles->first()?->name ?? '',
-                'date_of_birth' => $this->employee->date_of_birth ? \Illuminate\Support\Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
+                'date_of_birth' => $this->employee->date_of_birth ? Carbon::parse($this->employee->date_of_birth)->format('Y-m-d') : '',
                 'gender' => $this->employee->gender,
                 'mobile_number' => $this->employee->mobile_number,
                 'home_address' => $this->employee->home_address,
@@ -206,10 +240,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'branch_id' => $this->employee->branch_id,
                 'department_id' => $this->employee->department_id,
                 'designation_id' => $this->employee->designation_id,
-                'date_of_join' => $this->employee->date_of_join ? \Illuminate\Support\Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
+                'date_of_join' => $this->employee->date_of_join ? Carbon::parse($this->employee->date_of_join)->format('Y-m-d') : '',
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
                 'basic_salary' => $this->employee->basic_salary ?? '',
+                'pay_date' => Payroll::where('employee_id', $this->employee->id)->first()?->pay_date ? Carbon::parse(Payroll::where('employee_id', $this->employee->id)->first()->pay_date)->format('Y-m-d') : '',
             ];
         } else {
             $this->form = [
@@ -232,14 +267,29 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => '',
                 'supervisor_id' => '',
                 'basic_salary' => '',
+                'pay_date' => '',
             ];
         }
         $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
     public function getLocationsProperty() { return Location::all(); }
-    public function getBranchesProperty() { return Branch::all(); }
-    public function getDepartmentsProperty() { return Department::all(); }
+
+    public function getFilteredBranchesProperty()
+    {
+        if (!empty($this->form['location_id'])) {
+            return Branch::where('location_id', $this->form['location_id'])->get();
+        }
+        return collect();
+    }
+
+    public function getFilteredDepartmentsProperty()
+    {
+        if (!empty($this->form['branch_id'])) {
+            return Department::where('branch_id', $this->form['branch_id'])->get();
+        }
+        return collect();
+    }
     public function getDesignationsProperty() { return Designation::all(); }
     public function getContractTypesProperty() { return ContractType::all(); }
     public function getUsersProperty() { return User::all(); }
@@ -350,7 +400,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" 
                         class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 border
-                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
+                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
                     <flux:icon name="ellipsis-vertical" variant="solid" class="w-5 h-5" />
                 </button>
                 
@@ -390,8 +440,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Payslips') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll.history', $employee->id) }}" 
-                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                        <a href="{{ route('employee.payroll-history') }}" 
+                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -505,11 +555,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <div>
                 <flux:select
-                    wire:model="form.location_id"
+                    wire:model.lazy="form.location_id"
                     :label="__('Branch Location')"
                     required
                     :placeholder="__('Branch Location')"
                 >
+                    <flux:select.option value="">{{ __('Select Location') }}</flux:select.option>
                     @foreach($this->locations as $location)
                         <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
                     @endforeach
@@ -517,32 +568,28 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <div>
                 <flux:select
-                    wire:model="form.branch_id"
+                    wire:model.lazy="form.branch_id"
                     :label="__('Branch')"
                     required
                     :placeholder="__('Branch')"
-                    :disabled="!$form['location_id']"
                 >
-                    @if($form['location_id'])
-                        @foreach($this->branches->where('location_id', $form['location_id']) as $branch)
-                            <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
-                        @endforeach
-                    @endif
+                    <flux:select.option value="">{{ __('Select Branch') }}</flux:select.option>
+                    @foreach($this->filteredBranches as $branch)
+                        <flux:select.option value="{{ $branch->id }}">{{ $branch->name }}</flux:select.option>
+                    @endforeach
                 </flux:select>
             </div>
             <div>
                 <flux:select
-                    wire:model="form.department_id"
+                    wire:model.lazy="form.department_id"
                     :label="__('Department')"
                     required
                     :placeholder="__('Department')"
-                    :disabled="!$form['branch_id']"
                 >
-                    @if($form['branch_id'])
-                        @foreach($this->departments->where('branch_id', $form['branch_id']) as $department)
-                            <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
-                        @endforeach
-                    @endif
+                    <flux:select.option value="">{{ __('Select Department') }}</flux:select.option>
+                    @foreach($this->filteredDepartments as $department)
+                        <flux:select.option value="{{ $department->id }}">{{ $department->name }}</flux:select.option>
+                    @endforeach
                 </flux:select>
             </div>
             <div>
@@ -572,11 +619,21 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div>
                 <flux:input
                     wire:model="form.basic_salary"
-                    :label="__('Basic Salary (KES)')"
+                    :label="__('Basic Salary (USD)')"
                     type="number"
                     step="0.01"
                     required
                     placeholder="{{ __('Basic Salary') }}" />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.pay_date"
+                    :label="__('Pay Date')"
+                    type="date"
+                    required
+                    autocomplete="pay-date"
+                    placeholder="{{ __('Pay Date') }}"
+                />
             </div>
 
             <!-- Account Details -->
@@ -604,7 +661,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                     wire:model.lazy="form.supervisor_id"
                     :label="__('Supervisor')"
                     :placeholder="__('Select Supervisor')"
-                    :disabled="!$form['role'] || in_array($form['role'], ['Developer', 'HR Administrator', 'Executive', 'New Employee'])"
                 >
                     <flux:select.option value="">{{ __('Select Supervisor') }}</flux:select.option>
                     @if($this->availableSupervisors)
@@ -637,16 +693,18 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <!-- Actions -->
             <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                <button type="submit"
-                    class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <flux:button icon:trailing="check" variant="primary" type="submit" class="flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
                     {{ $editing ? __('Update') : __('Create') }}
-                    <flux:icon name="check" class="w-5 h-5" />
-                </button>
-                <button type="button" wire:click="resetForm"
-                    class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                </flux:button>
+                @if($editing)
+                <flux:button icon:trailing="x-mark" variant="primary" type="button" wire:click="cancel" class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    {{ __('Cancel') }}
+                </flux:button>
+                @else
+                <flux:button icon:trailing="arrow-path-rounded-square" variant="primary" type="button" wire:click="resetForm" class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
                     {{ __('Reset') }}
-                    <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
-                </button>
+                </flux:button>
+                @endif
             </div>
         </form>
     </div>

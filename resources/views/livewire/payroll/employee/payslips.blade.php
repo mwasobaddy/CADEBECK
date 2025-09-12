@@ -388,7 +388,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </td>
                                 <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-bold">
                                     <span class="text-green-600 dark:text-green-400">
-                                        KES {{ number_format($payslip->payroll->net_pay, 2) }}
+                                        USD {{ number_format($payslip->payroll->net_pay, 2) }}
                                     </span>
                                 </td>
                                 <td class="px-5 py-4">
@@ -488,17 +488,17 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
                                         <span>{{ __('Basic Salary') }}:</span>
-                                        <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
+                                        <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
                                     </div>
                                     @if($selectedPayslip->payroll->total_allowances > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('Total Allowances') }}:</span>
-                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
+                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
                                         </div>
                                     @endif
                                     <div class="flex justify-between font-bold border-t pt-2 text-green-600 dark:text-green-400">
                                         <span>{{ __('Gross Pay') }}:</span>
-                                        <span>KES {{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
+                                        <span>USD {{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -514,30 +514,30 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     @if($selectedPayslip->payroll->paye_tax > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('PAYE Tax') }}:</span>
-                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
+                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->nhif_deduction > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('NHIF') }}:</span>
-                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->nhif_deduction, 2) }}</span>
+                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->nhif_deduction, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->nssf_deduction > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('NSSF') }}:</span>
-                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->nssf_deduction, 2) }}</span>
+                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->nssf_deduction, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->total_deductions > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('Total Deductions') }}:</span>
-                                            <span class="font-semibold">KES {{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
+                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
                                         </div>
                                     @endif
                                     <div class="flex justify-between font-bold border-t pt-2 text-red-600 dark:text-red-400">
                                         <span>{{ __('Net Pay') }}:</span>
-                                        <span>KES {{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
+                                        <span>USD {{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>

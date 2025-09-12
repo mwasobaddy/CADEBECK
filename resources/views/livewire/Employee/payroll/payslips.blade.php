@@ -361,7 +361,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" 
                         class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 border
-                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
+                        {{ request()->routeIs('employee.payroll.allowances') || request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
                     <flux:icon name="ellipsis-vertical" variant="solid" class="w-5 h-5" />
                 </button>
                 
@@ -401,8 +401,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Payslips') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll.history', $employee->id) }}" 
-                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                        <a href="{{ route('employee.payroll-history') }}" 
+                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -418,95 +418,95 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="relative bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <!-- Header with Icon -->
         <div class="flex items-center gap-3 mb-8">
-            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-500 to-cyan-500 tracking-tight drop-shadow-lg relative inline-block">
-                {{ __('Payslips') }}
-                <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-purple-800 via-purple-500 to-cyan-500"></span>
+            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500 tracking-tight drop-shadow-lg relative inline-block">
+            {{ __('Payslips') }}
+            <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
             </h2>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex items-center justify-between mb-6 gap-4">
             <div class="flex items-center gap-3">
-                <!-- No create button for payslips as they are generated automatically -->
+            <!-- No create button for payslips as they are generated automatically -->
             </div>
             <div class="flex items-center gap-3">
-                <button type="button" wire:click="exportAll"
-                    class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                    @if ($isLoadingExport) disabled @endif>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <span class="hidden lg:inline">
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                    </span>
-                </button>
+            <button type="button" wire:click="exportAll"
+                class="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                @if ($isLoadingExport) disabled @endif>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <span class="hidden lg:inline">
+                {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
+                </span>
+            </button>
             </div>
         </div>
 
         <!-- Search and Filters -->
         <div class="flex flex-wrap gap-6 items-center mb-6">
             <div class="relative w-80">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-purple-200 dark:text-purple-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
-                    </svg>
-                </span>
-                <input type="text" wire:model.live.debounce.300ms="search"
-                    class="w-full pl-10 pr-4 py-2 rounded-3xl border border-purple-200 dark:border-purple-700 focus:ring-2 focus:ring-purple-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
-                    placeholder="{{ __('Search payslips...') }}">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                </svg>
+            </span>
+            <input type="text" wire:model.live.debounce.300ms="search"
+                class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                placeholder="{{ __('Search payslips...') }}">
             </div>
             
             <select wire:model.live="filterStatus"
-                class="px-3 py-2 rounded-3xl border border-purple-200 dark:border-purple-700 focus:ring-2 focus:ring-purple-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                <option value="">{{ __('All Status') }}</option>
-                <option value="emailed">{{ __('Emailed') }}</option>
-                <option value="not_emailed">{{ __('Not Emailed') }}</option>
-                <option value="downloaded">{{ __('Downloaded') }}</option>
-                <option value="not_downloaded">{{ __('Not Downloaded') }}</option>
+            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+            <option value="">{{ __('All Status') }}</option>
+            <option value="emailed">{{ __('Emailed') }}</option>
+            <option value="not_emailed">{{ __('Not Emailed') }}</option>
+            <option value="downloaded">{{ __('Downloaded') }}</option>
+            <option value="not_downloaded">{{ __('Not Downloaded') }}</option>
             </select>
 
             <select wire:model.live="perPage"
-                class="px-3 py-2 rounded-3xl border border-purple-200 dark:border-purple-700 focus:ring-2 focus:ring-purple-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
+            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
             </select>
         </div>
 
         @if (count($selected) > 0)
-            <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-purple-50/80 to-blue-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-purple-200 dark:border-zinc-700 backdrop-blur-sm">
-                <div class="flex items-center gap-2 py-2">
-                    <span class="text-sm font-medium text-purple-700 dark:text-purple-300">
-                        {{ count($selected) }} {{ __('item(s) selected') }}
-                    </span>
-                    @if(count($selected) < ($this->payslips ? $this->payslips->total() : 0))
-                        <button type="button" wire:click="selectAllData"
-                            class="text-sm text-purple-600 dark:text-purple-400 hover:underline">
-                            {{ __('Select all') }} {{ $this->payslips ? $this->payslips->total() : 0 }} {{ __('items') }}
-                        </button>
-                    @endif
-                </div>
-                <div class="flex items-center gap-3">
-                    <button type="button" wire:click="exportSelected"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                        @if ($isLoadingExport) disabled @endif>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                    </button>
-                    <button type="button" wire:click="bulkDeleteConfirm"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        {{ __('Delete Selected') }}
-                    </button>
-                </div>
+            <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
+            <div class="flex items-center gap-2 py-2">
+                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                {{ count($selected) }} {{ __('item(s) selected') }}
+                </span>
+                @if(count($selected) < ($this->payslips ? $this->payslips->total() : 0))
+                <button type="button" wire:click="selectAllData"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    {{ __('Select all') }} {{ $this->payslips ? $this->payslips->total() : 0 }} {{ __('items') }}
+                </button>
+                @endif
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="exportSelected"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                @if ($isLoadingExport) disabled @endif>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
+                </button>
+                <button type="button" wire:click="bulkDeleteConfirm"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                {{ __('Delete Selected') }}
+                </button>
+            </div>
             </div>
         @endif
 
@@ -607,7 +607,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             @if($payslip->payroll)
                             <span class="text-blue-600 dark:text-blue-400">
-                                KES {{ number_format($payslip->payroll->gross_pay, 2) }}
+                                USD {{ number_format($payslip->payroll->gross_pay, 2) }}
                             </span>
                             @else
                             <span class="text-gray-400">-</span>
@@ -616,7 +616,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-bold">
                             @if($payslip->payroll)
                             <span class="text-green-600 dark:text-green-400">
-                                KES {{ number_format($payslip->payroll->net_pay, 2) }}
+                                USD {{ number_format($payslip->payroll->net_pay, 2) }}
                             </span>
                             @else
                             <span class="text-gray-400">-</span>
