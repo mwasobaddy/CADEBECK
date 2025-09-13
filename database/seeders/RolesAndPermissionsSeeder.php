@@ -125,6 +125,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_history',
             'export_history',
 
+            'restore_employee',
+
 
             'manage_other_attendance',
             'edit_other_attendance',
