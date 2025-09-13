@@ -241,9 +241,14 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:view_employee_payslips'])
             ->name('employee.payroll.payslips');
 
-        Volt::route('my-payroll-history', 'employee.payroll.history')
+        Volt::route('employees/payroll/{employeeId}/history', 'employee.payroll.history')
             ->middleware(['auth', 'permission:view_employee_payroll_history'])
             ->name('employee.payroll.history');
+
+        // Alternative route for current user's payroll history (no employeeId needed)
+        Volt::route('my-payroll-history', 'employee.payroll-history')
+            ->middleware(['auth'])
+            ->name('employee.payroll.my-history');
 
         // Settings routes
         Volt::route('settings/mail', 'settings.mail-configuration')
