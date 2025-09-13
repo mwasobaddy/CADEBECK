@@ -13,8 +13,8 @@
             <nav class="flex-1 px-4 py-6 overflow-y-auto text-sm">
                 <ul class="space-y-2">
                     <li>
-                        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full {{ request()->routeIs('dashboard') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
-                            <span class="flex items-center rounded-full font-black p-2 {{ request()->routeIs('dashboard') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('dashboard') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>
+                            <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('dashboard') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                 <flux:icon name="home" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                             </span>
                             <span>{{ __('Dashboard') }}</span>
@@ -34,19 +34,26 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="users" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __('Employee') }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __('Employee') }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('manage_employee')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('employee.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('employee.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('employee.index') }}">
+                                        <a href="{{ route('employee.index') }}" wire:navigate>
                                             {{ __('Employee List') }}
                                         </a>
                                     </div>
@@ -83,7 +90,7 @@
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('employee.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('employee.show') }}">
+                                        <a href="{{ route('employee.show') }}" wire:navigate>
                                             {{ __('Create Employee') }}
                                         </a>
                                     </div>
@@ -109,19 +116,26 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="user" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __('User') }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __('User') }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('manage_user')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('user.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('user.index') }}">
+                                        <a href="{{ route('user.index') }}" wire:navigate>
                                             {{ __('User List') }}
                                         </a>
                                     </div>
@@ -133,7 +147,7 @@
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('user.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('user.show') }}">
+                                        <a href="{{ route('user.show') }}" wire:navigate>
                                             {{ __('Create User') }}
                                         </a>
                                     </div>
@@ -158,19 +172,26 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="briefcase" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __('Adverts') }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __('Adverts') }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('manage_job_advert')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('job.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('job.index') }}">
+                                        <a href="{{ route('job.index') }}" wire:navigate>
                                             {{ __('Job Adverts') }}
                                         </a>
                                     </div>
@@ -182,7 +203,7 @@
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('job.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('job.show') }}">
+                                        <a href="{{ route('job.show') }}" wire:navigate>
                                             {{ __('Create Adverts') }}
                                         </a>
                                     </div>
@@ -207,19 +228,26 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="tag" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __('Role') }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __('Role') }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('manage_role')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('role.index') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.index') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('role.index') }}">
+                                        <a href="{{ route('role.index') }}" wire:navigate>
                                             {{ __('Role List') }}
                                         </a>
                                     </div>
@@ -231,7 +259,7 @@
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('role.show') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                             <circle cx="12" cy="12" r="10"/>
                                         </svg>
-                                        <a href="{{ route('role.show') }}">
+                                        <a href="{{ route('role.show') }}" wire:navigate>
                                             {{ __('Create Role') }}
                                         </a>
                                     </div>
@@ -256,18 +284,27 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __("Organization") }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __("Organization") }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('manage_location')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('location.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('location.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('location.manage') }}">{{ __('Locations') }}</a>
+                                        <a href="{{ route('location.manage') }}" wire:navigate>
+                                            {{ __('Locations') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -277,7 +314,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('branch.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('branch.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('branch.manage') }}">{{ __('Branches') }}</a>
+                                        <a href="{{ route('branch.manage') }}" wire:navigate>
+                                            {{ __('Branches') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -287,7 +326,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('department.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('department.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('department.manage') }}">{{ __('Departments') }}</a>
+                                        <a href="{{ route('department.manage') }}" wire:navigate>
+                                            {{ __('Departments') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -297,7 +338,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('designation.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('designation.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('designation.manage') }}">{{ __('Designations') }}</a>
+                                        <a href="{{ route('designation.manage') }}" wire:navigate>
+                                            {{ __('Designations') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -320,12 +363,19 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __("Leave") }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __("Leave") }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 <li class="mb-2">
                                     <div class="flex items-center gap-2 px-2 py-1">
                                         <flux:icon name="document" variant="solid" class="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -338,7 +388,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('leave.apply') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('leave.apply') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('leave.apply') }}">{{ __('Apply Leave') }}</a>
+                                        <a href="{{ route('leave.apply') }}" wire:navigate>
+                                            {{ __('Apply Leave') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -347,7 +399,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('own-leave.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('own-leave.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('own-leave.manage') }}">{{ __('Leave List') }}</a>
+                                        <a href="{{ route('own-leave.manage') }}" wire:navigate>
+                                            {{ __('Leave List') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -364,7 +418,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('all-leave.manage') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('all-leave.manage') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('all-leave.manage') }}">{{ __('All Leave List') }}</a>
+                                        <a href="{{ route('all-leave.manage') }}" wire:navigate>
+                                            {{ __('All Leave List') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -387,18 +443,27 @@
                                         ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                                     <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                                 </span>
-                                <span>{{ __("Payroll") }}</span>
-                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <span class="w-[60%] text-start">{{ __("Payroll") }}</span>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 text-zinc-400 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <ul x-show="open" x-transition class="pl-8 mt-2">
+                            <ul x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95"
+                                x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0 scale-100"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
+                                class="pl-8 mt-2 overflow-hidden" class="pl-8 mt-2">
                                 @can('process_payroll')
                                 <li>
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('payroll.process') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('payroll.process') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('payroll.process') }}">{{ __('Process Payroll') }}</a>
+                                        <a href="{{ route('payroll.process') }}" wire:navigate>
+                                            {{ __('Process Payroll') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -408,7 +473,9 @@
                                     <div class="block px-2 py-1 border-l-2 py-2 flex items-center rounded-e-4xl {{ request()->routeIs('payroll.employee') ? 'border-green-600 dark:border-green-700 text-zinc-500 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }} duration-300 ease-in-out">
                                         <svg class="w-2 h-2 mr-2 {{ request()->routeIs('payroll.employee') ? 'fill-current text-green-600 dark:text-green-700' : 'fill-zinc-500 dark:fill-zinc-700' }}" viewBox="0 0 24 24">
                                         </svg>
-                                        <a href="{{ route('payroll.employee') }}">{{ __('My Payslips') }}</a>
+                                        <a href="{{ route('payroll.employee') }}" wire:navigate>
+                                            {{ __('My Payslips') }}
+                                        </a>
                                     </div>
                                 </li>
                                 @endcan
@@ -460,7 +527,7 @@
         <!-- Mobile Header -->
         <flux:header class="lg:hidden">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 ml-4">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 ml-4" wire:navigate>
                 <x-app-logo class="h-8 w-8" />
                 <span class="font-bold text-lg text-green-600">HRM</span>
             </a>
