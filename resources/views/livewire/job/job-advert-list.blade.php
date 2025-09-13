@@ -20,7 +20,9 @@ new #[Layout('components.layouts.app.guest')] class extends Component {};
         @forelse ($jobAdverts as $advert)
             <div class="bg-white dark:bg-zinc-900 rounded-lg shadow p-4">
                 <h2 class="text-lg font-semibold mb-2">
-                    <a href="{{ url('/careers/' . $advert->slug) }}" class="text-blue-600 hover:underline">{{ $advert->title }}</a>
+                    <a href="{{ url('/careers/' . $advert->slug) }}" class="text-blue-600 hover:underline" wire:navigate>
+                        {{ $advert->title }}
+                    </a>
                 </h2>
                 <p class="mb-2 text-zinc-600 dark:text-zinc-300">{{ Str::limit($advert->description, 120) }}</p>
                 <div class="text-sm text-zinc-500 mb-1">{{ __('Deadline') }}: {{ $advert->deadline }}</div>

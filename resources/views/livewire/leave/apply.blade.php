@@ -212,10 +212,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-full shadow-lg p-4 mb-8 z-10 relative border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
         <nav class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="{{ route('own-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('own-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
+                <a href="{{ route('own-leave.manage') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('own-leave.manage') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}" wire:navigate>
                     {{ __('Leave Manager') }}
                 </a>
-                <a href="{{ $this->isEditing && $this->leaveRequest ? route('own-leave.edit', $this->leaveRequest->id) : route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
+                <a href="{{ $this->isEditing && $this->leaveRequest ? route('own-leave.edit', $this->leaveRequest->id) : route('leave.apply') }}" class="border rounded-full py-2 px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('leave.apply*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}" wire:navigate>
                     {{ $this->isEditing ? __('Edit Leave Request') : __('New Leave Request') }}
                 </a>
             </div>
@@ -311,7 +311,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:icon name="check" class="w-5 h-5" />
                 </button>
                 <a href="{{ route('own-leave.manage') }}"
-                    class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400" wire:navigate>
                     {{ __('Cancel') }}
                     <flux:icon name="arrow-path-rounded-square" class="w-5 h-5" />
                 </a>
