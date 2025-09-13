@@ -65,12 +65,12 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function createDeduction(): void
     {
-        $this->redirectRoute('employee.payroll.deductions.create', ['employeeId' => $this->employee->id]);
+        $this->redirectRoute('employee.payroll.deductions.create', ['employeeId' => $this->employee->id], navigate: true);
     }
 
     public function editDeduction($deductionId): void
     {
-        $this->redirectRoute('employee.payroll.deductions.edit', ['employeeId' => $this->employee->id, 'deductionId' => $deductionId]);
+        $this->redirectRoute('employee.payroll.deductions.edit', ['employeeId' => $this->employee->id, 'deductionId' => $deductionId], navigate: true);
     }
 
     public function confirmDelete($deductionId): void
@@ -431,7 +431,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         <nav class="flex items-center justify-between md:justify-start gap-4 w-full">
             <div class="flex items-center gap-4">
                 <a href="{{ route('employee.index') }}"
-                    class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
+                    class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.index') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}" wire:navigate>
                     <span class="hidden md:flex">
                         {{ __('Employee List') }}
                     </span>
@@ -443,7 +443,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 {{-- add employee link --}}
                 @if ($editing)
                     <a href="{{ route('employee.show') }}"
-                        class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
+                        class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}" wire:navigate>
                         <span class="hidden md:flex">
                             {{ __('Add Employee') }}
                         </span>
@@ -455,7 +455,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
                 {{-- edit employee link --}}
                 <a href="{{ $editing && $employee ? route('employee.edit', $employee->id) : route('employee.show') }}"
-                    class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.show') || request()->routeIs('employee.edit') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}">
+                    class="border rounded-full py-2 px-2 md:px-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ request()->routeIs('employee.show') || request()->routeIs('employee.edit') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : '' }}" wire:navigate>
                     <span class="hidden md:flex">
                         {{ $editing ? __('Edit Employee') : __('Add Employee') }}
                     </span>
@@ -484,7 +484,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     style="display: none;">
                     <div class="py-2">
                         <a href="{{ route('employee.payroll.allowances', $employee->id) }}"
-                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.allowances') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.allowances') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -495,7 +495,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </a>
 
                         <a href="{{ route('employee.payroll.deductions', $employee->id) }}"
-                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.deductions') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.deductions') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -505,7 +505,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </a>
 
                         <a href="{{ route('employee.payroll.payslips', $employee->id) }}"
-                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.payslips') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.payslips') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -516,7 +516,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </a>
 
                         <a href="{{ route('employee.payroll-history') }}"
-                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}">
+                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
