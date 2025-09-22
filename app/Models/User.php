@@ -24,6 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'other_names',
         'email',
         'password',
+        'lang',
     ];
 
     /**
@@ -67,5 +68,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function employee()
     {
         return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Get the language preference for this user
+     */
+    public function language()
+    {
+        return $this->belongsTo(Language::class, 'lang', 'code');
     }
 }
