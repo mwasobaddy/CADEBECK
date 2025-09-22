@@ -151,9 +151,10 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         $this->isLoadingDownload = true;
 
+        // Use route() helper to generate download URL
         if (Storage::disk('public')->exists($payslip->file_path)) {
             $this->isLoadingDownload = false;
-            return response()->download(storage_path('app/public/' . $payslip->file_path), $payslip->file_name);
+            return redirect()->route('payslip.download', ['payslip' => $payslip->id]);
         }
 
         // If file doesn't exist, regenerate it
@@ -162,7 +163,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         if ($newPayslip && Storage::disk('public')->exists($newPayslip->file_path)) {
             $this->isLoadingDownload = false;
-            return response()->download(storage_path('app/public/' . $newPayslip->file_path), $newPayslip->file_name);
+            return redirect()->route('payslip.download', ['payslip' => $newPayslip->id]);
         }
 
         $this->isLoadingDownload = false;
@@ -249,7 +250,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
                         </svg>
                     </span>
-                    <input type="text" wire:model.live.debounce.300ms="search"
+                    <input type="text" wire:model.live.debounce.500ms="search"
                         class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
                         placeholder="{{ __('Search payslips...') }}">
                 </div>
@@ -374,7 +375,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endfor
                     @else
                         @forelse(($this->payslips ?? []) as $payslip)
-                            <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                            <tr class="hover:bg-gray-100 dark:hover:bg-white/20 group border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out" wire:loading.class.delay="opacity-50 dark:opacity-40">
                                 <td class="px-5 py-4 text-gray-900 dark:text-white font-bold">
                                     {{ $payslip->payslip_number }}
                                 </td>

@@ -504,7 +504,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
                 </svg>
             </span>
-            <input type="text" wire:model.live.debounce.300ms="search"
+            <input type="text" wire:model.live.debounce.500ms="search"
                 class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
                 placeholder="{{ __('Search payroll records...') }}">
             </div>
@@ -548,34 +548,37 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         @if (count($selected) > 0)
             <div class="flex items-center justify-between flex-wrap mt-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-zinc-800/50 dark:to-zinc-700/50 rounded-xl border border-blue-200 dark:border-zinc-700 backdrop-blur-sm">
-            <div class="flex items-center gap-2 py-2">
-                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
-                {{ count($selected) }} {{ __('item(s) selected') }}
-                </span>
-                @if(count($selected) < ($this->payrolls ? $this->payrolls->total() : 0))
-                <button type="button" wire:click="selectAllData"
-                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                    {{ __('Select all') }} {{ $this->payrolls ? $this->payrolls->total() : 0 }} {{ __('items') }}
-                </button>
-                @endif
-            </div>
-            <div class="flex items-center gap-3">
-                <button type="button" wire:click="exportSelected"
-                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                @if ($isLoadingExport) disabled @endif>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                </svg>
-                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                </button>
-                <button type="button" wire:click="bulkDeleteConfirm"
-                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                {{ __('Delete Selected') }}
-                </button>
-            </div>
+                <div class="flex items-center gap-2 py-2">
+                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {{ count($selected) }} {{ __('item(s) selected') }}
+                    </span>
+                    @if(count($selected) < ($this->payrolls ? $this->payrolls->total() : 0))
+                    <button type="button" wire:click="selectAllData"
+                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        {{ __('Select all') }} {{ $this->payrolls ? $this->payrolls->total() : 0 }} {{ __('items') }}
+                    </button>
+                    @endif
+                </div>
+                <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
+                    @can('export_payroll')
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" wire:loading.attr="disabled" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ __('Exporting Denied') }}
+                        </flux:button>
+                    @endcan
+                    @can('delete_payroll')
+                        <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            {{ __('Delete Selected') }}
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="trash" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            {{ __('Deleting Denied') }}
+                        </flux:button>
+                    @endcan
+                </div>
             </div>
         @endif
 
@@ -695,7 +698,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endfor
                     @else
                         @forelse($this->payrolls as $payroll)
-                        <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                        <tr class="hover:bg-gray-100 dark:hover:bg-white/20 group border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out" wire:loading.class.delay="opacity-50 dark:opacity-40">
                             <td class="px-3 py-4">
                                 <input type="checkbox" wire:model.live="selected" value="{{ $payroll->id }}" class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
                             </td>

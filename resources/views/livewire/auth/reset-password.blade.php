@@ -68,48 +68,65 @@ new #[Layout('components.layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
+<div class="space-y-6">
+    <x-auth-header :title="__('Reset your password')" :description="__('Enter your new password below')" />
 
     <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
+    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form wire:submit="resetPassword" class="flex flex-col gap-6">
+    <form wire:submit="resetPassword" class="space-y-6">
         <!-- Email Address -->
-        <flux:input
-            wire:model="email"
-            :label="__('Email')"
-            type="email"
-            required
-            autocomplete="email"
-        />
+        <div class="space-y-2">
+            <flux:input
+                wire:model="email"
+                :label="__('Email address')"
+                type="email"
+                required
+                autocomplete="email"
+                readonly
+            />
+        </div>
 
         <!-- Password -->
-        <flux:input
-            wire:model="password"
-            :label="__('Password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Password')"
-            viewable
-        />
+        <div class="space-y-2">
+            <flux:input
+                wire:model="password"
+                :label="__('New password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                placeholder="Enter new password"
+                viewable
+            />
+            <p class="text-sm text-gray-500 dark:text-gray-400">Must be at least 8 characters long</p>
+        </div>
 
         <!-- Confirm Password -->
-        <flux:input
-            wire:model="password_confirmation"
-            :label="__('Confirm password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Confirm password')"
-            viewable
-        />
-
-        <div class="flex items-center justify-end">
-            <flux:button type="submit" variant="primary" class="w-full">
-                {{ __('Reset password') }}
-            </flux:button>
+        <div class="space-y-2">
+            <flux:input
+                wire:model="password_confirmation"
+                :label="__('Confirm new password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                placeholder="Confirm new password"
+                viewable
+            />
         </div>
+
+        <!-- Submit Button -->
+        <flux:button type="submit" variant="primary" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            {{ __('Reset password') }}
+        </flux:button>
     </form>
+
+    <!-- Back to Login -->
+    <div class="text-center">
+        <flux:link :href="route('login')" wire:navigate class="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            {{ __('Back to login') }}
+        </flux:link>
+    </div>
 </div>

@@ -6,6 +6,7 @@ use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Audit;
 use Carbon\Carbon;
+use Livewire\Attributes\Computed;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public ?Employee $employee = null;
@@ -29,15 +30,31 @@ new #[Layout('components.layouts.app')] class extends Component {
             $this->allowance = PayrollAllowance::findOrFail($allowanceId);
             $this->editing = true;
             $this->form = [
-                'allowance_type' => $this->allowance->allowance_type,
-                'description' => $this->allowance->description,
-                'amount' => $this->allowance->amount,
-                'is_recurring' => $this->allowance->is_recurring,
+                'allowance_type' => $this->allowance->allowance_type ?? '',
+                'description' => $this->allowance->description ?? '',
+                'amount' => $this->allowance->amount ?? '',
+                'is_recurring' => $this->allowance->is_recurring ?? true,
                 'effective_date' => $this->allowance->effective_date ? Carbon::parse($this->allowance->effective_date)->format('Y-m-d') : '',
                 'end_date' => $this->allowance->end_date ? Carbon::parse($this->allowance->end_date)->format('Y-m-d') : '',
-                'notes' => $this->allowance->notes,
+                'notes' => $this->allowance->notes ?? '',
             ];
+        } else {
+            // Set default effective date to today for new allowances
+            $this->form['effective_date'] = Carbon::today()->format('Y-m-d');
         }
+    }
+
+    #[Computed]
+    public function allowanceTypes(): array
+    {
+        return [
+            'house' => __('House Allowance'),
+            'transport' => __('Transport Allowance'),
+            'medical' => __('Medical Allowance'),
+            'overtime' => __('Overtime'),
+            'bonus' => __('Bonus'),
+            'other' => __('Other'),
+        ];
     }
 
     public function save(): void
@@ -124,13 +141,13 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         if ($this->editing && $this->allowance) {
             $this->form = [
-                'allowance_type' => $this->allowance->allowance_type,
-                'description' => $this->allowance->description,
-                'amount' => $this->allowance->amount,
-                'is_recurring' => $this->allowance->is_recurring,
+                'allowance_type' => $this->allowance->allowance_type ?? '',
+                'description' => $this->allowance->description ?? '',
+                'amount' => $this->allowance->amount ?? '',
+                'is_recurring' => $this->allowance->is_recurring ?? true,
                 'effective_date' => $this->allowance->effective_date ? Carbon::parse($this->allowance->effective_date)->format('Y-m-d') : '',
                 'end_date' => $this->allowance->end_date ? Carbon::parse($this->allowance->end_date)->format('Y-m-d') : '',
-                'notes' => $this->allowance->notes,
+                'notes' => $this->allowance->notes ?? '',
             ];
         } else {
             $this->form = [
@@ -138,7 +155,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'description' => '',
                 'amount' => '',
                 'is_recurring' => true,
-                'effective_date' => '',
+                'effective_date' => Carbon::today()->format('Y-m-d'),
                 'end_date' => '',
                 'notes' => '',
             ];
@@ -146,16 +163,9 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
     }
 
-    public function getAllowanceTypesProperty()
+    public function cancel(): void
     {
-        return [
-            'house' => __('House Allowance'),
-            'transport' => __('Transport Allowance'),
-            'medical' => __('Medical Allowance'),
-            'overtime' => __('Overtime'),
-            'bonus' => __('Bonus'),
-            'other' => __('Other'),
-        ];
+        $this->redirectRoute('employee.payroll.allowances', ['employeeId' => $this->employee->id], navigate: true);
     }
 };
 ?>
@@ -226,7 +236,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" 
                         class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 border
-                        {{ request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
+                        {{ request()->routeIs('employee.payroll.deductions') || request()->routeIs('employee.payroll.payslips') || request()->routeIs('employee.payroll.history', ['employeeId' => $employee->id]) ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400' }}">
                     <flux:icon name="ellipsis-vertical" variant="solid" class="w-5 h-5" />
                 </button>
                 
@@ -250,7 +260,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Deductions') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll.payslips', $employee->id) }}" 
+                        <a href="{{ route('employee.payroll.payslips', ['employeeId' => $employee->id]) }}" 
                            class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.payslips') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -258,8 +268,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                             {{ __('Payslips') }}
                         </a>
                         
-                        <a href="{{ route('employee.payroll-history') }}" 
-                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll-history') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
+                        <a href="{{ route('employee.payroll.history', ['employeeId' => $employee->id]) }}" 
+                           class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200 {{ request()->routeIs('employee.payroll.history', $employee->id) ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200 border-green-400 dark:border-green-500' : 'text-zinc-700 dark:text-zinc-300' }}" wire:navigate>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -281,67 +291,73 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
             </h1>
         </div>
-        <form wire:submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <form wire:submit="save" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Allowance Information -->
             <div class="md:col-span-2 lg:col-span-3">
                 <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Allowance Information') }}</h2>
             </div>
+            
             <div>
-                <flux:select
-                    wire:model="form.allowance_type"
-                    :label="__('Allowance Type')"
+                <flux:select 
+                    wire:model="form.allowance_type" 
+                    label="{{ __('Allowance Type') }}" 
+                    placeholder="{{ __('Select Type') }}"
                     required
-                    :placeholder="__('Select Type')"
                 >
-                    <flux:select.option value="">{{ __('Select Type') }}</flux:select.option>
+                    <option value="">{{ __('Select Type') }}</option>
                     @foreach($this->allowanceTypes as $key => $value)
-                        <flux:select.option value="{{ $key }}">{{ $value }}</flux:select.option>
+                        <option value="{{ $key }}">{{ $value }}</option>
                     @endforeach
                 </flux:select>
             </div>
+            
             <div class="md:col-span-2">
-                <flux:input
-                    wire:model="form.description"
-                    :label="__('Description')"
-                    type="text"
+                <flux:input 
+                    wire:model="form.description" 
+                    label="{{ __('Description') }}"
+                    placeholder="{{ __('Enter allowance description...') }}"
                     required
-                    placeholder="{{ __('Enter allowance description...') }}" />
+                />
             </div>
 
             <!-- Financial Details -->
             <div class="md:col-span-2 lg:col-span-3 mt-6">
                 <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Financial Details') }}</h2>
             </div>
+            
             <div>
-                <flux:input
-                    wire:model="form.amount"
-                    :label="__('Amount (USD)')"
+                <flux:input 
+                    wire:model="form.amount" 
                     type="number"
                     step="0.01"
+                    label="{{ __('Amount (USD)') }}"
+                    placeholder="0.00"
                     required
-                    placeholder="0.00" />
-            </div>
-            <div>
-                <flux:input
-                    wire:model="form.effective_date"
-                    :label="__('Effective Date')"
-                    type="date"
-                    required
-                    placeholder="{{ __('Effective Date') }}"
                 />
             </div>
+            
             <div>
-                <flux:input
-                    wire:model="form.end_date"
-                    :label="__('End Date (Optional)')"
+                <flux:input 
+                    wire:model="form.effective_date" 
                     type="date"
-                    placeholder="{{ __('End Date (Optional)') }}"
+                    label="{{ __('Effective Date') }}"
+                    required
                 />
             </div>
+            
+            <div>
+                <flux:input 
+                    wire:model="form.end_date" 
+                    type="date"
+                    label="{{ __('End Date (Optional)') }}"
+                />
+            </div>
+            
             <div class="flex items-center">
-                <flux:checkbox
-                    wire:model="form.is_recurring"
-                    :label="__('Recurring Allowance')"
+                <flux:checkbox 
+                    wire:model="form.is_recurring" 
+                    label="{{ __('Recurring Allowance') }}"
                 />
             </div>
 
@@ -349,31 +365,47 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div class="md:col-span-2 lg:col-span-3 mt-6">
                 <h2 class="text-lg font-bold text-green-700 mb-2">{{ __('Additional Notes') }}</h2>
             </div>
+            
             <div class="md:col-span-2 lg:col-span-3">
-                <flux:textarea
-                    wire:model="form.notes"
-                    :label="__('Notes')"
+                <flux:textarea 
+                    wire:model="form.notes" 
+                    label="{{ __('Notes') }}"
                     rows="4"
                     placeholder="{{ __('Additional notes...') }}"
                 />
-                @error('form.notes')
-                <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                @enderror
             </div>
 
             <!-- Actions -->
             <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                <flux:button icon:trailing="check" variant="primary" type="submit" class="flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <flux:button 
+                    icon-trailing="check" 
+                    variant="primary" 
+                    type="submit" 
+                    class="flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
                     {{ $editing ? __('Update') : __('Create') }}
                 </flux:button>
+                
                 @if($editing)
-                <flux:button icon:trailing="x-mark" variant="primary" type="button" wire:click="redirectRoute('employee.payroll.allowances', ['employeeId' => $employee->id])" class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                    {{ __('Cancel') }}
-                </flux:button>
+                    <flux:button 
+                        icon-trailing="x-mark" 
+                        variant="primary" 
+                        type="button" 
+                        wire:click="cancel" 
+                        class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    >
+                        {{ __('Cancel') }}
+                    </flux:button>
                 @else
-                <flux:button icon:trailing="arrow-path-rounded-square" variant="primary" type="button" wire:click="resetForm" class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                    {{ __('Reset') }}
-                </flux:button>
+                    <flux:button 
+                        icon-trailing="arrow-path-rounded-square" 
+                        variant="primary" 
+                        type="button" 
+                        wire:click="resetForm" 
+                        class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    >
+                        {{ __('Reset Form') }}
+                    </flux:button>
                 @endif
             </div>
         </form>

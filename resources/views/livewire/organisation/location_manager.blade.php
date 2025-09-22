@@ -344,7 +344,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
                             </svg>
                         </span>
-                        <input type="text" wire:model.live.debounce.300ms="search"
+                        <input type="text" wire:model.live.debounce.500ms="search"
                             class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
                             placeholder="{{ __('Search locations...') }}">
                     </div>
@@ -494,7 +494,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                             @endfor
                         @else
                             @forelse (($this->locations ?? []) as $location)
-                                <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                                <tr class="hover:bg-gray-100 dark:hover:bg-white/20 group border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out" wire:loading.class.delay="opacity-50 dark:opacity-40">
                                     <td class="px-5 py-4">
                                         <input type="checkbox" wire:model.live="selected" value="{{ $location->id }}" class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
                                     </td>

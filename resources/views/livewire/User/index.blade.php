@@ -136,6 +136,20 @@ new #[Layout('components.layouts.app')] class extends Component {
             }
         }
     }
+    
+    public function toggleSelection($id): void
+    {
+        if (in_array($id, $this->selected)) {
+            // Remove the ID from selected array
+            $this->selected = array_values(array_diff($this->selected, [$id]));
+        } else {
+            // Add the ID to selected array
+            $this->selected[] = $id;
+            $this->selected = array_values(array_unique($this->selected));
+        }
+        
+        $this->updateSelectAllState();
+    }
 
     public function updatedSelected(): void
     {
@@ -386,25 +400,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     @can('export_user')
-                        <button type="button" wire:click="exportAll"
-                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                            @if ($isLoadingExport) disabled @endif>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            <span class="hidden lg:inline">
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                            </span>
-                        </button>
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ __('Exporting Denied') }}
+                        </flux:button>
                     @endcan
                     @can('create_user')
-                        <button type="button" wire:click="createNewUser"
-                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            <span class="hidden lg:inline">{{ __('Add User') }}</span>
-                        </button>
+                        <flux:button icon:trailing="plus" variant="primary" type="button" wire:click="createNewUser" class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('Add User') }}
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="plus" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('Adding Denied') }}
+                        </flux:button>
                     @endcan
                 </div>
             </div>
@@ -433,19 +444,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div>
                 @if ($showFilters ?? false)
                     <div class="flex flex-wrap gap-6 mt-6 items-center animate-fade-in">
-                        <select wire:model.live="filterRole"
-                            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                            <option value="">{{ __('All Roles') }}</option>
+                        <flux:select wire:model.live="filterRole" placeholder="{{ __('All Roles') }}" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
+                            <flux:select.option value="">{{ __('All Roles') }}</flux:select.option>
                             @foreach (Spatie\Permission\Models\Role::all() as $role)
-                                <option value="{{ $role->name }}">{{ __($role->name) }}</option>
+                                <flux:select.option value="{{ $role->name }}">{{ $role->name }}</flux:select.option>
                             @endforeach
-                        </select>
-                        <select wire:model.live="perPage"
-                            class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
+                        </flux:select>
+                        <flux:select wire:model.live="perPage" placeholder="10" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
+                            <flux:select.option value="10">10</flux:select.option>
+                            <flux:select.option value="25">25</flux:select.option>
+                            <flux:select.option value="50">50</flux:select.option>
+                        </flux:select>
                     </div>
                 @endif
             </div>
@@ -462,25 +471,24 @@ new #[Layout('components.layouts.app')] class extends Component {
                             </button>
                         @endif
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
                         @can('export_user')
-                            <button type="button" wire:click="exportSelected"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                                @if ($isLoadingExport) disabled @endif>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
+                            <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" :disabled="$isLoadingExport" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
                                 {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                            </button>
+                            </flux:button>
+                        @else
+                            <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                {{ __('Exporting Denied') }}
+                            </flux:button>
                         @endcan
                         @can('delete_user')
-                            <button type="button" wire:click="bulkDeleteConfirm"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
+                            <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                                 {{ __('Delete Selected') }}
-                            </button>
+                            </flux:button>
+                        @else
+                            <flux:button icon:trailing="trash" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                {{ __('Deleting Denied') }}
+                            </flux:button>
                         @endcan
                     </div>
                 </div>
@@ -510,37 +518,25 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('name')">
                                 {{ __('Name') }}
                                 @if($this->sortField === 'name')
-                                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        @if($sortDirection === 'asc')
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                        @else
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                        @endif
-                                    </svg>
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                                @else
+                                    <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                                 @endif
                             </th>
                             <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('roles')">
                                 {{ __('Roles') }}
                                 @if($this->sortField === 'roles')
-                                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        @if($sortDirection === 'asc')
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                        @else
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                        @endif
-                                    </svg>
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                                @else
+                                    <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                                 @endif
                             </th>
                             <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('created_at')">
                                 {{ __('Created At') }}
                                 @if($this->sortField === 'created_at')
-                                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        @if($sortDirection === 'asc')
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                        @else
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                        @endif
-                                    </svg>
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                                @else
+                                    <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                                 @endif
                             </th>
                             <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none">
@@ -575,9 +571,24 @@ new #[Layout('components.layouts.app')] class extends Component {
                             @endfor
                         @else
                             @forelse (($this->users ?? []) as $user)
-                                <tr class="hover:bg-gray-100 dark:hover:bg-white/20 transition group border-b border-gray-200 dark:border-gray-700">
+                                <tr class="hover:bg-gray-100 dark:hover:bg-white/20 group border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out" wire:loading.class.delay="opacity-50 dark:opacity-40">
                                     <td class="px-5 py-4">
-                                        <input type="checkbox" wire:model.live="selected" value="{{ $user->id }}" class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
+                                        <button type="button"
+                                            wire:click="toggleSelection({{ $user->id }})"
+                                            class="rounded focus:ring-2 focus:ring-pink-400 transition-colors duration-200
+                                                @if(in_array($user->id, $selected))
+                                                    bg-pink-500 text-white p-[2px]
+                                                @else
+                                                    bg-transparent text-pink-500 border border-gray-500 p-[6px]
+                                                @endif
+                                                flex items-center gap-2"
+                                        >
+                                            @if(in_array($user->id, $selected))
+                                                <svg class="w-3 h-3 text-gray-800 font-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            @endif
+                                        </button>
                                     </td>
                                     <td class="px-5 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate flex items-center gap-3">
                                         <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-300 font-bold text-lg">

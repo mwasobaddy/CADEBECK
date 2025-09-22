@@ -627,11 +627,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[200px]" wire:click="sortBy('name')">
                             {{ __('Name') }}
                             @if($this->sortField === 'name')
-                                @if($sortDirection === 'asc')
-                                    <flux:icon name="arrow-up" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @else
-                                    <flux:icon name="arrow-down" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @endif
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @else
                                 <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
@@ -639,11 +635,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[120px] gap-1 whitespace-nowrap" wire:click="sortBy('staff_number')">
                             {{ __('Staff') }}&nbsp;{{ __('NO.') }}
                             @if($this->sortField === 'staff_number')
-                                @if($sortDirection === 'asc')
-                                    <flux:icon name="arrow-up" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @else
-                                    <flux:icon name="arrow-down" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @endif
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @else
                                 <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
@@ -651,11 +643,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[120px] gap-1 whitespace-nowrap" wire:click="sortBy('gender')">
                             {{ __('Gender') }}
                             @if($this->sortField === 'gender')
-                                @if($sortDirection === 'asc')
-                                    <flux:icon name="arrow-up" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @else
-                                    <flux:icon name="arrow-down" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @endif
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @else
                                 <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
@@ -663,11 +651,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-[120px]" wire:click="sortBy('mobile_number')">
                             {{ __('Mobile') }}
                             @if($this->sortField === 'mobile_number')
-                                @if($sortDirection === 'asc')
-                                    <flux:icon name="arrow-up" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @else
-                                    <flux:icon name="arrow-down" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @endif
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @else
                                 <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
@@ -680,11 +664,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none min-w-[120px]" wire:click="sortBy('created_at')">
                             {{ __('D.O.J') }}
                             @if($this->sortField === 'created_at')
-                                @if($sortDirection === 'asc')
-                                    <flux:icon name="arrow-up" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @else
-                                    <flux:icon name="arrow-down" class="w-3 h-3 text-gray-400 inline ml-1" />
-                                @endif
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @else
                                 <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
