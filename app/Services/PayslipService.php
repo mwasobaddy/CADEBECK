@@ -202,17 +202,18 @@ class PayslipService
     }
 
     /**
-     * Store payslip PDF file
+     * Store payslip PDF file in temporary location
      */
     protected function storePayslipPDF($pdf, string $filename): string
     {
-        // Store in temp folder for temporary access
+        // Store in temp/payslips folder for temporary access
         $path = "temp/payslips/{$filename}";
         Storage::disk('public')->put($path, $pdf->output());
 
         // Schedule cleanup after 24 hours
         $this->scheduleTempFileCleanup($path);
 
+        // Return the temporary path
         return $path;
     }
 
@@ -347,6 +348,7 @@ class PayslipService
      */
     public function cleanupOldTempFiles(int $daysOld = 1): int
     {
+        // Always use temp/payslips as the base path
         $tempPath = 'temp/payslips';
         $files = Storage::disk('public')->files($tempPath);
         $deletedCount = 0;

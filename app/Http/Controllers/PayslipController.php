@@ -18,8 +18,8 @@ class PayslipController extends Controller
             abort(403, 'Unauthorized access to payslip.');
         }
 
-        // Check if file exists
-        if (!Storage::exists($payslip->file_path)) {
+        // Check if file exists in public disk
+        if (!Storage::disk('public')->exists($payslip->file_path)) {
             abort(404, 'Payslip file not found.');
         }
 
@@ -31,11 +31,12 @@ class PayslipController extends Controller
             'target_id' => $payslip->id,
             'details' => json_encode([
                 'downloaded_at' => now(),
+                'file_path' => $payslip->file_path,
             ]),
         ]);
 
-        // Return the file for download
-        return Storage::download(
+        // Return the file for download from public disk
+        return Storage::disk('public')->download(
             $payslip->file_path,
             'payslip_' . $payslip->payroll->employee->employee_number . '_' . $payslip->payroll->payroll_period . '.pdf'
         );
