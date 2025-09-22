@@ -120,6 +120,15 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
             ->middleware(['auth', 'permission:vet_candidates'])
             ->name('job.index.vetting');
+
+        Volt::route('job/job-adverts/{jobAdvertId}/applications', 'job.applications')
+            ->middleware(['auth', 'permission:manage_job_advert'])
+            ->name('job.applications');
+            
+        // CV Download Route
+        Route::get('applications/{application}/download-cv', [App\Http\Controllers\ApplicationController::class, 'downloadCV'])
+            ->middleware(['auth', 'permission:manage_job_advert'])
+            ->name('application.download-cv');
             
         // Organisation: Locations, Branches, Departments, Designations
         Volt::route('organisation/locations', 'organisation.location_manager')
@@ -177,6 +186,10 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('clock', 'clock.clock-manager')
             ->middleware(['auth', 'permission:mark_attendance'])
             ->name('clock.manage');
+
+        Volt::route('attendance/manage', 'attendance.manage')
+            ->middleware(['auth', 'permission:view_other_attendance'])
+            ->name('attendance.manage');
 
         Volt::route('wellbeing', 'wellbeing.wellbeing-manager')
             ->middleware(['auth', 'permission:edit_user'])
@@ -260,7 +273,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Public routes for payslip downloads (with authentication)
 Route::middleware(['auth'])->group(function () {
-    Route::get('payslips/{payslip}/download', [App\Http\Controllers\PayslipController::class, 'download'])
+    Route::get('temp/{payslip}/download', [App\Http\Controllers\PayslipController::class, 'download'])
         ->name('payslip.download');
 });
 
