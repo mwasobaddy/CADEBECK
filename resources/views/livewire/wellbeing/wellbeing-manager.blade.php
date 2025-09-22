@@ -120,20 +120,35 @@ new #[Layout('components.layouts.app')] class extends Component {
             'comments' => 'nullable|string|max:1000',
         ]);
 
+        // Check if a response already exists for today
+        $existingResponse = WellBeingResponse::where('employee_id', $employee->id)
+            ->where('response_date', today())
+            ->first();
+
+        if ($existingResponse) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('You have already submitted a well-being survey for today. Only one response per day is allowed.')
+            ]);
+            $this->isLoading = false;
+            return;
+        }
+
         WellBeingResponse::create([
             'employee_id' => $employee->id,
             'user_id' => $user->id,
-            'survey_type' => $this->currentSurvey['id'],
-            'responses' => [
-                'stress_level' => $this->stress_level,
-                'mood_rating' => $this->mood_rating,
+            'response_date' => today(),
+            'stress_level' => $this->stress_level,
+            'work_life_balance' => $this->mood_rating, // Map mood to work_life_balance
+            'job_satisfaction' => $this->work_satisfaction,
+            'support_level' => $this->workload_rating, // Map workload to support_level
+            'comments' => $this->comments,
+            'additional_metrics' => [
                 'sleep_quality' => $this->sleep_quality,
-                'work_satisfaction' => $this->work_satisfaction,
-                'workload_rating' => $this->workload_rating,
-                'comments' => $this->comments,
+                'survey_type' => $this->currentSurvey['id'],
+                'is_anonymous' => $this->anonymity_preference,
+                'submitted_at' => now(),
             ],
-            'is_anonymous' => $this->anonymity_preference,
-            'submitted_at' => now(),
         ]);
 
         $this->loadWellBeingData();
@@ -149,10 +164,16 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getAverageRating($responses, $key)
     {
-        if ($responses->isEmpty()) return 0;
+        $collection = collect($responses);
+        if ($collection->isEmpty()) return 0;
 
-        return round($responses->avg(function($response) use ($key) {
-            return $response->responses[$key] ?? 0;
+        return round($collection->avg(function($response) use ($key) {
+            // Check if it's a direct field on the model
+            if (in_array($key, ['stress_level', 'work_life_balance', 'job_satisfaction', 'support_level'])) {
+                return $response->$key ?? 0;
+            }
+            // Otherwise check in additional_metrics
+            return $response->additional_metrics[$key] ?? 0;
         }), 1);
     }
 
@@ -194,11 +215,20 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getRecentTrend($responses, $key, $days = 7)
     {
-        if ($responses->count() < 2) return 'stable';
+        if (count($responses) < 2) return 'stable';
 
-        $recent = $responses->take(7);
-        $first = $recent->first()->responses[$key] ?? 0;
-        $last = $recent->last()->responses[$key] ?? 0;
+        $recent = collect($responses)->take(7);
+        
+        // Get value from appropriate field
+        $getValue = function($response) use ($key) {
+            if (in_array($key, ['stress_level', 'work_life_balance', 'job_satisfaction', 'support_level'])) {
+                return $response->$key ?? 0;
+            }
+            return $response->additional_metrics[$key] ?? 0;
+        };
+        
+        $first = $getValue($recent->first());
+        $last = $getValue($recent->last());
 
         $difference = $last - $first;
 
@@ -235,8 +265,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!$employee) return false;
 
         $lastResponse = WellBeingResponse::where('employee_id', $employee->id)
-            ->where('survey_type', $surveyId)
-            ->latest()
+            ->whereJsonContains('additional_metrics->survey_type', $surveyId)
+            ->latest('response_date')
             ->first();
 
         if (!$lastResponse) return true;
@@ -244,7 +274,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $survey = collect($this->surveys)->firstWhere('id', $surveyId);
         $frequency = $survey['frequency'] ?? 'daily';
 
-        $daysSinceLast = now()->diffInDays($lastResponse->submitted_at);
+        $daysSinceLast = now()->diffInDays($lastResponse->response_date);
 
         return match($frequency) {
             'daily' => $daysSinceLast >= 1,
@@ -274,12 +304,12 @@ new #[Layout('components.layouts.app')] class extends Component {
     <!-- Well-being Overview -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @php
-            $recentResponses = collect($this->wellBeingResponses)->take(10);
+            $recentResponses = $this->wellBeingResponses;
             $avgStress = $this->getAverageRating($recentResponses, 'stress_level');
-            $avgMood = $this->getAverageRating($recentResponses, 'mood_rating');
+            $avgWorkLife = $this->getAverageRating($recentResponses, 'work_life_balance');
             $avgSleep = $this->getAverageRating($recentResponses, 'sleep_quality');
             $stressTrend = $this->getRecentTrend($recentResponses, 'stress_level');
-            $moodTrend = $this->getRecentTrend($recentResponses, 'mood_rating');
+            $workLifeTrend = $this->getRecentTrend($recentResponses, 'work_life_balance');
         @endphp
 
         <!-- Stress Level Card -->
@@ -297,16 +327,16 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
         </div>
 
-        <!-- Mood Rating Card -->
+        <!-- Work-Life Balance Card -->
         <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ __('Mood Rating') }}</h3>
-                <span class="text-2xl {{ $this->getTrendColor($moodTrend) }}">{{ $this->getTrendIcon($moodTrend) }}</span>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ __('Work-Life Balance') }}</h3>
+                <span class="text-2xl {{ $this->getTrendColor($workLifeTrend) }}">{{ $this->getTrendIcon($workLifeTrend) }}</span>
             </div>
             <div class="flex items-center gap-4">
-                <div class="text-3xl font-bold text-{{ $this->getMoodColor($avgMood) }}-600">{{ $avgMood }}/10</div>
+                <div class="text-3xl font-bold text-{{ $this->getMoodColor($avgWorkLife) }}-600">{{ $avgWorkLife }}/10</div>
                 <div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ $this->getMoodText($avgMood) }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ $this->getMoodText($avgWorkLife) }}</div>
                     <div class="text-xs text-gray-500">{{ __('Last 10 responses') }}</div>
                 </div>
             </div>
@@ -519,7 +549,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     @endif
 
     <!-- Recent Responses -->
-    @if($this->wellBeingResponses->count() > 0)
+    @if(count($this->wellBeingResponses) > 0)
         <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
             <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('Recent Responses') }}</h3>
             <div class="space-y-4">
@@ -528,54 +558,46 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h4 class="font-semibold text-gray-800 dark:text-gray-200">
-                                    {{ collect($this->surveys)->firstWhere('id', $response->survey_type)['title'] ?? $response->survey_type }}
+                                    {{ $response->additional_metrics['survey_type'] ?? 'Well-being Survey' }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $response->submitted_at->format('M j, Y \a\t g:i A') }}
+                                    {{ $response->response_date->format('M j, Y') }}
                                 </p>
                             </div>
-                            @if($response->is_anonymous)
+                            @if($response->additional_metrics['is_anonymous'] ?? false)
                                 <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">{{ __('Anonymous') }}</span>
                             @endif
                         </div>
 
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                            @if(isset($response->responses['stress_level']))
-                                <div>
-                                    <span class="text-gray-600 dark:text-gray-400">{{ __('Stress:') }}</span>
-                                    <span class="font-semibold">{{ $response->responses['stress_level'] }}/10</span>
-                                </div>
-                            @endif
-                            @if(isset($response->responses['mood_rating']))
-                                <div>
-                                    <span class="text-gray-600 dark:text-gray-400">{{ __('Mood:') }}</span>
-                                    <span class="font-semibold">{{ $response->responses['mood_rating'] }}/10</span>
-                                </div>
-                            @endif
-                            @if(isset($response->responses['sleep_quality']))
+                            <div>
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Stress:') }}</span>
+                                <span class="font-semibold">{{ $response->stress_level }}/10</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Work-Life:') }}</span>
+                                <span class="font-semibold">{{ $response->work_life_balance }}/10</span>
+                            </div>
+                            @if(isset($response->additional_metrics['sleep_quality']))
                                 <div>
                                     <span class="text-gray-600 dark:text-gray-400">{{ __('Sleep:') }}</span>
-                                    <span class="font-semibold">{{ $response->responses['sleep_quality'] }}/10</span>
+                                    <span class="font-semibold">{{ $response->additional_metrics['sleep_quality'] }}/10</span>
                                 </div>
                             @endif
-                            @if(isset($response->responses['work_satisfaction']))
-                                <div>
-                                    <span class="text-gray-600 dark:text-gray-400">{{ __('Satisfaction:') }}</span>
-                                    <span class="font-semibold">{{ $response->responses['work_satisfaction'] }}/10</span>
-                                </div>
-                            @endif
-                            @if(isset($response->responses['workload_rating']))
-                                <div>
-                                    <span class="text-gray-600 dark:text-gray-400">{{ __('Workload:') }}</span>
-                                    <span class="font-semibold">{{ $response->responses['workload_rating'] }}/10</span>
-                                </div>
-                            @endif
+                            <div>
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Satisfaction:') }}</span>
+                                <span class="font-semibold">{{ $response->job_satisfaction }}/10</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 dark:text-gray-400">{{ __('Support:') }}</span>
+                                <span class="font-semibold">{{ $response->support_level }}/10</span>
+                            </div>
                         </div>
 
-                        @if(!empty($response->responses['comments']))
+                        @if(!empty($response->comments))
                             <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    <strong>{{ __('Comments:') }}</strong> {{ $response->responses['comments'] }}
+                                    <strong>{{ __('Comments:') }}</strong> {{ $response->comments }}
                                 </p>
                             </div>
                         @endif
