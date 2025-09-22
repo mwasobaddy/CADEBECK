@@ -122,6 +122,6 @@ class Employee extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereNull('deleted_at');
+        return $query->whereNull('employees.deleted_at');
     }
 }
