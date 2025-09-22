@@ -14,42 +14,18 @@ new class extends \Livewire\Volt\Component {
     public $todayAttendance = null;
     public $isLoading = false;
     public $locationData = null;
+    public $absentEmployees = [];
+    public $attendanceStats = [];
 
     public function mount()
     {
         $user = Auth::user();
-        $data = [];
-
-        if ($user->can('full_system_access')) {
-            $data['system_stats'] = 'All system stats';
-            $data['onboarding'] = 'All onboarding templates';
-            $data['users'] = 'All users';
-            $data['reports'] = 'All reports';
-            $data['payroll'] = 'Payroll integrations';
-        }
-
-        if ($user->can('create_onboarding_workflows')) {
-            $data['onboarding'] = 'Manage onboarding workflows';
-            $data['employees'] = 'Manage employees';
-            $data['leave'] = 'Leave requests & attendance';
-            $data['performance'] = 'Performance reviews';
-            $data['wellbeing'] = 'Well-being reports';
-        }
-
-        if ($user->can('login')) {
-            $data['check_in_out'] = 'Check in/out';
-            $data['documents'] = 'Upload documents';
-            $data['orientation'] = 'Orientation materials';
-            $data['leave'] = 'Request leave & view balance';
-            $data['payslips'] = 'View/download payslips';
-            $data['wellbeing'] = 'Stress monitoring & surveys';
-        }
-
-        $this->dashboardData = $data;
 
         // Load clock attendance data
         $this->loadTodayAttendance();
         $this->getCurrentLocation();
+        $this->loadAbsentEmployees();
+        $this->loadAttendanceStats();
     }
 
     public function loadTodayAttendance()
@@ -79,6 +55,135 @@ new class extends \Livewire\Volt\Component {
             'accuracy' => null,
             'timestamp' => now()->timestamp
         ];
+    }
+
+    public function loadAbsentEmployees()
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            $this->absentEmployees = [];
+            return;
+        }
+
+        // Get employees based on hierarchical permissions
+        $employeeIds = $this->getViewableEmployeeIds();
+
+        if (empty($employeeIds)) {
+            $this->absentEmployees = [];
+            return;
+        }
+
+        // Get employees who haven't clocked in today
+        $todayAttendeeIds = Attendance::whereDate('date', today())
+            ->whereIn('employee_id', $employeeIds)
+            ->whereNotNull('clock_in_time')
+            ->pluck('employee_id')
+            ->toArray();
+
+        $this->absentEmployees = Employee::active()
+            ->whereIn('employees.id', $employeeIds)
+            ->whereNotIn('employees.id', $todayAttendeeIds)
+            ->with(['user', 'department', 'designation'])
+            ->join('users', 'employees.user_id', '=', 'users.id')
+            ->orderBy('users.first_name')
+            ->select('employees.*')
+            ->limit(10) // Limit to 10 for dashboard display
+            ->get();
+    }
+
+    public function loadAttendanceStats()
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            $this->attendanceStats = [];
+            return;
+        }
+
+        $employeeIds = $this->getViewableEmployeeIds();
+
+        if (empty($employeeIds)) {
+            $this->attendanceStats = [];
+            return;
+        }
+
+        $totalEmployees = count($employeeIds);
+        $presentToday = Attendance::whereDate('date', today())
+            ->whereIn('employee_id', $employeeIds)
+            ->whereNotNull('clock_in_time')
+            ->count();
+
+        $absentToday = $totalEmployees - $presentToday;
+
+        // Weekly stats
+        $weekStart = now()->startOfWeek();
+        $weeklyAttendance = Attendance::whereBetween('date', [$weekStart, now()])
+            ->whereIn('employee_id', $employeeIds)
+            ->where('status', 'present')
+            ->count();
+
+        $this->attendanceStats = [
+            'total_employees' => $totalEmployees,
+            'present_today' => $presentToday,
+            'absent_today' => $absentToday,
+            'attendance_rate' => $totalEmployees > 0 ? round(($presentToday / $totalEmployees) * 100, 1) : 0,
+            'weekly_attendance' => $weeklyAttendance,
+        ];
+    }
+
+    public function getViewableEmployeeIds()
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return [];
+        }
+
+        // Executive and Developer can see all employees
+        if ($user->can('view_other_attendance') && ($user->hasRole(['Executive', 'Developer']))) {
+            return Employee::active()->pluck('id')->toArray();
+        }
+
+        // Manager N-1 can see employees and Manager N-2 they supervise
+        if ($user->hasRole('Manager N-1')) {
+            $subordinateIds = $this->getAllSubordinateIds($employee->id);
+            return array_merge([$employee->id], $subordinateIds);
+        }
+
+        // Manager N-2 can see employees they directly supervise
+        if ($user->hasRole('Manager N-2')) {
+            $subordinateIds = $this->getDirectSubordinateIds($employee->id);
+            return array_merge([$employee->id], $subordinateIds);
+        }
+
+        // Regular employees can only see themselves
+        return [$employee->id];
+    }
+
+    private function getDirectSubordinateIds($employeeId)
+    {
+        return Employee::where('supervisor_id', $employeeId)
+            ->active()
+            ->pluck('id')
+            ->toArray();
+    }
+
+    private function getAllSubordinateIds($employeeId)
+    {
+        $subordinates = [];
+        $directSubordinates = $this->getDirectSubordinateIds($employeeId);
+
+        foreach ($directSubordinates as $subId) {
+            $subordinates[] = $subId;
+            // Recursively get subordinates of subordinates
+            $subordinates = array_merge($subordinates, $this->getAllSubordinateIds($subId));
+        }
+
+        return array_unique($subordinates);
     }
 
     public function clockIn()
@@ -222,7 +327,7 @@ new class extends \Livewire\Volt\Component {
     <!-- Welcome Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            {{ __('Welcome back, ') . Auth::user()->name }}!
+            {{ __('Welcome back, ') . Auth::user()->first_name }}!
         </h1>
         <p class="text-gray-600 dark:text-gray-300 mt-2">
             {{ 'Here\'s your HR dashboard overview for today.' }}
@@ -328,13 +433,135 @@ new class extends \Livewire\Volt\Component {
         </div>
     </div>
 
-    <!-- Role-based Dashboard Content -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @foreach ($dashboardData as $key => $value)
-            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
-                <h2 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">{{ __(ucwords(str_replace('_', ' ', $key))) }}</h2>
-                <p class="text-gray-600 dark:text-gray-400">{{ __($value) }}</p>
+    <!-- Attendance Overview Section -->
+    @if(count($this->attendanceStats) > 0)
+    <div class="mb-8">
+        <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
+            <div class="flex items-center gap-3 mb-6">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500">
+                    {{ 'Team Attendance Overview' }}
+                </h2>
             </div>
-        @endforeach
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-green-200 dark:border-green-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-green-600 dark:text-green-400">Present Today</p>
+                            <p class="text-2xl font-bold text-green-800 dark:text-green-200">{{ $this->attendanceStats['present_today'] }}</p>
+                        </div>
+                        <div class="p-2 bg-green-200 dark:bg-green-800 rounded-lg">
+                            <svg class="w-6 h-6 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl p-4 border border-red-200 dark:border-red-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">Absent Today</p>
+                            <p class="text-2xl font-bold text-red-800 dark:text-red-200">{{ $this->attendanceStats['absent_today'] }}</p>
+                        </div>
+                        <div class="p-2 bg-red-200 dark:bg-red-800 rounded-lg">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Team</p>
+                            <p class="text-2xl font-bold text-blue-800 dark:text-blue-200">{{ $this->attendanceStats['total_employees'] }}</p>
+                        </div>
+                        <div class="p-2 bg-blue-200 dark:bg-blue-800 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-purple-600 dark:text-purple-400">Attendance Rate</p>
+                            <p class="text-2xl font-bold text-purple-800 dark:text-purple-200">{{ $this->attendanceStats['attendance_rate'] }}%</p>
+                        </div>
+                        <div class="p-2 bg-purple-200 dark:bg-purple-800 rounded-lg">
+                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Absent Employees List -->
+            @if(count($this->absentEmployees) > 0)
+            <div class="bg-red-50/50 dark:bg-red-900/10 rounded-xl p-4">
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-300 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    {{ 'Employees Not Clocked In Today' }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($this->absentEmployees as $employee)
+                    <div class="bg-white/80 dark:bg-zinc-800/80 rounded-lg p-3 border border-red-200 dark:border-red-700/50">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center text-white text-sm font-semibold">
+                                    {{ substr($employee->user->first_name, 0, 1) }}{{ substr($employee->user->other_names, 0, 1) }}
+                                </div>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {{ $employee->user->first_name }} {{ $employee->user->other_names }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {{ $employee->department->name ?? 'No Department' }} • {{ $employee->designation->name ?? 'No Designation' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @if(count($this->absentEmployees) >= 10)
+                <div class="mt-4 text-center">
+                    <a href="{{ route('attendance.manage') }}" 
+                       class="inline-flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium text-sm transition-colors"
+                       wire:navigate>
+                        {{ 'View All Attendance Records' }}
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+                @endif
+            </div>
+            @else
+            <div class="bg-green-50/50 dark:bg-green-900/10 rounded-xl p-4 text-center">
+                <svg class="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-green-800 dark:text-green-300 font-medium">{{ 'All team members have clocked in today!' }}</p>
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
+    
+    <!-- Right Column - Well-being -->
+    <div class="lg:col-span-1">
+        <livewire:wellbeing.wellbeing-manager />
     </div>
 </div>
