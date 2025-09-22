@@ -356,7 +356,7 @@ class PayrollSeeder extends Seeder
 
         // Generate file path (simulated)
         $fileName = $payslipNumber . '.pdf';
-        $filePath = 'payslips/' . date('Y') . '/' . $fileName;
+        $filePath = 'temp/payslips/' . $fileName;
 
         Payslip::create([
             'payroll_id' => $payroll->id,

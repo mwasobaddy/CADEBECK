@@ -29,6 +29,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'vet_candidate',
             'view_applications',
             'apply_job_advert',
+            'audit_applications',
+            'manage_applications',
+            'approve_applications',
+            'reject_applications',
+            'export_applications',
 
             'create_user',
             'edit_user',
@@ -121,6 +126,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_deduction',
             'export_deduction',
 
+            'export_payslip',
+            'delete_payslip',
+
             'manage_history',
             'delete_history',
             'export_history',
@@ -208,6 +216,11 @@ class RolesAndPermissionsSeeder extends Seeder
                     'vet_candidate',
                     'view_applications',
                     'apply_job_advert',
+                    'audit_applications',
+                    'manage_applications',
+                    'approve_applications',
+                    'reject_applications',
+                    'export_applications',
 
                     'manage_employee',
                     'create_employee',
@@ -277,6 +290,11 @@ class RolesAndPermissionsSeeder extends Seeder
                     'vet_candidate',
                     'view_applications',
                     'apply_job_advert',
+                    'audit_applications',
+                    'manage_applications',
+                    'approve_applications',
+                    'reject_applications',
+                    'export_applications',
 
                     'manage_employee',
                     'create_employee',
@@ -347,6 +365,11 @@ class RolesAndPermissionsSeeder extends Seeder
                     'vet_candidate',
                     'view_applications',
                     'apply_job_advert',
+                    'audit_applications',
+                    'manage_applications',
+                    'approve_applications',
+                    'reject_applications',
+                    'export_applications',
 
                     'manage_employee',
                     'create_employee',
@@ -444,6 +467,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'first_name' => 'Technical',
                 'other_names' => 'Developer',
                 'email' => 'kelvinramsiel@gmail.com',
+                'email_verified_at' => now(),
                 'password' => Hash::make('kelvin1234'),
                 'role' => 'Developer',
             ],
@@ -455,6 +479,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ], [
                 'first_name' => $userData['first_name'],
                 'other_names' => $userData['other_names'],
+                'email_verified_at' => $userData['email_verified_at'],
                 'password' => $userData['password'],
             ]);
             $user->assignRole($userData['role']);

@@ -26,6 +26,7 @@ return new class extends Migration
 
             $table->unique(['employee_id', 'date']); // One attendance record per employee per day
             $table->index(['date', 'status']);
+            $table->softDeletes();
         });
     }
 
