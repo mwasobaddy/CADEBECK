@@ -400,9 +400,9 @@ new class extends \Livewire\Volt\Component {
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
             {{ __('Welcome back, ') . Auth::user()->first_name }}!
         </h1>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">
+        {{-- <p class="text-gray-600 dark:text-gray-300 mt-2">
             {{ 'Here\'s your HR dashboard overview for today.' }}
-        </p>
+        </p> --}}
     </div>
 
     <!-- Clock In/Out Section -->
@@ -414,7 +414,7 @@ new class extends \Livewire\Volt\Component {
                     <polyline points="12,6 12,12 16,14"></polyline>
                 </svg>
                 <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500">
-                    {{ 'Clock In/Out' }}
+                    {{ __('Clock In/Out') }}
                 </h2>
             </div>
 
@@ -424,7 +424,7 @@ new class extends \Livewire\Volt\Component {
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-{{ $this->getStatusColor() }}-800 dark:text-{{ $this->getStatusColor() }}-200">
-                                {{ 'Current Status' }}
+                                {{ __('Current Status') }}
                             </h3>
                             <p class="text-{{ $this->getStatusColor() }}-600 dark:text-{{ $this->getStatusColor() }}-300 mt-1">
                                 {{ $this->getStatusText() }}
@@ -449,9 +449,9 @@ new class extends \Livewire\Volt\Component {
                 @php
                     $all_assessments_done = $this->surveyCompletedToday && $this->surveyCompletedThisWeek && $this->surveyCompletedThisMonth;
                     $missing = [];
-                    if (!$this->surveyCompletedToday) $missing[] = 'Daily';
-                    if (!$this->surveyCompletedThisWeek) $missing[] = 'Weekly';
-                    if (!$this->surveyCompletedThisMonth) $missing[] = 'Monthly';
+                    if (!$this->surveyCompletedToday) $missing[] = __('Daily');
+                    if (!$this->surveyCompletedThisWeek) $missing[] = __('Weekly');
+                    if (!$this->surveyCompletedThisMonth) $missing[] = __('Monthly');
                 @endphp
 
                 @if(!$all_assessments_done)
@@ -495,31 +495,33 @@ new class extends \Livewire\Volt\Component {
                 <div class="flex gap-4">
                     @php $can_clock_in = $this->surveyCompletedToday && $this->surveyCompletedThisWeek && $this->surveyCompletedThisMonth; @endphp
                     @if(!$this->currentAttendance)
-                        <button
-                            wire:click="clockIn"
-                            wire:loading.attr="disabled"
-                            wire:target="clockIn"
-                            @if(!$can_clock_in) disabled @endif
-                            class="flex-1 @if($can_clock_in) bg-green-600 hover:bg-green-700 disabled:bg-green-400 @else bg-gray-400 cursor-not-allowed @endif text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center gap-2"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                            </svg>
-                            <span wire:loading.remove wire:target="clockIn">{{ 'Clock In' }}</span>
-                            <span wire:loading wire:target="clockIn">{{ 'Clocking In...' }}</span>
-                        </button>
+                        @if($can_clock_in)
+                            <flux:button
+                                wire:click="clockIn"
+                                icon:trailing="arrow-left-end-on-rectangle"
+                                icon:variant="solid"
+                                variant="primary"
+                                class="w-full flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-6 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                {{ __('Clock In') }}
+                            </flux:button>
+                        @else
+                            <flux:button
+                                icon:trailing="arrow-left-end-on-rectangle"
+                                icon:variant="solid"
+                                variant="filled"
+                                class="w-full flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-6 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-not-allowed">
+                                {{ __('Clocking In') }}
+                            </flux:button>
+                        @endif
                     @else
-                        <button
+                        <flux:button
                             wire:click="clockOut"
-                            wire:loading.attr="disabled"
-                            class="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center gap-2"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                            </svg>
-                            <span wire:loading.remove>{{ 'Clock Out' }}</span>
-                            <span wire:loading>{{ 'Clocking Out...' }}</span>
-                        </button>
+                            icon:trailing="arrow-left-end-on-rectangle"
+                            icon:variant="solid"
+                            variant="primary"
+                            class="w-full flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-6 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            {{ __('Clock Out') }}
+                        </flux:button>
                     @endif
                 </div>
 
