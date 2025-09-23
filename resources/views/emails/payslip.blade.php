@@ -5,45 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payslip - CADEBECK HR</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
-        .content { padding: 30px 20px; }
-        .section { margin-bottom: 25px; }
-        .section h2 { color: #1f2937; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .info-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; }
-        .info-table td:first-child { font-weight: 600; color: #374151; width: 140px; }
-        .amount-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #f9fafb; border-radius: 8px; overflow: hidden; }
-        .amount-table th, .amount-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        .amount-table th { background: #f3f4f6; font-weight: 600; color: #374151; }
-        .amount-table td:last-child { text-align: right; font-weight: 600; }
-        .total-row { background: #ecfdf5 !important; font-weight: bold; }
-        .total-row td { color: #065f46; }
-        .net-pay { text-align: center; background: #ecfdf5; padding: 25px; margin: 20px 0; border-radius: 8px; border: 2px solid #10b981; }
-        .net-pay .amount { font-size: 32px; font-weight: bold; color: #059669; margin-bottom: 5px; }
-        .net-pay .label { font-size: 14px; color: #065f46; text-transform: uppercase; letter-spacing: 1px; }
-        .button { text-align: center; margin: 30px 0; }
-        .button a { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; }
-        .footer { text-align: center; padding: 20px; background: #f9fafb; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
-        .emoji { font-size: 20px; margin-right: 8px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #16a34a;
+            margin: 0;
+        }
+        .subtitle {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h2 {
+            color: #1e40af;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .info-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-table td:first-child {
+            font-weight: 600;
+            color: #475569;
+            width: 140px;
+        }
+        .amount-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .amount-table th, .amount-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .amount-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        .amount-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+        .total-row {
+            background: #ecfdf5 !important;
+            font-weight: bold;
+        }
+        .total-row td {
+            color: #065f46;
+        }
+        .net-pay {
+            text-align: center;
+            background: #ecfdf5;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #10b981;
+        }
+        .net-pay .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+        .net-pay .label {
+            font-size: 14px;
+            color: #065f46;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .message-content {
+            font-size: 16px;
+            line-height: 1.7;
+            margin: 20px 0;
+        }
+        .button {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button a {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .info-table td, .amount-table th, .amount-table td {
+                padding: 8px;
+            }
+            .net-pay .amount {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><span class="emoji">📄</span>Your Payslip</h1>
+            <h1 class="company-name">CADEBECK</h1>
+            <p class="subtitle">Human Resources Department</p>
         </div>
 
-        <div class="content">
+        <div class="message-content">
+            <h2 style="color: #1e40af; margin-bottom: 15px;">Dear {{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'Employee' }},</h2>
+            
+            <p>Your payslip for the period <strong>{{ $payroll->payroll_period ?? 'N/A' }}</strong> is ready. Please find your salary details below.</p>
+            
             <div class="section">
-                <p>Hello <strong>{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'Employee' }}</strong>,</p>
-                <p>Your payslip for the period <strong>{{ $payroll->payroll_period ?? 'N/A' }}</strong> is ready. Please find your salary details below.</p>
-            </div>
-
-            <div class="section">
-                <h2><span class="emoji">👤</span>Employee Information</h2>
+                <h2>Employee Information</h2>
                 <table class="info-table">
                     <tr><td>Employee ID</td><td>{{ $employee->staff_number ?? 'N/A' }}</td></tr>
                     <tr><td>Name</td><td>{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'N/A' }}</td></tr>
@@ -53,7 +179,7 @@
             </div>
 
             <div class="section">
-                <h2><span class="emoji">💰</span>Earnings Breakdown</h2>
+                <h2>Earnings Breakdown</h2>
                 <table class="amount-table">
                     <thead>
                         <tr>
@@ -111,7 +237,7 @@
             </div>
 
             <div class="section">
-                <h2><span class="emoji">📉</span>Deductions Breakdown</h2>
+                <h2>Deductions Breakdown</h2>
                 <table class="amount-table">
                     <thead>
                         <tr>
@@ -169,18 +295,19 @@
                 <div class="label">Net Pay</div>
             </div>
 
-            <div class="section">
-                <p><strong>⚠️ Important:</strong> This payslip is confidential and intended only for the named employee. If you have any questions about your salary, please contact the HR department.</p>
-            </div>
+            <p><strong>Important:</strong> This payslip is confidential and intended only for the named employee. If you have any questions about your salary, please contact the HR department.</p>
 
             <div class="button">
                 <a href="mailto:hr@cadebeck.com">Contact HR Department</a>
             </div>
+
+            <p style="margin-top: 30px;">Best regards,<br>
+            <strong>CADEBECK HR Team</strong></p>
         </div>
 
         <div class="footer">
-            <p>This is an automated message from <strong>CADEBECK HR Management System</strong>.<br>
-            Please do not reply to this email.</p>
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+            <p>© {{ date('Y') }} CADEBECK. All rights reserved.</p>
         </div>
     </div>
 </body>
