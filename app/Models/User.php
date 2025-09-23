@@ -63,6 +63,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the user's full name
+     */
+    public function getNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . $this->other_names);
+    }
+
+    /**
      * Get the employee record associated with this user
      */
     public function employee()

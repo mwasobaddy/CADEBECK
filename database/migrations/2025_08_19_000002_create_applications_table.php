@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->binary('cv_blob');
             $table->string('cover_letter', 600);
             $table->enum('status', ['Pending', 'Shortlisted', 'Rejected', 'Invited'])->default('Pending');
+            $table->timestamp('status_changed_at')->nullable();
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
         });

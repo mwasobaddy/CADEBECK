@@ -434,19 +434,11 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
             'Employee' => [
                 [
-                    'login',
-                    'check_in',
-                    'check_out',
-                    'upload_documents',
-                    'access_orientation_materials',
-                    'submit_feedback_forms',
-                    'request_leave',
-                    'view_leave_balance',
-                    'participate_performance_reviews',
-                    'view_payslips',
-                    'download_payslips',
-                    'access_stress_monitoring_tools',
-                    'complete_wellbeing_surveys',
+                    'manage_my_leave',
+                    'apply_for_leave',
+                    'edit_my_leave',
+                    'delete_my_leave',
+                    'export_my_leave',
             
                     // corrected permissions
                     'view_my_payslips',
