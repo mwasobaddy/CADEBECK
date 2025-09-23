@@ -410,10 +410,10 @@ new #[Layout('components.layouts.app')] class extends Component {
     <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-800 via-purple-500 to-pink-500">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500">
                     {{ __('Well-being & Stress Monitoring') }}
                 </h2>
             </div>
@@ -501,13 +501,31 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{{ __('Available') }}</span>
                         @endif
                     </div>
-                    <button
+                    {{-- <button
                         wire:click="startSurvey('{{ $survey['id'] }}')"
                         {{ !$this->isSurveyAvailable($survey['assessment_type']) ? 'disabled' : '' }}
                         class="w-full {{ $this->isSurveyAvailable($survey['assessment_type']) ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-400 cursor-not-allowed' }} text-white px-4 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                     >
                         {{ $this->isSurveyAvailable($survey['assessment_type']) ? __('Take Survey') : __('Completed') }}
-                    </button>
+                    </button> --}}
+
+                    @if($this->isSurveyAvailable($survey['assessment_type']))
+                    <flux:button
+                        wire:click="startSurvey('{{ $survey['id'] }}')"
+                        icon:trailing="clipboard-document-check"
+                        variant="primary"
+                        class="w-full flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                        {{ __('Take Survey') }}
+                    </flux:button>
+                    @else
+                    <flux:button
+                        icon:trailing="check-circle"
+                        variant="filled"
+                        class="w-full flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-not-allowed">
+                        {{ __('Completed') }}
+                    </flux:button>
+                    @endif
+                    
                 </div>
             @endforeach
         </div>
@@ -650,22 +668,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
 
                 <div class="flex justify-end gap-3">
-                    <button
+                    <flux:button
+                        icon:trailing="x-mark"
+                        variant="primary"
                         type="button"
                         wire:click="hideSurveyForm"
-                        class="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                        class="flex flex-row items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
                     >
                         {{ __('Cancel') }}
-                    </button>
-                    <button
+                    </flux:button>
+                    <flux:button
                         type="submit"
-                        wire:loading.attr="disabled"
-                        @disabled($isLoading)
-                        class="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                        <span wire:loading.remove>{{ __('Submit Survey') }}</span>
-                        <span wire:loading>{{ __('Submitting...') }}</span>
-                    </button>
+                        icon:trailing="paper-airplane"
+                        variant="primary"
+                        class="flex flex-row items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                        {{ __('Submit Survey') }}
+                    </flux:button>
                 </div>
             </form>
         </div>
@@ -681,7 +699,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="flex justify-between items-start mb-3">
                             <div>
                                 <h4 class="font-semibold text-gray-800 dark:text-gray-200">
-                                    {{ $response->additional_metrics['survey_type'] ?? 'Well-being Survey' }}
+                                    {{ $response->additional_metrics['survey_type'] ?? __('Well-being Survey') }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     {{ $response->period_start_date ? $response->period_start_date->format('M j, Y') : $response->created_at->format('M j, Y') }}
