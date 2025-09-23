@@ -39,7 +39,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 autofocus
                 placeholder="Enter your email address"
             />
-            <p class="text-sm text-gray-500 dark:text-gray-400">We'll send reset instructions to this email if it exists in our system.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('We\'ll send reset instructions to this email if it exists in our system.') }}</p>
         </div>
 
         <!-- Submit Button -->

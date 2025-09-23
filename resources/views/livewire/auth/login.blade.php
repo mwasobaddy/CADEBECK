@@ -136,14 +136,14 @@ new #[Layout('components.layouts.auth')] class extends Component {
             <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Need an account?</span>
+            <span class="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">{{ __('Need an account?') }}</span>
         </div>
     </div>
 
     <!-- Contact Admin -->
     <div class="text-center">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-            Contact your system administrator to create an account
+            {{ __('Contact your system administrator to create an account') }}
         </p>
     </div>
 </div>

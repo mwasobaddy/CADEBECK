@@ -98,7 +98,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 placeholder="Enter new password"
                 viewable
             />
-            <p class="text-sm text-gray-500 dark:text-gray-400">Must be at least 8 characters long</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Must be at least 8 characters long') }}</p>
         </div>
 
         <!-- Confirm Password -->
