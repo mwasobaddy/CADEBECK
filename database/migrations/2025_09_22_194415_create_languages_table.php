@@ -25,7 +25,7 @@ return new class extends Migration
         // Insert default languages
         DB::table('languages')->insert([
             [
-                'code' => 'eng',
+                'code' => 'en',
                 'name' => 'English',
                 'native_name' => 'English',
                 'is_active' => true,
