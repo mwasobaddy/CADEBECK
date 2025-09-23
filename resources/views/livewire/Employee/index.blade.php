@@ -515,7 +515,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </span>
                     <input type="text" wire:model.live.debounce.500ms="search"
                         class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
-                        placeholder="{{ __('Search employee...') }}">
+                        placeholder="{{ __('Search by employee name, number, or period...') }}">
                 </div>
                 <button type="button" wire:click="toggleFilters"
                     class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 bg-white/80 dark:bg-zinc-900/80 text-blue-600 dark:text-indigo-300 hover:bg-blue-50/80 dark:hover:bg-zinc-800/80 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">

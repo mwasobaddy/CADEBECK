@@ -561,7 +561,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <flux:select.option value="not_downloaded">{{ __('Not Downloaded') }}</flux:select.option>
                 </flux:select>
 
-                <flux:select wire:model.live="perPage" placeholder="10" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
+                <flux:select wire:model.live="perPage" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
                     <flux:select.option value="10">10</flux:select.option>
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
