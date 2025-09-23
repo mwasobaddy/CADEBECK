@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll Processed - {{ $companyName ?? 'CADEBECK' }}</title>
+    <title>{{ __('Payroll Processed') }} - {{ config('app.name') }}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -169,78 +169,78 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="company-name">{{ $companyName ?? 'CADEBECK' }}</h1>
-            <p class="subtitle">Human Resources Department</p>
+            <h1 class="company-name">{{ config('app.name') }}</h1>
+            <p class="subtitle">{{ __('Human Resources Department') }}</p>
         </div>
 
         <div class="section">
-            <h2 style="color: #1e40af; margin-bottom: 15px;">Dear {{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'Employee' }},</h2>
-            
-            <p>We hope this message finds you well. Your payroll has been processed for the period <strong>{{ $payroll->payroll_period ?? 'N/A' }}</strong>. Your complete payslip details are shown below.</p>
+            <h2 style="color: #1e40af; margin-bottom: 15px;">{{ __('Dear :name,', ['name' => $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'Employee']) }}</h2>
+
+            <p>{{ __('We hope this message finds you well. Your payroll has been processed for the period :period. Your complete payslip details are shown below.', ['period' => $payroll->payroll_period ?? 'N/A']) }}</p>
         </div>
 
         <div class="section">
-            <h2>Employee Information</h2>
+            <h2>{{ __('Employee Information') }}</h2>
             <table class="info-table">
-                <tr><td>Employee ID</td><td>{{ $employee->staff_number ?? 'N/A' }}</td></tr>
-                <tr><td>Name</td><td>{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'N/A' }}</td></tr>
-                <tr><td>Department</td><td>{{ $employee->department->name ?? 'N/A' }}</td></tr>
-                <tr><td>Designation</td><td>{{ $employee->designation->name ?? 'N/A' }}</td></tr>
+                <tr><td>{{ __('Employee ID') }}</td><td>{{ $employee->staff_number ?? 'N/A' }}</td></tr>
+                <tr><td>{{ __('Name') }}</td><td>{{ $employee->user ? trim(($employee->user->first_name ?? '') . ' ' . ($employee->user->other_names ?? '')) : 'N/A' }}</td></tr>
+                <tr><td>{{ __('Department') }}</td><td>{{ $employee->department->name ?? 'N/A' }}</td></tr>
+                <tr><td>{{ __('Designation') }}</td><td>{{ $employee->designation->name ?? 'N/A' }}</td></tr>
             </table>
         </div>
 
         <div class="section">
-            <h2>Earnings Breakdown</h2>
+            <h2>{{ __('Earnings Breakdown') }}</h2>
             <table class="amount-table allowances-table">
                 <thead>
                     <tr>
-                        <th>Description</th>
-                        <th>Amount</th>
+                        <th>{{ __('Description') }}</th>
+                        <th>{{ __('Amount') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Basic Salary</strong></td>
+                        <td><strong>{{ __('Basic Salary') }}</strong></td>
                         <td><strong>USD {{ number_format($payroll->basic_salary ?? 0, 2) }}</strong></td>
                     </tr>
                     @if(($payroll->house_allowance ?? 0) > 0)
                     <tr>
-                        <td>House Allowance</td>
+                        <td>{{ __('House Allowance') }}</td>
                         <td>USD {{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->transport_allowance ?? 0) > 0)
                     <tr>
-                        <td>Transport Allowance</td>
+                        <td>{{ __('Transport Allowance') }}</td>
                         <td>USD {{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->medical_allowance ?? 0) > 0)
                     <tr>
-                        <td>Medical Allowance</td>
+                        <td>{{ __('Medical Allowance') }}</td>
                         <td>USD {{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->overtime_amount ?? 0) > 0)
                     <tr>
-                        <td>Overtime Allowance</td>
+                        <td>{{ __('Overtime Allowance') }}</td>
                         <td>USD {{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->bonus_amount ?? 0) > 0)
                     <tr>
-                        <td>Bonus</td>
+                        <td>{{ __('Bonus') }}</td>
                         <td>USD {{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->other_allowances ?? 0) > 0)
                     <tr>
-                        <td>Other Allowances</td>
+                        <td>{{ __('Other Allowances') }}</td>
                         <td>USD {{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     <tr class="total-row">
-                        <td><strong>Total Earnings</strong></td>
+                        <td><strong>{{ __('Total Earnings') }}</strong></td>
                         <td><strong>USD {{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
                     </tr>
                 </tbody>
@@ -248,53 +248,53 @@
         </div>
 
         <div class="section">
-            <h2>Deductions Breakdown</h2>
+            <h2>{{ __('Deductions Breakdown') }}</h2>
             <table class="amount-table deductions-table">
                 <thead>
                     <tr>
-                        <th>Description</th>
-                        <th>Amount</th>
+                        <th>{{ __('Description') }}</th>
+                        <th>{{ __('Amount') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if(($payroll->paye_tax ?? 0) > 0)
                     <tr>
-                        <td>PAYE Tax</td>
+                        <td>{{ __('PAYE Tax') }}</td>
                         <td>USD {{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->nhif_deduction ?? 0) > 0)
                     <tr>
-                        <td>NHIF Contribution</td>
+                        <td>{{ __('NHIF Contribution') }}</td>
                         <td>USD {{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->nssf_deduction ?? 0) > 0)
                     <tr>
-                        <td>NSSF Contribution</td>
+                        <td>{{ __('NSSF Contribution') }}</td>
                         <td>USD {{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->insurance_deduction ?? 0) > 0)
                     <tr>
-                        <td>Insurance Premium</td>
+                        <td>{{ __('Insurance Premium') }}</td>
                         <td>USD {{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->loan_deduction ?? 0) > 0)
                     <tr>
-                        <td>Loan Repayment</td>
+                        <td>{{ __('Loan Repayment') }}</td>
                         <td>USD {{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->other_deductions ?? 0) > 0)
                     <tr>
-                        <td>Other Deductions</td>
+                        <td>{{ __('Other Deductions') }}</td>
                         <td>USD {{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     <tr class="total-row">
-                        <td><strong>Total Deductions</strong></td>
+                        <td><strong>{{ __('Total Deductions') }}</strong></td>
                         <td><strong>USD {{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
                     </tr>
                 </tbody>
@@ -303,20 +303,20 @@
 
         <div class="net-pay">
             <div class="amount">USD {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
-            <div class="label">Net Pay</div>
+            <div class="label">{{ __('Net Pay') }}</div>
         </div>
 
         <div class="section">
-            <p><strong>Important:</strong> If you notice any discrepancies in your payroll details, please contact the HR department immediately.</p>
+            <p><strong>{{ __('Important:') }}</strong> {{ __('If you notice any discrepancies in your payroll details, please contact the HR department immediately.') }}</p>
         </div>
 
         <div class="button">
-            <a href="mailto:hr@cadebeck.com">Contact HR Department</a>
+            <a href="mailto:hr@cadebeck.com">{{ __('Contact HR Department') }}</a>
         </div>
 
         <div class="footer">
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-            <p>© {{ date('Y') }} {{ $companyName ?? 'CADEBECK' }}. All rights reserved.</p>
+            <p>{{ __('This is an automated message. Please do not reply directly to this email.') }}</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
         </div>
     </div>
 </body>

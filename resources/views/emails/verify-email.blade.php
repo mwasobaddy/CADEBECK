@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Verify Your Email Address') }}</title>
+    <title>{{ __('Verify Your Email Address') }} - {{ config('app.name') }}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -82,7 +82,7 @@
     <div class="container">
         <div class="header">
             <h1 class="company-name">{{ config('app.name') }}</h1>
-            <p class="subtitle">Human Resources Department</p>
+            <p class="subtitle">{{ __('Human Resources Department') }}</p>
         </div>
 
         <div class="message-content">
@@ -97,12 +97,12 @@
             <p>{{ __('If you did not create an account, no further action is required.') }}</p>
 
             <p style="margin-top: 30px;">{{ __('Thanks,') }}<br>
-            <strong>{{ config('app.name') }} HR Team</strong></p>
+            <strong>{{ config('app.name') }} {{ __('HR Team') }}</strong></p>
         </div>
 
         <div class="footer">
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-            <p>© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <p>{{ __('This is an automated message. Please do not reply directly to this email.') }}</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
         </div>
     </div>
 </body>
