@@ -135,6 +135,20 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
     }
 
+    public function toggleSelection($id): void
+    {
+        if (in_array($id, $this->selected)) {
+            // Remove the ID from selected array
+            $this->selected = array_values(array_diff($this->selected, [$id]));
+        } else {
+            // Add the ID to selected array
+            $this->selected[] = $id;
+            $this->selected = array_values(array_unique($this->selected));
+        }
+        
+        $this->updateSelectAllState();
+    }
+
     public function updatedSelected(): void
     {
         $this->updateSelectAllState();
@@ -412,43 +426,30 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <span class="absolute -bottom-2 left-0 w-[100px] h-1 rounded-full bg-gradient-to-r from-green-800 via-green-500 to-blue-500"></span>
                 </h1>
             </div>
-            
-            <div class="flex items-center gap-3">
-                @can('import_job_advert')
-                    <!-- Import Button -->
-                    <button type="button" onclick="document.getElementById('import-file').click()"
-                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400 bg-green-50/80 dark:bg-green-900/20 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                        </svg>
-                        <span class="hidden lg:inline">{{ __('Import') }}</span>
-                    </button>
-                    <input type="file" id="import-file" accept=".csv,.xlsx,.xls" class="hidden" wire:change="importFile">
-                @endcan
 
+            <div class="flex items-center gap-3">
                 @can('export_job_advert')
-                    <!-- Export All Button -->
-                    <button type="button" wire:click="exportAll"
-                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                        @if ($isLoadingExport) disabled @endif>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        <span class="hidden lg:inline">
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                        </span>
-                    </button>
+                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll"
+                    class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
+                    </flux:button>
+                @else
+                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true"
+                    class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {{ __('Exporting Denied') }}
+                    </flux:button>
                 @endcan
 
                 @can('create_job_advert')
-                    <!-- Create New Advert Button -->
-                    <button type="button" wire:click="createNewAdvert"
-                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span class="hidden lg:inline">{{ __('Add Advert') }}</span>
-                    </button>
+                    <flux:button icon:trailing="plus" variant="primary" type="button" wire:click="createNewAdvert"
+                    class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {{ __('Add Advert') }}
+                    </flux:button>
+                @else
+                    <flux:button icon:trailing="plus" variant="primary" type="button" :disabled="true"
+                    class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {{ __('Adding Denied') }}
+                    </flux:button>
                 @endcan
             </div>
         </div>
@@ -483,19 +484,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             <!-- Filters (hidden by default, shown when toggled) -->
             @if ($showFilters ?? false)
                 <div class="flex flex-wrap gap-6 mt-6 items-center animate-fade-in">
-                    <select wire:model.live="filterStatus"
-                        class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                        <option value="">{{ __('All Statuses') }}</option>
-                        <option value="Published">{{ __('Published') }}</option>
-                        <option value="Draft">{{ __('Draft') }}</option>
-                        <option value="Expired">{{ __('Expired') }}</option>
-                    </select>
-                    <select wire:model.live="perPage"
-                        class="px-3 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                    </select>
+                    <flux:select wire:model.live="filterStatus" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
+                        <flux:select.option value="">{{ __('All Statuses') }}</flux:select.option>
+                        <flux:select.option value="Published">{{ __('Published') }}</flux:select.option>
+                        <flux:select.option value="Draft">{{ __('Draft') }}</flux:select.option>
+                        <flux:select.option value="Expired">{{ __('Expired') }}</flux:select.option>
+                    </flux:select>
+                    <flux:select wire:model.live="perPage" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
+                        <flux:select.option value="10">10</flux:select.option>
+                        <flux:select.option value="25">25</flux:select.option>
+                        <flux:select.option value="50">50</flux:select.option>
+                    </flux:select>
                 </div>
             @endif
         </div>
@@ -514,28 +513,25 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </button>
                     @endif
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
                     @can('export_job_advert')
-                        <!-- Export Selected Button -->
-                        <button type="button" wire:click="exportSelected"
-                            class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                            @if ($isLoadingExport) disabled @endif>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                        </button>
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ __('Export Selected') }}
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            {{ __('Exporting Denied') }}
+                        </flux:button>
                     @endcan
-                    
+
                     @can('delete_job_advert')
-                        <!-- Delete Selected Button -->
-                        <button type="button" wire:click="bulkDeleteConfirm"
-                            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
+                        <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                             {{ __('Delete Selected') }}
-                        </button>
+                        </flux:button>
+                    @else
+                        <flux:button icon:trailing="trash" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            {{ __('Deleting Denied') }}
+                        </flux:button>
                     @endcan
                 </div>
             </div>
@@ -567,65 +563,40 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('title')">
                             {{ __('Title') }}
                             @if($this->sortField === 'title')
-                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    @if($sortDirection === 'asc')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                    @else
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    @endif
-                                </svg>
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                            @else
+                                <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
                         </th>
                         <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('description')">
                             {{ __('Description') }}
                             @if($this->sortField === 'description')
-                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    @if($sortDirection === 'asc')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                    @else
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    @endif
-                                </svg>
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                            @else
+                                <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
                         </th>
                         <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('deadline')">
                             {{ __('Deadline') }}
                             @if($this->sortField === 'deadline')
-                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    @if($sortDirection === 'asc')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                    @else
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    @endif
-                                </svg>
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                            @else
+                                <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
                         </th>
                         <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('status')">
                             {{ __('Status') }}
                             @if($this->sortField === 'status')
-                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    @if($sortDirection === 'asc')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                    @else
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    @endif
-                                </svg>
+                                <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-3 h-3 text-gray-400 inline ml-1" />
+                            @else
+                                <flux:icon name="arrows-up-down" class="w-3 h-3 text-gray-400 inline ml-1" />
                             @endif
                         </th>
                         <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider">
                             {{ __('Applications') }}
                         </th>
-                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none" wire:click="sortBy('created_at')">
+                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wider cursor-pointer select-none">
                             {{ __('Actions') }}
-                            @if($this->sortField === 'created_at')
-                                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    @if($this->sortDirection === 'asc')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                                    @else
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                    @endif
-                                </svg>
-                            @endif
                         </th>
                     </tr>
                 </thead>
@@ -664,10 +635,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @forelse (($this->jobAdverts ?? []) as $advert)
                             <tr class="hover:bg-gray-100 dark:hover:bg-white/20 group border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out" wire:loading.class.delay="opacity-50 dark:opacity-40">
                                 <td class="px-5 py-4">
-                                    <input type="checkbox" 
-                                        wire:model.live="selected" 
-                                        value="{{ $advert->id }}" 
-                                        class="accent-pink-500 rounded focus:ring-2 focus:ring-pink-400" />
+                                    <button type="button"
+                                        wire:click="toggleSelection({{ $advert->id }})"
+                                        class="rounded focus:ring-2 focus:ring-pink-400 transition-colors duration-200
+                                            @if(in_array($advert->id, $selected))
+                                                bg-pink-500 text-white p-[2px]
+                                            @else
+                                                bg-transparent text-pink-500 border border-gray-500 p-[6px]
+                                            @endif
+                                            flex items-center gap-2"
+                                    >
+                                        @if(in_array($advert->id, $selected))
+                                            <svg class="w-3 h-3 text-gray-800 font-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        @endif
+                                    </button>
                                 </td>
                                 <td class="px-5 py-4 text-gray-900 dark:text-white font-bold max-w-xs truncate">
                                     <span class="group-hover:underline">{{ $advert->title }}</span>
@@ -713,12 +696,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             </svg>
                                             {{ $advert->applications_count ?? 0 }}
                                         </span>
-                                        @if($advert->applications_count > 0)
-                                            <button wire:click="manageApplications({{ $advert->id }})"
-                                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs underline">
-                                                {{ __('View') }}
-                                            </button>
-                                        @endif
+                                        @can('manage_applications')
+                                            @if($advert->applications_count > 0)
+                                                <button wire:click="manageApplications({{ $advert->id }})"
+                                                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs underline">
+                                                    {{ __('View') }}
+                                                </button>
+                                            @endif
+                                        @endcan
                                     </div>
                                 </td>
                                 <td class="px-5 py-4">
@@ -731,12 +716,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             size="sm"
                                             icon="eye"
                                         />
-                                        {{-- edit button --}}
                                         @can('edit_job_advert')
                                             <flux:button
                                                 wire:click="confirmEdit({{ $advert->id }})"
                                                 variant="primary"
                                                 color="blue"
+                                                size="sm"
+                                                icon="pencil-square"
+                                            />
+                                        @else
+                                            <flux:button
+                                                :disabled="true"
+                                                variant="primary"
+                                                color="gray"
                                                 size="sm"
                                                 icon="pencil-square"
                                             />
@@ -746,6 +738,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                                                 wire:click="confirmDelete({{ $advert->id }})"
                                                 variant="danger"
                                                 color="red"
+                                                size="sm"
+                                                icon="trash"
+                                            />
+                                        @else
+                                            <flux:button
+                                                :disabled="true"
+                                                variant="danger"
+                                                color="gray"
                                                 size="sm"
                                                 icon="trash"
                                             />
@@ -1004,17 +1004,33 @@ new #[Layout('components.layouts.app')] class extends Component {
                 @endif
 
                 <div class="flex justify-between gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <button wire:click="manageApplications({{ $pendingViewId }})"
-                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-400 transition flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        {{ __('Manage Applications') }}
-                    </button>
-                    <button wire:click="$set('showViewModal', false)"
-                            class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 transition">
+                    @can('manage_applications')
+                        <flux:button
+                            wire:click="manageApplications({{ $pendingViewId }})"
+                            variant="primary"
+                            color="blue"
+                            size="sm"
+                            icon="document-text"
+                        >
+                            {{ ('Manage Applications') }}
+                        </flux:button>
+                    @else
+                        <flux:button
+                            variant="primary"
+                            color="gray"
+                            color="blue"
+                            size="sm"
+                            icon="document-text"
+                            class="cursor-not-allowed"
+                        >
+                            {{ ('Manage Applications') }}
+                        </flux:button>
+                    @endcan
+                    <flux:button
+                        wire:click="$set('showViewModal', false)"
+                    >
                         {{ __('Close') }}
-                    </button>
+                    </flux:button>
                 </div>
             </div>
         </div>
