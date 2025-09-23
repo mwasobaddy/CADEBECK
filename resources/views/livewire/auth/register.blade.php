@@ -95,7 +95,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         </div>
 
         <!-- Submit Button -->
-        <flux:button type="submit" variant="primary" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        <flux:button type="submit" variant="primary" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 dark:from-green-500 dark:to-green-600 dark:hover:from-green-600 dark:hover:to-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
             {{ __('Create account') }}
         </flux:button>
     </form>
@@ -103,14 +103,14 @@ new #[Layout('components.layouts.auth')] class extends Component {
     <!-- Terms and Privacy -->
     <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
         By creating an account, you agree to our 
-        <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">Terms of Service</a> and 
-        <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">Privacy Policy</a>
+        <a href="#" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">Terms of Service</a> and 
+        <a href="#" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">Privacy Policy</a>
     </p>
 
     <!-- Login Link -->
     <div class="text-center">
         <span class="text-sm text-gray-600 dark:text-gray-400">{{ __('Already have an account?') }}</span>
-        <flux:link :href="route('login')" wire:navigate class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium ml-1">
+        <flux:link :href="route('login')" wire:navigate class="text-sm text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300 font-medium ml-1">
             {{ __('Sign in') }}
         </flux:link>
     </div>

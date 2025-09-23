@@ -104,7 +104,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
             <div class="flex items-center justify-between">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Password') }}</label>
                 @if (Route::has('password.request'))
-                    <flux:link class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors" :href="route('password.request')" wire:navigate>
+                    <flux:link class="text-sm text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300 transition-colors" :href="route('password.request')" wire:navigate>
                         {{ __('Forgot password?') }}
                     </flux:link>
                 @endif
@@ -125,7 +125,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         </div>
 
         <!-- Submit Button -->
-        <flux:button variant="primary" type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        <flux:button variant="primary" type="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 dark:from-green-500 dark:to-green-600 dark:hover:from-green-600 dark:hover:to-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
             {{ __('Sign in to your account') }}
         </flux:button>
     </form>
