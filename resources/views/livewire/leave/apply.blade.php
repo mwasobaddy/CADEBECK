@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Audit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Notifications\LeaveRequestNotification;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
@@ -157,6 +158,14 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'details' => json_encode($formData),
             ]);
 
+            // Send notifications to supervisors with delays to prevent simultaneous sending
+            $supervisors = $this->getSupervisorsToNotify($employee);
+            $delay = 0;
+            foreach ($supervisors as $supervisor) {
+                $supervisor->user->notify(new LeaveRequestNotification($leaveRequest, $delay));
+                $delay += 5; // Add 5 second delay between each email
+            }
+
             $message = __('Leave request submitted successfully.');
         }
 
@@ -178,6 +187,19 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         // Redirect back to leave manager
         return redirect()->route('own-leave.manage');
+    }
+
+    private function getSupervisorsToNotify($employee)
+    {
+        $supervisors = collect();
+        $current = $employee->supervisor;
+
+        while ($current) {
+            $supervisors->push($current);
+            $current = $current->supervisor;
+        }
+
+        return $supervisors;
     }
 
     public function cancel()
