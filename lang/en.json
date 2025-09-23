@@ -423,5 +423,22 @@
     "Form reset successfully.": "Form reset successfully.",
     "Allowance Information": "Allowance Information",
     "Financial Details": "Financial Details",
-    "No description provided": "No description provided"
+    "No description provided": "No description provided",
+    "Deduction Information": "Deduction Information",
+    "Deduction Type": "Deduction Type",
+    "Edit Deduction": "Edit Deduction",
+    "Create Deduction": "Create Deduction",
+    "Insurance": "Insurance",
+    "Loan Repayment": "Loan Repayment",
+    "Tax": "Tax",
+    "Pension": "Pension",
+    "Recurring Deduction": "Recurring Deduction",
+    "Deductions for": "Deductions for",
+    "Deduction created successfully.": "Deduction created successfully.",
+    "Deduction updated successfully.": "Deduction updated successfully.",
+    "Deduction deactivated successfully.": "Deduction deactivated successfully.",
+    "Deduction reactivated successfully.": "Deduction reactivated successfully.",
+    "Selected deductions deactivated successfully.": "Selected deductions deactivated successfully.",
+    "Selected deductions exported successfully.": "Selected deductions exported successfully.",
+    "All deductions exported successfully.": "All deductions exported successfully."
 }
