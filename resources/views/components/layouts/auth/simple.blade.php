@@ -4,63 +4,63 @@
         @include('partials.head')
         <style>
             .hero-gradient {
-                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #60a5fa 50%, #93c5fd 75%, #dbeafe 100%);
+            background: linear-gradient(135deg, #065f46 0%, #16a34a 25%, #22c55e 50%, #86efac 75%, #bbf7d0 100%);
             }
             
             .hero-gradient-dark {
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%);
+            background: linear-gradient(135deg, #052e20 0%, #08332a 25%, #0f392f 50%, #1a4b38 75%, #294d3e 100%);
             }
             
             .testimonial-card {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             }
             
             .testimonial-card-dark {
-                background: rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             }
             
             .company-logo {
-                background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+            background: linear-gradient(135deg, #065f46, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             }
             
             .company-logo-dark {
-                background: linear-gradient(135deg, #60a5fa, #93c5fd);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+            background: linear-gradient(135deg, #bbf7d0, #86efac);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             }
             
             .floating-element {
-                animation: float 6s ease-in-out infinite;
+            animation: float 6s ease-in-out infinite;
             }
             
             @keyframes float {
-                0%, 100% { transform: translateY(0px); }
-                50% { transform: translateY(-20px); }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
             }
             
             .slide-in {
-                animation: slideIn 0.8s ease-out;
+            animation: slideIn 0.8s ease-out;
             }
             
             @keyframes slideIn {
-                from { opacity: 0; transform: translateX(-50px); }
-                to { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
             }
 
             /* Dark mode grid pattern */
             .grid-pattern-dark {
-                background-image: 
-                    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-                background-size: 20px 20px;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
             }
         </style>
     </head>
@@ -72,7 +72,7 @@
                     <!-- Logo and Company Name -->
                     <div class="mb-8">
                         <div class="flex items-center space-x-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-500 dark:to-blue-700 shadow-lg">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full border border-green-500 dark:border-green-700 dark:bg-gray-200/50 shadow-lg">
                                 <x-app-logo-icon class="h-8 w-8 text-white" />
                             </div>
                             <div>
@@ -129,9 +129,9 @@
                         <div class="mb-12">
                             <h2 class="text-4xl font-bold text-white dark:text-gray-100 mb-4 leading-tight">
                                 Streamline Your HR
-                                <span class="block text-blue-200 dark:text-blue-300">Management</span>
+                                <span class="block text-green-200 dark:text-green-300">Management</span>
                             </h2>
-                            <p class="text-xl text-blue-100 dark:text-gray-300 leading-relaxed">
+                            <p class="text-xl text-green-100 dark:text-gray-300 leading-relaxed">
                                 Empower your workforce with modern HR solutions that drive productivity and employee satisfaction.
                             </p>
                         </div>
@@ -156,7 +156,7 @@
                                     </div>
                                     <div>
                                         <div class="text-white dark:text-gray-100 font-semibold">Sarah Ahmed</div>
-                                        <div class="text-blue-200 dark:text-gray-300 text-sm">HR Director</div>
+                                        <div class="text-green-200 dark:text-gray-300 text-sm">HR Director</div>
                                     </div>
                                 </div>
                             </div>
@@ -173,15 +173,15 @@
                         <div class="mt-12 grid grid-cols-3 gap-6 text-center hidden">
                             <div class="text-white dark:text-gray-100">
                                 <div class="text-2xl font-bold">99%</div>
-                                <div class="text-blue-200 dark:text-gray-300 text-sm">Uptime</div>
+                                <div class="text-green-200 dark:text-gray-300 text-sm">Uptime</div>
                             </div>
                             <div class="text-white dark:text-gray-100">
                                 <div class="text-2xl font-bold">500+</div>
-                                <div class="text-blue-200 dark:text-gray-300 text-sm">Companies</div>
+                                <div class="text-green-200 dark:text-gray-300 text-sm">Companies</div>
                             </div>
                             <div class="text-white dark:text-gray-100">
                                 <div class="text-2xl font-bold">24/7</div>
-                                <div class="text-blue-200 dark:text-gray-300 text-sm">Support</div>
+                                <div class="text-green-200 dark:text-gray-300 text-sm">Support</div>
                             </div>
                         </div>
                     </div>
@@ -230,7 +230,7 @@
                                 </div>
                                 <div>
                                     <div class="text-white dark:text-gray-100 font-semibold">${testimonial.author}</div>
-                                    <div class="text-blue-200 dark:text-gray-300 text-sm">${testimonial.position}</div>
+                                    <div class="text-green-200 dark:text-gray-300 text-sm">${testimonial.position}</div>
                                 </div>
                             </div>
                         `;

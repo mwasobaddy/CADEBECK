@@ -1,6 +1,9 @@
-<div class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">
-    <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-</div>
-<div class="ms-1 grid flex-1 text-start text-sm">
-    <span class="mb-0.5 truncate leading-tight font-semibold">Laravel Starter Kit</span>
+<div class="flex items-center space-x-3">
+    <div class="flex h-12 w-12 items-center justify-center rounded-full border border-green-500 dark:border-green-700 dark:bg-gray-200/50 shadow-lg">
+        <x-app-logo-icon class="h-8 w-8 text-white" />
+    </div>
+    <div>
+        <h1 class="text-sm font-bold company-logo dark:company-logo-dark">{{ config('app.name', 'CADEBECK') }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">HR Management System</p>
+    </div>
 </div>
