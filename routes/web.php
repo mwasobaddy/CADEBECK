@@ -23,6 +23,10 @@ Volt::route('careers/{slug}/apply', 'job.job-application-form')
 Volt::route('applications', 'job.job-application-form')
     ->name('applications');
 
+// Language switching route (available to all users)
+Route::get('/language/{language}', [App\Http\Controllers\LanguageController::class, 'switch'])
+    ->name('language.switch');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 

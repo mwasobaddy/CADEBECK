@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
+            \App\Http\Middleware\SetLanguage::class,
             \App\Http\Middleware\TempFileCleanup::class,
         ]);
 
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'temp.cleanup' => \App\Http\Middleware\TempFileCleanup::class,
+            'setlanguage' => \App\Http\Middleware\SetLanguage::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
