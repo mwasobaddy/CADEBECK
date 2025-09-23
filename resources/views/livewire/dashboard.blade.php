@@ -9,6 +9,10 @@ use Carbon\Carbon;
 layout('components.layouts.app');
 
 new class extends \Livewire\Volt\Component {
+    // Listen for wellbeing submission events from the wellbeing manager
+    protected $listeners = [
+        'wellbeingSubmitted' => 'handleWellbeingSubmitted'
+    ];
     public $dashboardData = [];
     public $currentAttendance = null;
     public $todayAttendance = null;
@@ -16,6 +20,9 @@ new class extends \Livewire\Volt\Component {
     public $locationData = null;
     public $absentEmployees = [];
     public $attendanceStats = [];
+    public $surveyCompletedToday = false;
+    public $surveyCompletedThisWeek = false;
+    public $surveyCompletedThisMonth = false;
 
     public function mount()
     {
@@ -26,6 +33,7 @@ new class extends \Livewire\Volt\Component {
         $this->getCurrentLocation();
         $this->loadAbsentEmployees();
         $this->loadAttendanceStats();
+        $this->checkSurveyStatus();
     }
 
     public function loadTodayAttendance()
@@ -134,6 +142,40 @@ new class extends \Livewire\Volt\Component {
         ];
     }
 
+    public function checkSurveyStatus()
+    {
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if ($employee) {
+            // Daily: check for a daily assessment submitted for today
+            $todaySurvey = \App\Models\WellBeingResponse::where('employee_id', $employee->id)
+                ->where('assessment_type', 'daily')
+                ->whereDate('period_start_date', today())
+                ->exists();
+
+            // Weekly: check for at least one weekly assessment whose period includes today
+            $weekStart = Carbon::now()->startOfWeek()->toDateString();
+            $weekEnd = Carbon::now()->endOfWeek()->toDateString();
+            $weeklySurvey = \App\Models\WellBeingResponse::where('employee_id', $employee->id)
+                ->where('assessment_type', 'weekly')
+                ->whereBetween('period_start_date', [$weekStart, $weekEnd])
+                ->exists();
+
+            // Monthly: check for at least one monthly assessment for current month
+            $monthStart = Carbon::now()->startOfMonth()->toDateString();
+            $monthEnd = Carbon::now()->endOfMonth()->toDateString();
+            $monthlySurvey = \App\Models\WellBeingResponse::where('employee_id', $employee->id)
+                ->where('assessment_type', 'monthly')
+                ->whereBetween('period_start_date', [$monthStart, $monthEnd])
+                ->exists();
+
+            $this->surveyCompletedToday = $todaySurvey;
+            $this->surveyCompletedThisWeek = $weeklySurvey;
+            $this->surveyCompletedThisMonth = $monthlySurvey;
+        }
+    }
+
     public function getViewableEmployeeIds()
     {
         $user = Auth::user();
@@ -198,6 +240,25 @@ new class extends \Livewire\Volt\Component {
                 'type' => 'error',
                 'message' => 'Employee record not found. Please contact HR.'
             ]);
+            $this->isLoading = false;
+            return;
+        }
+
+        // Check if employee has completed today's wellbeing survey
+        // Re-check all required assessments (daily, weekly, monthly) before clock-in
+        $this->checkSurveyStatus();
+
+        if (!($this->surveyCompletedToday && $this->surveyCompletedThisWeek && $this->surveyCompletedThisMonth)) {
+            $missing = [];
+            if (!$this->surveyCompletedToday) $missing[] = 'daily';
+            if (!$this->surveyCompletedThisWeek) $missing[] = 'weekly';
+            if (!$this->surveyCompletedThisMonth) $missing[] = 'monthly';
+
+            $this->dispatch('notify', [
+                'type' => 'warning',
+                'message' => 'Please complete the following well-being assessments before clocking in: ' . implode(', ', $missing) . '.'
+            ]);
+
             $this->isLoading = false;
             return;
         }
@@ -296,6 +357,16 @@ new class extends \Livewire\Volt\Component {
 
         return 'gray';
     }
+
+    // Called when another component emits a wellbeingSubmitted event
+    public function handleWellbeingSubmitted()
+    {
+        // Refresh survey status and related attendance data so the UI updates immediately
+        $this->checkSurveyStatus();
+        $this->loadTodayAttendance();
+        $this->loadAttendanceStats();
+        $this->loadAbsentEmployees();
+    }
 };
 ?>
 
@@ -374,19 +445,68 @@ new class extends \Livewire\Volt\Component {
                     </div>
                 </div>
 
+                <!-- Wellbeing Survey Status -->
+                @php
+                    $all_assessments_done = $this->surveyCompletedToday && $this->surveyCompletedThisWeek && $this->surveyCompletedThisMonth;
+                    $missing = [];
+                    if (!$this->surveyCompletedToday) $missing[] = 'Daily';
+                    if (!$this->surveyCompletedThisWeek) $missing[] = 'Weekly';
+                    if (!$this->surveyCompletedThisMonth) $missing[] = 'Monthly';
+                @endphp
+
+                @if(!$all_assessments_done)
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-amber-100 dark:bg-amber-800 rounded-lg">
+                                    <svg class="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-amber-800 dark:text-amber-200">{{ 'Well-being Assessments Required' }}</h4>
+                                    <p class="text-sm text-amber-600 dark:text-amber-300">{{ 'Please complete the following assessments before clocking in:' }}</p>
+                                    <ul class="mt-2 text-sm text-amber-700 dark:text-amber-300 list-disc ml-5">
+                                        @foreach($missing as $m)
+                                            <li>{{ $m }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
+                                <svg class="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-green-800 dark:text-green-200">{{ 'All Well-being Assessments Completed' }}</h4>
+                                <p class="text-sm text-green-600 dark:text-green-300">{{ 'Thank you — you may now clock in.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Action Buttons -->
                 <div class="flex gap-4">
+                    @php $can_clock_in = $this->surveyCompletedToday && $this->surveyCompletedThisWeek && $this->surveyCompletedThisMonth; @endphp
                     @if(!$this->currentAttendance)
                         <button
                             wire:click="clockIn"
                             wire:loading.attr="disabled"
-                            class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center gap-2"
+                            wire:target="clockIn"
+                            @if(!$can_clock_in) disabled @endif
+                            class="flex-1 @if($can_clock_in) bg-green-600 hover:bg-green-700 disabled:bg-green-400 @else bg-gray-400 cursor-not-allowed @endif text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center gap-2"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
                             </svg>
-                            <span wire:loading.remove>{{ 'Clock In' }}</span>
-                            <span wire:loading>{{ 'Clocking In...' }}</span>
+                            <span wire:loading.remove wire:target="clockIn">{{ 'Clock In' }}</span>
+                            <span wire:loading wire:target="clockIn">{{ 'Clocking In...' }}</span>
                         </button>
                     @else
                         <button
@@ -438,10 +558,10 @@ new class extends \Livewire\Volt\Component {
     <div class="mb-8">
         <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-6">
             <div class="flex items-center gap-3 mb-6">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
-                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 via-blue-500 to-purple-500">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-500 to-blue-500">
                     {{ 'Team Attendance Overview' }}
                 </h2>
             </div>
