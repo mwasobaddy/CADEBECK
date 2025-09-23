@@ -3,7 +3,7 @@
         <x-app-logo-icon class="h-8 w-8 text-white" />
     </div>
     <div>
-        <h1 class="text-sm font-bold company-logo dark:company-logo-dark">{{ config('app.name', 'CADEBECK') }}</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">HR Management System</p>
+        <h1 class="text-sm font-bold company-logo dark:company-logo-dark">{{ config('app.name') }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('HR Management System') }}</p>
     </div>
 </div>
