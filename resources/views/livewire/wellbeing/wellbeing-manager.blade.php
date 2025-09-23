@@ -51,6 +51,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'title' => __('Daily Well-being Check-in'),
                 'description' => __('Quick daily assessment of your current well-being'),
                 'frequency' => 'daily',
+                'assessment_type' => 'daily',
                 'questions' => ['stress_level', 'mood_rating', 'sleep_quality']
             ],
             [
@@ -58,6 +59,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'title' => __('Weekly Work Assessment'),
                 'description' => __('Comprehensive weekly evaluation of work satisfaction and workload'),
                 'frequency' => 'weekly',
+                'assessment_type' => 'weekly',
                 'questions' => ['work_satisfaction', 'workload_rating', 'stress_level', 'comments']
             ],
             [
@@ -65,6 +67,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'title' => __('Monthly Well-being Review'),
                 'description' => __('Monthly comprehensive well-being and stress monitoring review'),
                 'frequency' => 'monthly',
+                'assessment_type' => 'monthly',
                 'questions' => ['stress_level', 'mood_rating', 'sleep_quality', 'work_satisfaction', 'workload_rating', 'comments']
             ]
         ];
@@ -73,6 +76,23 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function startSurvey($surveyId)
     {
         $this->currentSurvey = collect($this->surveys)->firstWhere('id', $surveyId);
+
+        if (!$this->currentSurvey) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Survey not found.')
+            ]);
+            return;
+        }
+
+        if (!$this->isSurveyAvailable($this->currentSurvey['assessment_type'])) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('This survey has already been completed for the current period.')
+            ]);
+            return;
+        }
+
         $this->showSurveyForm = true;
         $this->resetSurveyForm();
     }
@@ -97,6 +117,11 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function submitSurvey()
     {
+        // Prevent double submission
+        if ($this->isLoading) {
+            return;
+        }
+
         $this->isLoading = true;
 
         $user = Auth::user();
@@ -120,46 +145,139 @@ new #[Layout('components.layouts.app')] class extends Component {
             'comments' => 'nullable|string|max:1000',
         ]);
 
-        // Check if a response already exists for today
+        // Calculate assessment period based on survey type
+        $periodDates = $this->calculateAssessmentPeriod($this->currentSurvey['assessment_type']);
+
+        // Double-check if a response already exists for this assessment period
         $existingResponse = WellBeingResponse::where('employee_id', $employee->id)
-            ->where('response_date', today())
+            ->where('assessment_type', $this->currentSurvey['assessment_type'])
+            ->where('period_start_date', $periodDates['start'])
+            ->lockForUpdate() // Prevent race conditions
             ->first();
 
         if ($existingResponse) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => __('You have already submitted a well-being survey for today. Only one response per day is allowed.')
+                'message' => __('You have already submitted this type of assessment for the current period. Please try again later.')
             ]);
             $this->isLoading = false;
             return;
         }
 
-        WellBeingResponse::create([
-            'employee_id' => $employee->id,
-            'user_id' => $user->id,
-            'response_date' => today(),
-            'stress_level' => $this->stress_level,
-            'work_life_balance' => $this->mood_rating, // Map mood to work_life_balance
-            'job_satisfaction' => $this->work_satisfaction,
-            'support_level' => $this->workload_rating, // Map workload to support_level
-            'comments' => $this->comments,
-            'additional_metrics' => [
-                'sleep_quality' => $this->sleep_quality,
-                'survey_type' => $this->currentSurvey['id'],
-                'is_anonymous' => $this->anonymity_preference,
-                'submitted_at' => now(),
+        try {
+            WellBeingResponse::create([
+                'employee_id' => $employee->id,
+                'user_id' => $user->id,
+                'assessment_type' => $this->currentSurvey['assessment_type'],
+                'frequency' => $this->currentSurvey['frequency'],
+                'period_start_date' => $periodDates['start'],
+                'period_end_date' => $periodDates['end'],
+                'stress_level' => $this->stress_level,
+                'work_life_balance' => $this->mood_rating, // Map mood to work_life_balance
+                'job_satisfaction' => $this->work_satisfaction,
+                'support_level' => $this->workload_rating, // Map workload to support_level
+                'comments' => $this->comments,
+                'additional_metrics' => [
+                    'sleep_quality' => $this->sleep_quality,
+                    'survey_type' => $this->currentSurvey['id'],
+                    'is_anonymous' => $this->anonymity_preference,
+                    'submitted_at' => now(),
+                ],
+            ]);
+
+            $this->loadWellBeingData();
+            $this->hideSurveyForm();
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => __('Well-being survey submitted successfully. Thank you for your feedback!')
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle unique constraint violation
+            if ($e->getCode() == 23000) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('This assessment has already been submitted for the current period. Please try again later.')
+                ]);
+            } else {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('An error occurred while submitting your survey. Please try again.')
+                ]);
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('An unexpected error occurred. Please try again.')
+            ]);
+        } finally {
+            $this->isLoading = false;
+        }
+    }
+
+    private function calculateAssessmentPeriod($assessmentType)
+    {
+        $today = now();
+
+        return match($assessmentType) {
+            'daily' => [
+                'start' => $today->toDateString(),
+                'end' => $today->toDateString()
             ],
-        ]);
+            'weekly' => [
+                'start' => $today->startOfWeek()->toDateString(),
+                'end' => $today->endOfWeek()->toDateString()
+            ],
+            'monthly' => [
+                'start' => $today->startOfMonth()->toDateString(),
+                'end' => $today->endOfMonth()->toDateString()
+            ],
+            default => [
+                'start' => $today->toDateString(),
+                'end' => $today->toDateString()
+            ]
+        };
+    }
 
-        $this->loadWellBeingData();
-        $this->hideSurveyForm();
+    public function isSurveyAvailable($surveyType)
+    {
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
 
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('Well-being survey submitted successfully. Thank you for your feedback!')
-        ]);
+        if (!$employee) {
+            return false;
+        }
 
-        $this->isLoading = false;
+        $periodDates = $this->calculateAssessmentPeriod($surveyType);
+        // Normalize period start for comparison
+        $period_start_str = \Illuminate\Support\Carbon::parse($periodDates['start'])->toDateString();
+
+        // First check in-memory responses (faster and ensures UI updates immediately after submit)
+        if (!empty($this->wellBeingResponses)) {
+            foreach ($this->wellBeingResponses as $resp) {
+                // Use period_start_date if available, otherwise fall back to created_at
+                $resp_start = null;
+                if (!empty($resp->period_start_date)) {
+                    $resp_start = \Illuminate\Support\Carbon::parse($resp->period_start_date)->toDateString();
+                } elseif (!empty($resp->created_at)) {
+                    $resp_start = \Illuminate\Support\Carbon::parse($resp->created_at)->toDateString();
+                }
+
+                if ($resp->employee_id == $employee->id
+                    && (($resp->assessment_type ?? null) == $surveyType)
+                    && $resp_start === $period_start_str) {
+                    return false; // already submitted for this period
+                }
+            }
+        }
+
+        // Final DB check (definitive)
+        $exists = WellBeingResponse::where('employee_id', $employee->id)
+            ->where('assessment_type', $surveyType)
+            ->whereDate('period_start_date', $period_start_str)
+            ->exists();
+
+        return !$exists;
     }
 
     public function getAverageRating($responses, $key)
@@ -173,6 +291,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 return $response->$key ?? 0;
             }
             // Otherwise check in additional_metrics
+            $this->dispatch('wellbeingSubmitted');
             return $response->additional_metrics[$key] ?? 0;
         }), 1);
     }
@@ -370,21 +489,24 @@ new #[Layout('components.layouts.app')] class extends Component {
         <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('Available Surveys') }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             @foreach($this->surveys as $survey)
-                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition-shadow">
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-lg transition-shadow {{ !$this->isSurveyAvailable($survey['assessment_type']) ? 'opacity-60' : '' }}">
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex-1">
                             <h4 class="font-semibold text-gray-800 dark:text-gray-200">{{ $survey['title'] }}</h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $survey['description'] }}</p>
                         </div>
-                        @if($this->shouldShowSurveyReminder($survey['id']))
-                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">{{ __('Due') }}</span>
+                        @if(!$this->isSurveyAvailable($survey['assessment_type']))
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">{{ __('Completed') }}</span>
+                        @else
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{{ __('Available') }}</span>
                         @endif
                     </div>
                     <button
                         wire:click="startSurvey('{{ $survey['id'] }}')"
-                        class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        {{ !$this->isSurveyAvailable($survey['assessment_type']) ? 'disabled' : '' }}
+                        class="w-full {{ $this->isSurveyAvailable($survey['assessment_type']) ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-400 cursor-not-allowed' }} text-white px-4 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                     >
-                        {{ __('Take Survey') }}
+                        {{ $this->isSurveyAvailable($survey['assessment_type']) ? __('Take Survey') : __('Completed') }}
                     </button>
                 </div>
             @endforeach
@@ -538,7 +660,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <button
                         type="submit"
                         wire:loading.attr="disabled"
-                        class="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        @disabled($isLoading)
+                        class="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
                         <span wire:loading.remove>{{ __('Submit Survey') }}</span>
                         <span wire:loading>{{ __('Submitting...') }}</span>
@@ -561,7 +684,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     {{ $response->additional_metrics['survey_type'] ?? 'Well-being Survey' }}
                                 </h4>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $response->response_date->format('M j, Y') }}
+                                    {{ $response->period_start_date ? $response->period_start_date->format('M j, Y') : $response->created_at->format('M j, Y') }}
                                 </p>
                             </div>
                             @if($response->additional_metrics['is_anonymous'] ?? false)
