@@ -10,7 +10,10 @@ class WellBeingResponse extends Model
     protected $fillable = [
         'employee_id',
         'user_id',
-        'response_date',
+        'assessment_type',
+        'period_start_date',
+        'period_end_date',
+        'frequency',
         'stress_level',
         'work_life_balance',
         'job_satisfaction',
@@ -20,7 +23,8 @@ class WellBeingResponse extends Model
     ];
 
     protected $casts = [
-        'response_date' => 'date',
+        'period_start_date' => 'date',
+        'period_end_date' => 'date',
         'additional_metrics' => 'array',
     ];
 
@@ -36,12 +40,12 @@ class WellBeingResponse extends Model
 
     public function scopeToday($query)
     {
-        return $query->where('response_date', today());
+        return $query->where('period_start_date', today());
     }
 
     public function scopeThisWeek($query)
     {
-        return $query->whereBetween('response_date', [
+        return $query->whereBetween('period_start_date', [
             now()->startOfWeek(),
             now()->endOfWeek()
         ]);
@@ -49,8 +53,18 @@ class WellBeingResponse extends Model
 
     public function scopeThisMonth($query)
     {
-        return $query->whereMonth('response_date', now()->month)
-                    ->whereYear('response_date', now()->year);
+        return $query->whereMonth('period_start_date', now()->month)
+                    ->whereYear('period_start_date', now()->year);
+    }
+
+    public function scopeByAssessmentType($query, $type)
+    {
+        return $query->where('assessment_type', $type);
+    }
+
+    public function scopeForEmployee($query, $employeeId)
+    {
+        return $query->where('employee_id', $employeeId);
     }
 
     public function scopeHighStress($query)
