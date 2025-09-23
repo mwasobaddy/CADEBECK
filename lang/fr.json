@@ -420,5 +420,8 @@
     "Reset": "Réinitialiser",
     "Employee created successfully.": "Employé créé avec succès.",
     "Employee updated successfully.": "Employé mis à jour avec succès.",
-    "Form reset successfully.": "Formulaire réinitialisé avec succès."
+    "Form reset successfully.": "Formulaire réinitialisé avec succès.",
+    "Allowance Information": "Informations sur l'Allocation",
+    "Financial Details": "Détails Financiers",
+    "No description provided": "Aucune description fournie"
 }
