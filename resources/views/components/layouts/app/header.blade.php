@@ -119,6 +119,8 @@
 
         {{ $slot }}
 
+
+        @livewire('notification.notification-manager')
         @fluxScripts
     </body>
 </html>
