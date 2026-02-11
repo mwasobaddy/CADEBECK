@@ -14,11 +14,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Department extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
-        'name', 'code', 'branch_id'
+        'name', 'code', 'branch_id',
     ];
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
     }
 }
