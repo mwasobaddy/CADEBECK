@@ -34,3 +34,6 @@ PAYROLL_NOTIFICATIONS_README.md
 !/storage/app/public/payslips/.gitkeep
 /storage/app/temp/*
 !/storage/app/temp/.gitkeep
+
+new.md
+steps.md
