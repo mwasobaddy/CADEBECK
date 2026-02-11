@@ -3,14 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
-
-
-
-
 Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
-
 
 Volt::route('/', 'job.job-advert-list')
     ->name('home');
@@ -37,7 +32,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/test-payroll-notification', function () {
         $employee = auth()->user()->employee ?? \App\Models\Employee::first();
 
-        if (!$employee) {
+        if (! $employee) {
             return response()->json(['error' => 'No employee found'], 404);
         }
 
@@ -59,14 +54,15 @@ Route::middleware(['auth'])->group(function () {
             return response()->json([
                 'success' => true,
                 'message' => 'Payroll notification sent successfully!',
-                'employee' => $employee->first_name . ' ' . $employee->other_names,
-                'email' => $employee->user->email ?? 'N/A'
+                'employee' => $employee->first_name.' '.$employee->other_names,
+                'email' => $employee->user->email ?? 'N/A',
             ]);
         } catch (\Exception $e) {
             $payroll->delete(); // Clean up
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     })->name('test.payroll.notification');
@@ -128,12 +124,12 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('job/job-adverts/{jobAdvertId}/applications', 'job.applications')
             ->middleware(['auth', 'permission:manage_job_advert'])
             ->name('job.applications');
-            
+
         // CV Download Route
         Route::get('applications/{application}/download-cv', [App\Http\Controllers\ApplicationController::class, 'downloadCV'])
             ->middleware(['auth', 'permission:manage_job_advert'])
             ->name('application.download-cv');
-            
+
         // Organisation: Locations, Branches, Departments, Designations
         Volt::route('organisation/locations', 'organisation.location_manager')
             ->middleware(['auth', 'permission:manage_location'])
@@ -199,6 +195,11 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:edit_user'])
             ->name('wellbeing.dashboard');
 
+        // Wellbeing Reports
+        Volt::route('wellbeing/reports', 'wellbeing.wellbeing-reports')
+            ->middleware(['auth', 'permission:access_wellbeing_reports'])
+            ->name('wellbeing.reports');
+
         Volt::route('own-leave/manage', 'leave.own-manage')
             ->middleware(['auth', 'permission:manage_my_leave'])
             ->name('own-leave.manage');
@@ -228,7 +229,6 @@ Route::middleware(['auth'])->group(function () {
             ->middleware(['auth', 'permission:view_my_payslips'])
             ->name('payroll.employee');
 
-        
         // Employee-specific payroll management routes
         Volt::route('employees/payroll/{employeeId}/allowances', 'employee.payroll.allowances')
             ->middleware(['auth', 'permission:manage_allowance'])

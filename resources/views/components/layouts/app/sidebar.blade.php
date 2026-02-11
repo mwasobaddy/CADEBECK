@@ -442,6 +442,17 @@
                         </li>
                         @endif
                         
+                        @can('access_wellbeing_reports')
+                        <li>
+                            <a href="{{ route('wellbeing.reports') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('wellbeing.reports') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>
+                                <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('wellbeing.reports') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                                    <flux:icon name="heart" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
+                                </span>
+                                <span>{{ __('Wellbeing Reports') }}</span>
+                            </a>
+                        </li>
+                        @endcan
+
                         @if (Auth::user()->can('process_payroll') || Auth::user()->can('view_my_payslips'))
                         <li x-data="{ open: {{ (request()->routeIs('payroll.process') || request()->routeIs('payroll.employee')) ? 'true' : 'false' }} }">
                             <div class="flex flex-col">
