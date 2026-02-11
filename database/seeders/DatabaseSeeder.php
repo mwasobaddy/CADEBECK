@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             LeaveRequestSeeder::class,
             ApplicationSeeder::class,
             AttendanceSeeder::class,
+            WellBeingResponseSeeder::class,
         ]);
     }
 }
