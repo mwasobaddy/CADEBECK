@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\LeaveRequest;
+use App\Models\WellBeingResponse;
 use App\Policies\LeaveRequestPolicy;
+use App\Policies\WellBeingPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -15,6 +17,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         LeaveRequest::class => LeaveRequestPolicy::class,
+        WellBeingResponse::class => WellBeingPolicy::class,
     ];
 
     /**
