@@ -7,182 +7,272 @@ use Carbon\Carbon;
 
 class TaxCalculationService
 {
-    /**
-     * Calculate PAYE (Pay As You Earn) tax for Kenya
-     * Based on KRA tax brackets for 2024/2025
-     */
-    public function calculatePAYE(float $taxableIncome, int $dependents = 0): array
+    protected string $taxYear;
+
+    public function __construct()
     {
-        // Personal relief: USD 2,400 per month
-        $personalRelief = 2400;
-
-        // Insurance relief: Up to USD 5,000 per month
-        $insuranceRelief = 0; // This will be calculated separately
-
-        // Total relief
-        $totalRelief = $personalRelief + $insuranceRelief;
-
-        // Tax brackets for monthly income (2024/2025)
-        $taxBrackets = [
-            ['min' => 0, 'max' => 24000, 'rate' => 0.10, 'fixed' => 0],
-            ['min' => 24001, 'max' => 32333, 'rate' => 0.25, 'fixed' => 2400],
-            ['min' => 32334, 'max' => 40333, 'rate' => 0.30, 'fixed' => 5280],
-            ['min' => 40334, 'max' => 48333, 'rate' => 0.32, 'fixed' => 7920],
-            ['min' => 48334, 'max' => 100000, 'rate' => 0.34, 'fixed' => 10440],
-            ['min' => 100001, 'max' => 200000, 'rate' => 0.36, 'fixed' => 28960],
-            ['min' => 200001, 'max' => PHP_FLOAT_MAX, 'rate' => 0.37, 'fixed' => 64960],
-        ];
-
-        $taxableAfterRelief = max(0, $taxableIncome - $totalRelief);
-
-        $payeTax = 0;
-        $taxDetails = [];
-
-        foreach ($taxBrackets as $bracket) {
-            if ($taxableAfterRelief > $bracket['min']) {
-                $taxableInBracket = min($taxableAfterRelief, $bracket['max']) - $bracket['min'];
-                $taxInBracket = ($taxableInBracket * $bracket['rate']) + $bracket['fixed'];
-
-                if ($taxableInBracket > 0) {
-                    $taxDetails[] = [
-                        'bracket' => $bracket['min'] . ' - ' . ($bracket['max'] == PHP_FLOAT_MAX ? 'Above' : $bracket['max']),
-                        'taxable_amount' => $taxableInBracket,
-                        'rate' => $bracket['rate'] * 100 . '%',
-                        'tax_amount' => $taxInBracket,
-                    ];
-                }
-
-                $payeTax += $taxInBracket;
-
-                if ($taxableAfterRelief <= $bracket['max']) {
-                    break;
-                }
-            }
-        }
-
-        return [
-            'taxable_income' => $taxableIncome,
-            'personal_relief' => $personalRelief,
-            'insurance_relief' => $insuranceRelief,
-            'total_relief' => $totalRelief,
-            'taxable_after_relief' => $taxableAfterRelief,
-            'paye_tax' => round($payeTax, 2),
-            'tax_details' => $taxDetails,
-        ];
+        $this->taxYear = '2024-2025';
     }
 
     /**
-     * Calculate NHIF deduction
-     * Based on NHIF contribution rates for 2024
+     * Calculate UK PAYE (Pay As You Earn) income tax
+     * Based on UK tax bands for 2024/2025 tax year
      */
-    public function calculateNHIF(float $grossPay): array
+    public function calculatePAYE(float $grossPay, ?string $taxCode = null): array
     {
-        // NHIF contribution brackets (monthly)
-        $nhifBrackets = [
-            ['min' => 0, 'max' => 5999, 'contribution' => 150],
-            ['min' => 6000, 'max' => 7999, 'contribution' => 300],
-            ['min' => 8000, 'max' => 11999, 'contribution' => 400],
-            ['min' => 12000, 'max' => 14999, 'contribution' => 500],
-            ['min' => 15000, 'max' => 19999, 'contribution' => 600],
-            ['min' => 20000, 'max' => 24999, 'contribution' => 750],
-            ['min' => 25000, 'max' => 29999, 'contribution' => 850],
-            ['min' => 30000, 'max' => 34999, 'contribution' => 900],
-            ['min' => 35000, 'max' => 39999, 'contribution' => 950],
-            ['min' => 40000, 'max' => 44999, 'contribution' => 1000],
-            ['min' => 45000, 'max' => 49999, 'contribution' => 1100],
-            ['min' => 50000, 'max' => 59999, 'contribution' => 1200],
-            ['min' => 60000, 'max' => 69999, 'contribution' => 1300],
-            ['min' => 70000, 'max' => 79999, 'contribution' => 1400],
-            ['min' => 80000, 'max' => 89999, 'contribution' => 1500],
-            ['min' => 90000, 'max' => 99999, 'contribution' => 1600],
-            ['min' => 100000, 'max' => PHP_FLOAT_MAX, 'contribution' => 1700],
-        ];
+        $personalAllowance = 12570;
+        $basicRateLimit = 37700;
+        $higherRateLimit = 125140;
 
-        $nhifContribution = 0;
-        $bracket = null;
+        $taxCode = $taxCode ?? '1257L';
+        $taxCodeAllowance = $this->parseTaxCode($taxCode, $personalAllowance);
 
-        foreach ($nhifBrackets as $nhifBracket) {
-            if ($grossPay >= $nhifBracket['min'] && $grossPay <= $nhifBracket['max']) {
-                $nhifContribution = $nhifBracket['contribution'];
-                $bracket = $nhifBracket;
-                break;
+        $taxableIncome = max(0, $grossPay - $taxCodeAllowance);
+
+        $taxDetails = [];
+        $totalTax = 0;
+
+        if ($taxableIncome <= $basicRateLimit) {
+            $totalTax = $taxableIncome * 0.20;
+            $taxDetails[] = [
+                'band' => 'Basic Rate (20%)',
+                'taxable_amount' => $taxableIncome,
+                'rate' => '20%',
+                'tax_amount' => round($totalTax, 2),
+            ];
+        } else {
+            $basicTax = $basicRateLimit * 0.20;
+            $totalTax += $basicTax;
+            $taxDetails[] = [
+                'band' => 'Basic Rate (20%)',
+                'taxable_amount' => $basicRateLimit,
+                'rate' => '20%',
+                'tax_amount' => round($basicTax, 2),
+            ];
+
+            if ($taxableIncome <= $higherRateLimit) {
+                $higherIncome = $taxableIncome - $basicRateLimit;
+                $higherTax = $higherIncome * 0.40;
+                $totalTax += $higherTax;
+                $taxDetails[] = [
+                    'band' => 'Higher Rate (40%)',
+                    'taxable_amount' => $higherIncome,
+                    'rate' => '40%',
+                    'tax_amount' => round($higherTax, 2),
+                ];
+            } else {
+                $higherTax = ($higherRateLimit - $basicRateLimit) * 0.40;
+                $totalTax += $higherTax;
+                $taxDetails[] = [
+                    'band' => 'Higher Rate (40%)',
+                    'taxable_amount' => $higherRateLimit - $basicRateLimit,
+                    'rate' => '40%',
+                    'tax_amount' => round($higherTax, 2),
+                ];
+
+                $additionalIncome = $taxableIncome - $higherRateLimit;
+                $additionalTax = $additionalIncome * 0.45;
+                $totalTax += $additionalTax;
+                $taxDetails[] = [
+                    'band' => 'Additional Rate (45%)',
+                    'taxable_amount' => $additionalIncome,
+                    'rate' => '45%',
+                    'tax_amount' => round($additionalTax, 2),
+                ];
             }
         }
 
         return [
             'gross_pay' => $grossPay,
-            'nhif_contribution' => $nhifContribution,
-            'bracket' => $bracket ? $bracket['min'] . ' - ' . ($bracket['max'] == PHP_FLOAT_MAX ? 'Above' : $bracket['max']) : 'Not found',
+            'tax_code' => $taxCode,
+            'tax_free_allowance' => $taxCodeAllowance,
+            'taxable_income' => $taxableIncome,
+            'total_tax' => round(max(0, $totalTax), 2),
+            'tax_details' => $taxDetails,
         ];
     }
 
     /**
-     * Calculate NSSF deduction
-     * Based on NSSF rates for 2024 (Tier I and II)
+     * Parse UK tax code to extract allowance
      */
-    public function calculateNSSF(float $basicSalary): array
+    protected function parseTaxCode(string $taxCode, int $defaultAllowance): float
     {
-        // NSSF rates for 2024
-        $tier1Rate = 0.06; // 6% of pensionable earnings
-        $tier2Rate = 0.06; // 6% of pensionable earnings
-        $tier1Max = 7000; // Maximum pensionable earnings for Tier I
-        $tier2Max = 36000; // Maximum pensionable earnings for Tier II
+        $numericCode = preg_replace('/[^0-9]/', '', $taxCode);
+        if (empty($numericCode)) {
+            return $defaultAllowance;
+        }
+        return (float) $numericCode * 10;
+    }
 
-        // Employee contribution (6% of basic salary, capped)
-        $tier1Contribution = min($basicSalary, $tier1Max) * $tier1Rate;
-        $tier2Contribution = max(0, min($basicSalary, $tier2Max) - $tier1Max) * $tier2Rate;
+    /**
+     * Calculate UK National Insurance (Employee's contribution)
+     * Based on 2024/2025 thresholds
+     */
+    public function calculateNIC(float $grossPay, string $nicCategory = 'A'): array
+    {
+        $primaryThreshold = 12570;
+        $upperThreshold = 50270;
 
-        $totalNSSF = $tier1Contribution + $tier2Contribution;
+        $weeklyThreshold = $primaryThreshold / 52;
+        $weeklyUpper = $upperThreshold / 52;
+
+        $rates = [
+            'A' => ['main' => 0.08, 'upper' => 0.02],
+            'B' => [0.057, 0.02],
+            'C' => [0.00, 0.00],
+            'H' => [0.06, 0.02],
+            'M' => [0.08, 0.02],
+            'Z' => [0.0585, 0.02],
+        ];
+
+        $categoryRates = $rates[$nicCategory] ?? $rates['A'];
+
+        $weeklyPay = $grossPay / 52;
+        $employeeNi = 0;
+
+        if ($weeklyPay > $weeklyThreshold) {
+            $mainRate = min($weeklyPay, $weeklyUpper) - $weeklyThreshold;
+            $employeeNi = $mainRate * $categoryRates[0];
+
+            if ($weeklyPay > $weeklyUpper) {
+                $upperRate = $weeklyPay - $weeklyUpper;
+                $employeeNi += $upperRate * $categoryRates[1];
+            }
+        }
 
         return [
-            'basic_salary' => $basicSalary,
-            'tier1_contribution' => round($tier1Contribution, 2),
-            'tier2_contribution' => round($tier2Contribution, 2),
-            'total_nssf' => round($totalNSSF, 2),
-            'tier1_max' => $tier1Max,
-            'tier2_max' => $tier2Max,
+            'gross_pay' => $grossPay,
+            'nic_category' => $nicCategory,
+            'primary_threshold' => $primaryThreshold,
+            'upper_threshold' => $upperThreshold,
+            'employee_contribution' => round($employeeNi * 52, 2),
         ];
     }
 
     /**
-     * Calculate all taxes for an employee
+     * Calculate employer National Insurance contribution
      */
-    public function calculateAllTaxes(float $basicSalary, float $totalAllowances, float $totalDeductions = 0, int $dependents = 0): array
+    public function calculateEmployerNI(float $grossPay): array
     {
+        $secondaryThreshold = 9580;
+        $upperSecondaryThreshold = 50960;
+
+        $monthlyThreshold = $secondaryThreshold / 12;
+        $monthlyUpper = $upperSecondaryThreshold / 12;
+
+        $monthlyPay = $grossPay / 12;
+        $employerNi = 0;
+
+        if ($monthlyPay > $monthlyThreshold) {
+            $niAtMainRate = min($monthlyPay, $monthlyUpper) - $monthlyThreshold;
+            $employerNi = $niAtMainRate * 0.138;
+
+            if ($monthlyPay > $monthlyUpper) {
+                $niAtUpperRate = $monthlyPay - $monthlyUpper;
+                $employerNi += $niAtUpperRate * 0.049;
+            }
+        }
+
+        return [
+            'gross_pay' => $grossPay,
+            'secondary_threshold' => $secondaryThreshold,
+            'employer_contribution' => round($employerNi * 12, 2),
+        ];
+    }
+
+    /**
+     * Calculate Student Loan repayment (Plan 1 or Plan 2)
+     */
+    public function calculateStudentLoan(float $grossPay, string $plan = 'plan1'): array
+    {
+        $thresholds = [
+            'plan1' => ['threshold' => 25365, 'rate' => 0.09],
+            'plan2' => ['threshold' => 27295, 'rate' => 0.09],
+            'postgrad' => ['threshold' => 21000, 'rate' => 0.06],
+        ];
+
+        $planConfig = $thresholds[$plan] ?? $thresholds['plan1'];
+        $repayment = max(0, ($grossPay - $planConfig['threshold']) * $planConfig['rate']);
+
+        return [
+            'gross_pay' => $grossPay,
+            'plan' => $plan,
+            'threshold' => $planConfig['threshold'],
+            'repayment' => round($repayment / 12, 2),
+        ];
+    }
+
+    /**
+     * Calculate workplace pension contribution (auto-enrolment)
+     */
+    public function calculatePension(float $grossPay, float $employeeRate = 0.05, float $employerRate = 0.03): array
+    {
+        $qualifyingEarningsMin = 6080;
+        $qualifyingEarningsMax = 60960;
+
+        $annualQualifyingEarnings = max(0, min($grossPay, $qualifyingEarningsMax) - $qualifyingEarningsMin);
+
+        $employeeContribution = $annualQualifyingEarnings * $employeeRate;
+        $employerContribution = $annualQualifyingEarnings * $employerRate;
+
+        return [
+            'gross_pay' => $grossPay,
+            'qualifying_earnings' => round($annualQualifyingEarnings, 2),
+            'employee_contribution' => round($employeeContribution / 12, 2),
+            'employer_contribution' => round($employerContribution / 12, 2),
+            'total_contribution' => round(($employeeContribution + $employerContribution) / 12, 2),
+        ];
+    }
+
+    /**
+     * Calculate all UK taxes and deductions for an employee
+     */
+    public function calculateAllTaxes(
+        float $basicSalary,
+        float $totalAllowances,
+        float $totalDeductions = 0,
+        ?string $taxCode = '1257L',
+        string $nicCategory = 'A',
+        ?string $studentLoanPlan = null,
+        bool $includePension = true
+    ): array {
         $grossPay = $basicSalary + $totalAllowances;
-        $taxableIncome = $grossPay;
 
-        // Calculate individual taxes
-        $payeResult = $this->calculatePAYE($taxableIncome, $dependents);
-        $nhifResult = $this->calculateNHIF($grossPay);
-        $nssfResult = $this->calculateNSSF($basicSalary);
+        $payeResult = $this->calculatePAYE($grossPay, $taxCode);
+        $nicResult = $this->calculateNIC($grossPay, $nicCategory);
+        $employerNiResult = $this->calculateEmployerNI($grossPay);
 
-        // Total statutory deductions
-        $totalStatutory = $payeResult['paye_tax'] + $nhifResult['nhif_contribution'] + $nssfResult['total_nssf'];
+        $studentLoanResult = null;
+        if ($studentLoanPlan) {
+            $studentLoanResult = $this->calculateStudentLoan($grossPay, $studentLoanPlan);
+        }
 
-        // Net pay calculation
+        $pensionResult = null;
+        if ($includePension) {
+            $pensionResult = $this->calculatePension($grossPay);
+        }
+
+        $totalStatutory = $payeResult['total_tax'] 
+            + $nicResult['employee_contribution']
+            + ($studentLoanResult['repayment'] ?? 0)
+            + ($pensionResult['employee_contribution'] ?? 0);
+
         $netPay = $grossPay - $totalStatutory - $totalDeductions;
 
         return [
             'gross_pay' => round($grossPay, 2),
-            'taxable_income' => round($taxableIncome, 2),
+            'tax_code' => $taxCode,
             'paye' => $payeResult,
-            'nhif' => $nhifResult,
-            'nssf' => $nssfResult,
+            'national_insurance' => $nicResult,
+            'employer_national_insurance' => $employerNiResult,
+            'student_loan' => $studentLoanResult,
+            'pension' => $pensionResult,
             'total_statutory_deductions' => round($totalStatutory, 2),
             'other_deductions' => round($totalDeductions, 2),
-            'net_pay' => round($netPay, 2),
+            'net_pay' => round(max(0, $netPay), 2),
             'tax_calculation_date' => Carbon::now()->toDateString(),
+            'tax_year' => $this->taxYear,
         ];
-    }
-
-    /**
-     * Calculate housing levy (1.5% of basic salary)
-     */
-    public function calculateHousingLevy(float $basicSalary): float
-    {
-        $housingLevyRate = 0.015; // 1.5%
-        return round($basicSalary * $housingLevyRate, 2);
     }
 
     /**
@@ -190,8 +280,6 @@ class TaxCalculationService
      */
     public function getTaxSummary(Employee $employee, string $period): array
     {
-        // This would typically fetch payroll data for the period
-        // For now, return a template structure
         return [
             'employee_id' => $employee->id,
             'employee_name' => $employee->first_name . ' ' . $employee->other_names,
@@ -199,9 +287,9 @@ class TaxCalculationService
             'tax_summary' => [
                 'total_gross_pay' => 0,
                 'total_paye' => 0,
-                'total_nhif' => 0,
-                'total_nssf' => 0,
-                'total_housing_levy' => 0,
+                'total_national_insurance' => 0,
+                'total_employer_ni' => 0,
+                'total_pension' => 0,
                 'net_tax_liability' => 0,
             ],
         ];
