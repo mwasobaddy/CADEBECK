@@ -710,7 +710,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             <span class="text-blue-600 dark:text-blue-400">
-                                USD {{ number_format($payroll->basic_salary, 2) }}
+                                £ {{ number_format($payroll->basic_salary, 2) }}
                             </span>
                         </td>
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
@@ -718,7 +718,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 @if($payroll->status === 'draft')
                                     {{ __('Draft') }}
                                 @else
-                                    +USD {{ number_format($payroll->total_allowances, 2) }}
+                                    +£ {{ number_format($payroll->total_allowances, 2) }}
                                 @endif
                             </span>
                         </td>
@@ -727,7 +727,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 @if($payroll->status === 'draft')
                                     {{ __('Draft') }}
                                 @else
-                                    -USD {{ number_format($payroll->total_deductions, 2) }}
+                                    -£ {{ number_format($payroll->total_deductions, 2) }}
                                 @endif
                             </span>
                         </td>
@@ -736,7 +736,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 @if($payroll->status === 'draft')
                                     {{ __('Draft') }}
                                 @else
-                                    USD {{ number_format($payroll->net_pay, 2) }}
+                                    £ {{ number_format($payroll->net_pay, 2) }}
                                 @endif
                             </span>
                         </td>
@@ -922,7 +922,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
                         <h4 class="text-sm font-medium text-green-700 dark:text-green-300 mb-2">{{ __('Net Pay') }}</h4>
                         <p class="text-xl font-bold text-green-600 dark:text-green-400">
-                            USD {{ number_format($selectedPayroll->net_pay, 2) }}
+                            £ {{ number_format($selectedPayroll->net_pay, 2) }}
                         </p>
                     </div>
                 </div>
@@ -940,55 +940,55 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="space-y-3">
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Basic Salary') }}</span>
-                                <span class="font-semibold text-blue-600 dark:text-blue-400">USD {{ number_format($selectedPayroll->basic_salary, 2) }}</span>
+                                <span class="font-semibold text-blue-600 dark:text-blue-400">£ {{ number_format($selectedPayroll->basic_salary, 2) }}</span>
                             </div>
 
                             @if($selectedPayroll->house_allowance > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('House Allowance') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->house_allowance, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->house_allowance, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->transport_allowance > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Transport Allowance') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->transport_allowance, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->transport_allowance, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->medical_allowance > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Medical Allowance') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->medical_allowance, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->medical_allowance, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->other_allowances > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Other Allowances') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->other_allowances, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->other_allowances, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->overtime_amount > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Overtime') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->overtime_amount, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->overtime_amount, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->bonus_amount > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Bonus') }}</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">+USD {{ number_format($selectedPayroll->bonus_amount, 2) }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">+£ {{ number_format($selectedPayroll->bonus_amount, 2) }}</span>
                             </div>
                             @endif
 
                             <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                                 <div class="flex justify-between items-center">
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ __('Gross Pay') }}</span>
-                                    <span class="font-bold text-lg text-purple-600 dark:text-purple-400">USD {{ number_format($selectedPayroll->gross_pay, 2) }}</span>
+                                    <span class="font-bold text-lg text-purple-600 dark:text-purple-400">£ {{ number_format($selectedPayroll->gross_pay, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1006,49 +1006,35 @@ new #[Layout('components.layouts.app')] class extends Component {
                             @if($selectedPayroll->paye_tax > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('PAYE Tax') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->paye_tax, 2) }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-£ {{ number_format($selectedPayroll->paye_tax, 2) }}</span>
                             </div>
                             @endif
-
-                            @if($selectedPayroll->nhif_deduction > 0)
-                            <div class="flex justify-between items-center py-2">
-                                <span class="text-gray-600 dark:text-gray-400">{{ __('NHIF') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->nhif_deduction, 2) }}</span>
-                            </div>
-                            @endif
-
-                            @if($selectedPayroll->nssf_deduction > 0)
-                            <div class="flex justify-between items-center py-2">
-                                <span class="text-gray-600 dark:text-gray-400">{{ __('NSSF') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->nssf_deduction, 2) }}</span>
-                            </div>
-                            @endif
-
+                            
                             @if($selectedPayroll->insurance_deduction > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Insurance') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->insurance_deduction, 2) }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-£ {{ number_format($selectedPayroll->insurance_deduction, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->loan_deduction > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Loan Deduction') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->loan_deduction, 2) }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-£ {{ number_format($selectedPayroll->loan_deduction, 2) }}</span>
                             </div>
                             @endif
 
                             @if($selectedPayroll->other_deductions > 0)
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-gray-600 dark:text-gray-400">{{ __('Other Deductions') }}</span>
-                                <span class="font-semibold text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->other_deductions, 2) }}</span>
+                                <span class="font-semibold text-red-600 dark:text-red-400">-£ {{ number_format($selectedPayroll->other_deductions, 2) }}</span>
                             </div>
                             @endif
 
                             <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                                 <div class="flex justify-between items-center">
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ __('Total Deductions') }}</span>
-                                    <span class="font-bold text-lg text-red-600 dark:text-red-400">-USD {{ number_format($selectedPayroll->total_deductions, 2) }}</span>
+                                    <span class="font-bold text-lg text-red-600 dark:text-red-400">-£ {{ number_format($selectedPayroll->total_deductions, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1077,7 +1063,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <span class="font-medium text-green-900 dark:text-green-100">{{ $allowance->allowance_type }}</span>
                                             <span class="text-sm text-green-700 dark:text-green-300 ml-2">({{ $allowance->description }})</span>
                                         </div>
-                                        <span class="font-semibold text-green-600 dark:text-green-400">USD {{ number_format($allowance->amount, 2) }}</span>
+                                        <span class="font-semibold text-green-600 dark:text-green-400">£ {{ number_format($allowance->amount, 2) }}</span>
                                     </div>
                                 @endforeach
                             </div>
@@ -1105,7 +1091,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                             <span class="font-medium text-red-900 dark:text-red-100">{{ $deduction->deduction_type }}</span>
                                             <span class="text-sm text-red-700 dark:text-red-300 ml-2">({{ $deduction->description }})</span>
                                         </div>
-                                        <span class="font-semibold text-red-600 dark:text-red-400">USD {{ number_format($deduction->amount, 2) }}</span>
+                                        <span class="font-semibold text-red-600 dark:text-red-400">£ {{ number_format($deduction->amount, 2) }}</span>
                                     </div>
                                 @endforeach
                             </div>

@@ -782,7 +782,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </td>
                                 <td class="px-4 py-4 text-gray-900 dark:text-white font-semibold">
                                     <span class="text-red-600 dark:text-red-400">
-                                        -USD {{ number_format($deduction->amount, 2) }}
+                                        -£ {{ number_format($deduction->amount, 2) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 text-gray-900 dark:text-white">
@@ -960,7 +960,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <div class="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
                                     <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{ __('Amount') }}</h4>
                                     <p class="text-lg font-semibold text-red-600 dark:text-red-400">
-                                        -USD {{ number_format($viewDeduction->amount, 2) }}
+                                        -£ {{ number_format($viewDeduction->amount, 2) }}
                                     </p>
                                 </div>
 

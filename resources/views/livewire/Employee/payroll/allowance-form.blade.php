@@ -331,7 +331,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     wire:model="form.amount" 
                     type="number"
                     step="0.01"
-                    label="{{ __('Amount (USD)') }}"
+                    label="{{ __('Amount (£)') }}"
                     placeholder="0.00"
                     required
                 />
