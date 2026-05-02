@@ -7,8 +7,7 @@ Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Volt::route('/', 'job.job-advert-list')
-    ->name('home');
+Route::redirect('/', '/login')->name('home');
 Volt::route('careers/{slug}', 'job.job-advert-details')
     ->name('careers.details');
 Volt::route('careers/{slug}/apply', 'job.job-application-form')

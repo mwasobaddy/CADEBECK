@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...
