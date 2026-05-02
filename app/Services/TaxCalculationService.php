@@ -117,7 +117,7 @@ class TaxCalculationService
         $weeklyUpper = $upperThreshold / 52;
 
         $rates = [
-            'A' => ['main' => 0.08, 'upper' => 0.02],
+            'A' => [0.08, 0.02],
             'B' => [0.057, 0.02],
             'C' => [0.00, 0.00],
             'H' => [0.06, 0.02],
