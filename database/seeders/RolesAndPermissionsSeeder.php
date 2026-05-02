@@ -196,6 +196,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'download_payslips',
             'access_stress_monitoring_tools',
             'complete_wellbeing_surveys',
+
+            'upload_external_payslip',
+            'view_external_payslip',
+            'delete_external_payslip',
         ];
 
         foreach ($permissions as $permission) {
@@ -268,18 +272,43 @@ class RolesAndPermissionsSeeder extends Seeder
                     'edit_own_attendance',
                     'delete_own_attendance',
                     'view_own_attendance',
-            
+
+                    // Allowances
+                    'manage_allowance',
+                    'create_allowance',
+                    'edit_allowance',
+                    'delete_allowance',
+                    'export_allowance',
+
+                    // Deductions
+                    'manage_deduction',
+                    'create_deduction',
+                    'edit_deduction',
+                    'delete_deduction',
+                    'export_deduction',
+
+                    // Payslips
                     'view_my_payslips',
+                    'view_payslips',
+                    'download_payslips',
+                    'export_payslip',
+                    'delete_payslip',
+                    'generate_payslips',
+                    'configure_external_payslip_sources',
+
+                    // History
+                    'manage_history',
+                    'delete_history',
+                    'export_history',
+                    'view_employee_payroll_history',
 
                     'process_payroll',
-                    'generate_payslips',
                     'manage_performance_reviews',
                     'initiate_hiring_processes',
                     'create_policies',
                     'create_orientation_materials',
                     'access_stress_monitoring_reports',
                     'access_wellbeing_reports',
-                    'configure_external_payslip_sources',
                 ],
             ],
             'Manager N-1' => [
