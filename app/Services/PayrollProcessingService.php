@@ -95,14 +95,24 @@ class PayrollProcessingService
         $totalAllowances = $allowances->sum('amount');
         $totalDeductions = $deductions->sum('amount');
 
-        // Calculate taxes
+        // Get employee tax settings (with defaults for UK)
+        $taxCode = $employee->tax_code ?? '1257L';
+        $nicCategory = $employee->nic_category ?? 'A';
+        $studentLoanPlan = $employee->student_loan_plan;
+        $includePension = $employee->include_pension ?? true;
+
+        // Calculate UK taxes
         $taxCalculation = $this->taxService->calculateAllTaxes(
             $employee->basic_salary,
             $totalAllowances,
-            $totalDeductions
+            $totalDeductions,
+            $taxCode,
+            $nicCategory,
+            $studentLoanPlan,
+            $includePension
         );
 
-        // Create payroll record
+        // Create payroll record with UK fields
         $payroll = Payroll::create([
             'employee_id' => $employee->id,
             'payroll_period' => $period,
@@ -116,18 +126,21 @@ class PayrollProcessingService
             'overtime_amount' => $allowances->where('allowance_type', 'overtime')->sum('amount'),
             'bonus_amount' => $allowances->where('allowance_type', 'bonus')->sum('amount'),
             'gross_pay' => $taxCalculation['gross_pay'],
-            'paye_tax' => $taxCalculation['paye']['paye_tax'],
-            'nhif_deduction' => $taxCalculation['nhif']['nhif_contribution'],
-            'nssf_deduction' => $taxCalculation['nssf']['total_nssf'],
+            'tax_code' => $taxCalculation['paye']['tax_code'] ?? '1257L',
+            'paye_tax' => $taxCalculation['paye']['total_tax'] ?? 0,
+            'national_insurance' => $taxCalculation['national_insurance']['employee_contribution'] ?? 0,
+            'student_loan_deduction' => $taxCalculation['student_loan']['repayment'] ?? 0,
+            'pension_contribution' => $taxCalculation['pension']['employee_contribution'] ?? 0,
+            'employer_pension_contribution' => $taxCalculation['pension']['employer_contribution'] ?? 0,
+            'nic_category' => $taxCalculation['national_insurance']['nic_category'] ?? 'A',
+            'student_loan_plan' => $taxCalculation['student_loan']['plan'] ?? null,
             'insurance_deduction' => $deductions->where('deduction_type', 'insurance')->sum('amount'),
             'loan_deduction' => $deductions->where('deduction_type', 'loan')->sum('amount'),
             'other_deductions' => $deductions->where('deduction_type', 'other')->sum('amount'),
             'total_deductions' => $totalDeductions + $taxCalculation['total_statutory_deductions'],
             'net_pay' => $taxCalculation['net_pay'],
-            'taxable_income' => $taxCalculation['taxable_income'],
-            'personal_relief' => $taxCalculation['paye']['personal_relief'],
-            'total_relief' => $taxCalculation['paye']['total_relief'],
-            'status' => 'draft',
+            'taxable_income' => $taxCalculation['paye']['taxable_income'] ?? $taxCalculation['gross_pay'],
+            'status' => 'processed',
             'calculation_details' => $taxCalculation,
         ]);
 
@@ -281,8 +294,9 @@ class PayrollProcessingService
             'total_deductions' => $payrolls->sum('total_deductions'),
             'total_net_pay' => $payrolls->sum('net_pay'),
             'total_paye' => $payrolls->sum('paye_tax'),
-            'total_nhif' => $payrolls->sum('nhif_deduction'),
-            'total_nssf' => $payrolls->sum('nssf_deduction'),
+            'total_national_insurance' => $payrolls->sum('national_insurance'),
+            'total_student_loan' => $payrolls->sum('student_loan_deduction'),
+            'total_pension' => $payrolls->sum('pension_contribution'),
             'processed_count' => $payrolls->where('status', 'processed')->count(),
             'paid_count' => $payrolls->where('status', 'paid')->count(),
         ];

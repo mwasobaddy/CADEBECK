@@ -29,7 +29,7 @@ class PayslipService
         $payroll->load(['employee.user', 'employee.department', 'employee.designation', 'employee.branch']);
 
         // Calculate tax details if not already calculated
-        if (!$payroll->paye_tax || !$payroll->nhif_deduction || !$payroll->nssf_deduction) {
+        if (!$payroll->paye_tax || !$payroll->national_insurance) {
             $this->calculateTaxes($payroll);
         }
 
@@ -65,20 +65,29 @@ class PayslipService
      */
     protected function calculateTaxes(Payroll $payroll): void
     {
+        $employee = $payroll->employee;
+        $taxCode = $employee?->tax_code ?? '1257L';
+        $nicCategory = $employee?->nic_category ?? 'A';
+        $studentLoanPlan = $employee?->student_loan_plan;
+        $includePension = $employee?->include_pension ?? true;
+
         $taxCalculation = $this->taxService->calculateAllTaxes(
             $payroll->basic_salary,
             $payroll->calculateTotalAllowances(),
             $payroll->calculateTotalDeductions(),
-            0 // dependents - can be added later
+            $taxCode,
+            $nicCategory,
+            $studentLoanPlan,
+            $includePension
         );
 
         $payroll->update([
-            'paye_tax' => $taxCalculation['paye']['paye_tax'],
-            'nhif_deduction' => $taxCalculation['nhif']['nhif_contribution'],
-            'nssf_deduction' => $taxCalculation['nssf']['total_nssf'],
-            'taxable_income' => $taxCalculation['taxable_income'],
-            'personal_relief' => $taxCalculation['paye']['personal_relief'],
-            'total_relief' => $taxCalculation['paye']['total_relief'],
+            'tax_code' => $taxCalculation['paye']['tax_code'] ?? '1257L',
+            'paye_tax' => $taxCalculation['paye']['total_tax'] ?? 0,
+            'national_insurance' => $taxCalculation['national_insurance']['employee_contribution'] ?? 0,
+            'student_loan_deduction' => $taxCalculation['student_loan']['repayment'] ?? 0,
+            'pension_contribution' => $taxCalculation['pension']['employee_contribution'] ?? 0,
+            'taxable_income' => $taxCalculation['paye']['taxable_income'] ?? $taxCalculation['gross_pay'],
             'gross_pay' => $taxCalculation['gross_pay'],
             'net_pay' => $taxCalculation['net_pay'],
             'calculation_details' => $taxCalculation,
@@ -128,8 +137,8 @@ class PayslipService
 
         $company = [
             'name' => 'CADEBECK HR Management',
-            'address' => 'Nairobi, Kenya',
-            'phone' => '+254 XXX XXX XXX',
+            'address' => 'United Kingdom',
+            'phone' => '+44 XXX XXX XXXX',
             'email' => 'hr@cadebeck.com',
         ];
 
@@ -150,6 +159,8 @@ class PayslipService
             'payroll' => [
                 'period' => $payroll->payroll_period,
                 'pay_date' => $payroll->pay_date?->format('M d, Y') ?? 'N/A',
+                'tax_code' => $payroll->tax_code ?? '1257L',
+                'nic_number' => 'N/A',
                 'basic_salary' => $payroll->basic_salary,
                 'allowances' => [
                     'house' => $payroll->house_allowance,
@@ -162,8 +173,9 @@ class PayslipService
                 ],
                 'deductions' => [
                     'paye' => $payroll->paye_tax,
-                    'nhif' => $payroll->nhif_deduction,
-                    'nssf' => $payroll->nssf_deduction,
+                    'national_insurance' => $payroll->national_insurance,
+                    'student_loan' => $payroll->student_loan_deduction,
+                    'pension' => $payroll->pension_contribution,
                     'insurance' => $payroll->insurance_deduction,
                     'loan' => $payroll->loan_deduction,
                     'other' => $payroll->other_deductions,
