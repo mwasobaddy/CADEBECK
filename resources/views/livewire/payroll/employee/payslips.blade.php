@@ -24,6 +24,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     public bool $isPaginating = false;
     public bool $isLoadingData = false;
     public bool $isLoadingDownload = false;
+    public bool $showUploadModal = false;
+    public $uploadedFile;
+    public string $uploadPeriod = '';
+    public string $uploadPayDate = '';
+    public array $availableUploadPeriods = [];
 
     public function mount(): void
     {
@@ -31,6 +36,174 @@ new #[Layout('components.layouts.app')] class extends Component {
         if (!Auth::user()->hasRole('Employee')) {
             abort(403, 'Access denied. Only employees can view payslips.');
         }
+
+        $this->uploadPayDate = now()->format('Y-m-d');
+        $this->availableUploadPeriods = [
+            now()->format('m/Y'),
+            now()->subMonth()->format('m/Y'),
+            now()->subMonths(2)->format('m/Y'),
+            now()->subMonths(3)->format('m/Y'),
+            now()->subMonths(4)->format('m/Y'),
+            now()->subMonths(5)->format('m/Y'),
+            now()->subMonths(6)->format('m/Y'),
+        ];
+    }
+
+    public function openUploadModal(): void
+    {
+        if (!Auth::user()->can('upload_external_payslip')) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('You do not have permission to upload external payslips.')
+            ]);
+            return;
+        }
+        $this->showUploadModal = true;
+    }
+
+    public function closeUploadModal(): void
+    {
+        $this->showUploadModal = false;
+        $this->uploadedFile = null;
+        $this->uploadPeriod = '';
+        $this->uploadPayDate = now()->format('Y-m-d');
+    }
+
+    public function uploadExternalPayslip(): void
+    {
+        if (!Auth::user()->can('upload_external_payslip')) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('You do not have permission to upload external payslips.')
+            ]);
+            return;
+        }
+
+        $this->validate([
+            'uploadedFile' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'uploadPeriod' => 'required|string',
+            'uploadPayDate' => 'required|date',
+        ]);
+
+        try {
+            $employeeId = Auth::user()->employee->id;
+
+            $existingPayslip = Payslip::where('employee_id', $employeeId)
+                ->where('payroll_period', $this->uploadPeriod)
+                ->first();
+
+            if ($existingPayslip && $existingPayslip->is_external) {
+                $existingPayslip->deleteExternalFile();
+                $existingPayslip->delete();
+            } elseif ($existingPayslip) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => __('A generated payslip already exists for this period. Delete it first to upload an external one.')
+                ]);
+                return;
+            }
+
+            $file = $this->uploadedFile;
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $newFileName = 'external_payslip_' . $employeeId . '_' . time() . '.' . $extension;
+
+            $path = $file->storeAs('payslips/external', $newFileName, 'public');
+
+            $payslip = Payslip::create([
+                'employee_id' => $employeeId,
+                'payslip_number' => Payslip::generateUniquePayslipNumber(),
+                'payroll_period' => $this->uploadPeriod,
+                'pay_date' => $this->uploadPayDate,
+                'is_external' => true,
+                'external_file_path' => $path,
+                'external_file_name' => $originalName,
+                'external_uploaded_by' => Auth::id(),
+                'external_uploaded_at' => now(),
+            ]);
+
+            $this->closeUploadModal();
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => __('External payslip uploaded successfully.')
+            ]);
+
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Error uploading payslip: ') . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function downloadExternalPayslip(Payslip $payslip): void
+    {
+        if ($payslip->employee_id !== Auth::user()->employee->id) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Access denied. You can only download your own payslips.')
+            ]);
+            return;
+        }
+
+        if (!$payslip->is_external || !$payslip->external_file_path) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('External payslip file not found.')
+            ]);
+            return;
+        }
+
+        if (!Storage::disk('public')->exists($payslip->external_file_path)) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Payslip file could not be found on server.')
+            ]);
+            return;
+        }
+
+        $payslip->markAsDownloaded();
+
+        $this->isLoadingDownload = true;
+        $downloadPath = storage_path('app/public/' . $payslip->external_file_path);
+        $this->isLoadingDownload = false;
+
+        response()->download($downloadPath, $payslip->external_file_name);
+    }
+
+    public function deleteExternalPayslip(Payslip $payslip): void
+    {
+        if (!Auth::user()->can('delete_external_payslip')) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('You do not have permission to delete external payslips.')
+            ]);
+            return;
+        }
+
+        if ($payslip->employee_id !== Auth::user()->employee->id) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Access denied. You can only delete your own payslips.')
+            ]);
+            return;
+        }
+
+        if (!$payslip->is_external) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Cannot delete generated payslips from here.')
+            ]);
+            return;
+        }
+
+        $payslip->deleteExternalFile();
+        $payslip->delete();
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => __('External payslip deleted successfully.')
+        ]);
     }
 
     public function sortBy($field)
@@ -261,6 +434,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </svg>
                     <span class="hidden lg:inline">{{ __('Filters') }}</span>
                 </button>
+                @can('upload_external_payslip')
+                <button type="button" wire:click="openUploadModal"
+                    class="flex items-center gap-1 px-3 py-2 rounded-3xl border border-green-200 dark:border-green-700 bg-green-50/80 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100/80 dark:hover:bg-green-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-green-400 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span class="hidden lg:inline">{{ __('Upload Payslip') }}</span>
+                </button>
+                @endcan
             </div>
         </div>
 
@@ -389,7 +571,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 </td>
                                 <td class="px-5 py-4 text-gray-700 dark:text-gray-300 font-bold">
                                     <span class="text-green-600 dark:text-green-400">
-                                        USD {{ number_format($payslip->payroll->net_pay, 2) }}
+                                        £{{ number_format($payslip->payroll->net_pay, 2) }}
                                     </span>
                                 </td>
                                 <td class="px-5 py-4">
@@ -459,6 +641,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                             {{ __('Payslip Details') }}
+                            @if($selectedPayslip->is_external)
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                    {{ __('External') }}
+                                </span>
+                            @endif
                         </h2>
                         <button wire:click="closeModal" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,7 +666,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg p-4 border border-green-200 dark:border-green-800">
+<div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg p-4 border border-green-200 dark:border-green-800">
                                 <h4 class="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
@@ -487,19 +674,49 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     {{ __('Earnings') }}
                                 </h4>
                                 <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
-                                        <span>{{ __('Basic Salary') }}:</span>
-                                        <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
-                                    </div>
+                                    @if($selectedPayslip->payroll->basic_salary > 0)
+                                        <div class="flex justify-between">
+                                            <span>{{ __('Basic Salary') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->basic_salary, 2) }}</span>
+                                        </div>
+                                    @endif
                                     @if($selectedPayslip->payroll->total_allowances > 0)
                                         <div class="flex justify-between">
-                                            <span>{{ __('Total Allowances') }}:</span>
-                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
+                                            <span>{{ __('Allowances') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->total_allowances, 2) }}</span>
                                         </div>
+                                    @endif
+                                    <div class="flex justify-between font-bold border-t pt-2 text-green-700 dark:text-green-400">
+                                        <span>{{ __('Gross Pay') }}:</span>
+                                        <span>£{{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-lg p-4 border border-red-200 dark:border-red-800">
+                                <h4 class="font-bold text-red-900 dark:text-red-100 mb-3 flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    {{ __('Deductions') }}
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>{{ __('Tax & Deductions') }}:</span>
+                                        <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
+                                    </div>
+                                    <div class="flex justify-between font-bold border-t pt-2 text-red-700 dark:text-red-400">
+                                        <span>{{ __('Net Pay') }}:</span>
+                                        <span>£{{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
                                     @endif
                                     <div class="flex justify-between font-bold border-t pt-2 text-green-600 dark:text-green-400">
                                         <span>{{ __('Gross Pay') }}:</span>
-                                        <span>USD {{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
+                                        <span>£{{ number_format($selectedPayslip->payroll->gross_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -514,31 +731,37 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <div class="space-y-2 text-sm">
                                     @if($selectedPayslip->payroll->paye_tax > 0)
                                         <div class="flex justify-between">
-                                            <span>{{ __('PAYE Tax') }}:</span>
-                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
+                                            <span>{{ __('Income Tax (PAYE)') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->paye_tax, 2) }}</span>
                                         </div>
                                     @endif
-                                    @if($selectedPayslip->payroll->nhif_deduction > 0)
+                                    @if($selectedPayslip->payroll->national_insurance > 0)
                                         <div class="flex justify-between">
-                                            <span>{{ __('NHIF') }}:</span>
-                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->nhif_deduction, 2) }}</span>
+                                            <span>{{ __('National Insurance') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->national_insurance, 2) }}</span>
                                         </div>
                                     @endif
-                                    @if($selectedPayslip->payroll->nssf_deduction > 0)
+                                    @if($selectedPayslip->payroll->student_loan_deduction > 0)
                                         <div class="flex justify-between">
-                                            <span>{{ __('NSSF') }}:</span>
-                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->nssf_deduction, 2) }}</span>
+                                            <span>{{ __('Student Loan') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->student_loan_deduction, 2) }}</span>
+                                        </div>
+                                    @endif
+                                    @if($selectedPayslip->payroll->pension_contribution > 0)
+                                        <div class="flex justify-between">
+                                            <span>{{ __('Pension') }}:</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->pension_contribution, 2) }}</span>
                                         </div>
                                     @endif
                                     @if($selectedPayslip->payroll->total_deductions > 0)
                                         <div class="flex justify-between">
                                             <span>{{ __('Total Deductions') }}:</span>
-                                            <span class="font-semibold">USD {{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
+                                            <span class="font-semibold">£{{ number_format($selectedPayslip->payroll->total_deductions, 2) }}</span>
                                         </div>
                                     @endif
                                     <div class="flex justify-between font-bold border-t pt-2 text-red-600 dark:text-red-400">
                                         <span>{{ __('Net Pay') }}:</span>
-                                        <span>USD {{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
+                                        <span>£{{ number_format($selectedPayslip->payroll->net_pay, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -569,25 +792,127 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     <span>{{ __('Designation') }}:</span>
                                     <span class="font-semibold">{{ $selectedPayslip->payroll->employee->designation->name ?? 'N/A' }}</span>
                                 </div>
+                                @if($selectedPayslip->payroll->tax_code)
+                                <div class="flex justify-between">
+                                    <span>{{ __('Tax Code') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->tax_code }}</span>
+                                </div>
+                                @endif
+                                @if($selectedPayslip->payroll->nic_category)
+                                <div class="flex justify-between">
+                                    <span>{{ __('NI Category') }}:</span>
+                                    <span class="font-semibold">{{ $selectedPayslip->payroll->nic_category }}</span>
+                                </div>
+                                @endif
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <button wire:click="downloadPayslip({{ $selectedPayslip->id }})"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
-                                @if ($isLoadingDownload) disabled @endif>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                {{ $isLoadingDownload ? __('Downloading...') : __('Download PDF') }}
-                            </button>
+                            @if($selectedPayslip->is_external)
+                                <button wire:click="downloadExternalPayslip({{ $selectedPayslip->id }})"
+                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                                    @if ($isLoadingDownload) disabled @endif>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    {{ $isLoadingDownload ? __('Downloading...') : __('Download') }}
+                                </button>
+                                @can('delete_external_payslip')
+                                <button wire:click="deleteExternalPayslip({{ $selectedPayslip->id }})"
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                                    onclick="return confirm('Are you sure you want to delete this external payslip?')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    {{ __('Delete') }}
+                                </button>
+                                @endcan
+                            @else
+                                <button wire:click="downloadPayslip({{ $selectedPayslip->id }})"
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                                    @if ($isLoadingDownload) disabled @endif>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    {{ $isLoadingDownload ? __('Downloading...') : __('Download PDF') }}
+                                </button>
+                            @endif
                             <button wire:click="closeModal"
                                 class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                                 {{ __('Close') }}
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Upload External Payslip Modal -->
+    @if($showUploadModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="flex min-h-screen items-center justify-center p-4">
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" wire:click="closeUploadModal"></div>
+                <div class="relative bg-white dark:bg-zinc-900 rounded-xl shadow-2xl p-6 w-full max-w-md z-10">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                            {{ __('Upload External Payslip') }}
+                        </h2>
+                        <button wire:click="closeUploadModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form wire:submit="uploadExternalPayslip" enctype="multipart/form-data">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    {{ __('Payroll Period') }}
+                                </label>
+                                <select wire:model="uploadPeriod" required
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500">
+                                    <option value="">{{ __('Select Period') }}</option>
+                                    @foreach($availableUploadPeriods as $period)
+                                        <option value="{{ $period }}">{{ $period }}</option>
+                                    @endforeach
+                                </select>
+                                @error('uploadPeriod') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    {{ __('Pay Date') }}
+                                </label>
+                                <input type="date" wire:model="uploadPayDate" required
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500">
+                                @error('uploadPayDate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    {{ __('Payslip File') }}
+                                </label>
+                                <input type="file" wire:model="uploadedFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                <p class="text-xs text-gray-500 mt-1">{{ __('Max size: 5MB. Supported: PDF, DOC, DOCX, JPG, PNG') }}</p>
+                                @error('uploadedFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 mt-6">
+                            <button type="submit"
+                                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                                {{ __('Upload') }}
+                            </button>
+                            <button type="button" wire:click="closeUploadModal"
+                                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                                {{ __('Cancel') }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

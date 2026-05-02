@@ -86,7 +86,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
         if ($this->sortField === 'name') {
             $query->join('users', 'employees.user_id', '=', 'users.id')
-                ->orderByRaw("CONCAT(users.first_name, ' ', users.other_names) $direction")
+                ->orderByRaw("users.first_name || ' ' || users.other_names $direction")
                 ->select('employees.*');
         } elseif ($this->sortField === 'staff_number') {
             $query->orderBy('staff_number', $direction);

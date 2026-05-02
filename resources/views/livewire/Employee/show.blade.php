@@ -35,6 +35,10 @@ new #[Layout('components.layouts.app')] class extends Component {
         'contract_type_id' => '',
         'supervisor_id' => '',
         'basic_salary' => '',
+        'tax_code' => '1257L',
+        'nic_category' => 'A',
+        'student_loan_plan' => '',
+        'include_pension' => true,
         'pay_date' => '',
     ];
     public ?Employee $employee = null;
@@ -66,6 +70,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
                 'basic_salary' => $this->employee->basic_salary ?? '',
+                'tax_code' => $this->employee->tax_code ?? '1257L',
+                'nic_category' => $this->employee->nic_category ?? 'A',
+                'student_loan_plan' => $this->employee->student_loan_plan ?? '',
+                'include_pension' => $this->employee->include_pension ?? true,
                 'pay_date' => $payroll?->pay_date ? Carbon::parse($payroll->pay_date)->format('Y-m-d') : '',
             ];
             $this->editing = true;
@@ -122,6 +130,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
             'form.supervisor_id' => ['nullable', 'exists:employees,id'],
             'form.basic_salary' => ['required', 'numeric', 'min:0'],
+            'form.tax_code' => ['nullable', 'string', 'max:10'],
+            'form.nic_category' => ['required', 'in:A,B,C,H,M,Z'],
+            'form.student_loan_plan' => ['nullable', 'in:plan1,plan2,postgrad'],
+            'form.include_pension' => ['boolean'],
             'form.pay_date' => ['required', 'date'],
         ];
         $this->validate($rules);
@@ -145,11 +157,14 @@ new #[Layout('components.layouts.app')] class extends Component {
             $payroll->basic_salary = $this->form['basic_salary'];
             $payroll->payroll_period = $this->form['date_of_join'];
             $payroll->pay_date = $this->form['pay_date'];
+            $payroll->tax_code = $this->form['tax_code'] ?? '1257L';
+            $payroll->nic_category = $this->form['nic_category'] ?? 'A';
+            $payroll->student_loan_plan = $this->form['student_loan_plan'] ?? null;
             // take gross pay from the existing payroll or set to basic salary if not set
             $payroll->gross_pay = $payroll->gross_pay ?? $this->form['basic_salary'];
             $payroll->net_pay = $payroll->net_pay ?? $this->form['basic_salary']; // This should ideally consider allowances and deductions
             // Add other payroll fields as needed
-
+ 
             $payroll->save();
 
             // Log the update action
@@ -191,6 +206,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'basic_salary' => $newEmployee->basic_salary,
                 'payroll_period' => $newEmployee->date_of_join,
                 'pay_date' => $this->form['pay_date'],
+                'tax_code' => $this->form['tax_code'] ?? '1257L',
+                'nic_category' => $this->form['nic_category'] ?? 'A',
+                'student_loan_plan' => $this->form['student_loan_plan'] ?? null,
                 'gross_pay' => $newEmployee->basic_salary, // Assuming gross pay is same as basic salary initially
                 'net_pay' => $newEmployee->basic_salary, // This should ideally consider allowances and deductions
                 // Add other payroll fields as needed
@@ -619,11 +637,44 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div>
                 <flux:input
                     wire:model="form.basic_salary"
-                    :label="__('Basic Salary (USD)')"
+                    :label="__('Basic Salary (£)')"
                     type="number"
                     step="0.01"
                     required
                     placeholder="{{ __('Basic Salary') }}" />
+            </div>
+            <div>
+                <flux:input
+                    wire:model="form.tax_code"
+                    :label="__('Tax Code')"
+                    placeholder="e.g., 1257L" />
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.nic_category"
+                    :label="__('NI Category')">
+                    <option value="A">A - Standard</option>
+                    <option value="B">B - Married/Civil Partnership</option>
+                    <option value="C">C - Over State Pension age</option>
+                    <option value="H">H - Apprentice</option>
+                    <option value="M">M - Married/Civil Partnership (reduced)</option>
+                    <option value="Z">Z - Under 21</option>
+                </flux:select>
+            </div>
+            <div>
+                <flux:select
+                    wire:model="form.student_loan_plan"
+                    :label="__('Student Loan Plan')">
+                    <option value="">None</option>
+                    <option value="plan1">Plan 1</option>
+                    <option value="plan2">Plan 2</option>
+                    <option value="postgrad">Postgraduate</option>
+                </flux:select>
+            </div>
+            <div class="flex items-center">
+                <flux:checkbox
+                    wire:model="form.include_pension"
+                    :label="__('Include Pension')" />
             </div>
             <div>
                 <flux:input

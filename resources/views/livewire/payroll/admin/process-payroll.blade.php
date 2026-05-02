@@ -445,15 +445,17 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getPayrollsProperty()
     {
-        $query = Payroll::with(['employee', 'payslip']);
+        $query = Payroll::with(['employee.user', 'payslip']);
 
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('payroll_period', 'like', "%{$this->search}%")
                   ->orWhereHas('employee', function($eq) {
-                      $eq->where('first_name', 'like', "%{$this->search}%")
-                         ->orWhere('other_names', 'like', "%{$this->search}%")
-                         ->orWhere('staff_number', 'like', "%{$this->search}%");
+                      $eq->where('staff_number', 'like', "%{$this->search}%")
+                         ->orWhereHas('user', function($uq) {
+                             $uq->where('first_name', 'like', "%{$this->search}%")
+                                ->orWhere('other_names', 'like', "%{$this->search}%");
+                         });
                   });
             });
         }
@@ -465,8 +467,9 @@ new #[Layout('components.layouts.app')] class extends Component {
         $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
         if ($this->sortField === 'employee') {
             $query->leftJoin('employees', 'payrolls.employee_id', '=', 'employees.id')
+                  ->leftJoin('users', 'employees.user_id', '=', 'users.id')
                   ->select('payrolls.*')
-                  ->orderByRaw("CONCAT(employees.first_name, ' ', employees.other_names) $direction");
+                  ->orderByRaw("users.first_name || ' ' || users.other_names $direction");
         } else {
             $field = in_array($this->sortField, ['payroll_period', 'gross_pay', 'net_pay', 'status', 'created_at']) 
                    ? $this->sortField : 'created_at';

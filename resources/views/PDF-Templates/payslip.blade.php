@@ -290,6 +290,14 @@
                 <span class="info-value">{{ $payslip_number }}</span>
             </div>
             <div class="info-row">
+                <span class="info-label">Tax Code:</span>
+                <span class="info-value">{{ $payroll['tax_code'] ?? '1257L' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">NI Number:</span>
+                <span class="info-value">{{ $payroll['nic_number'] ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Generated:</span>
                 <span class="info-value">{{ $generated_at }}</span>
             </div>
@@ -303,7 +311,7 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th style="text-align: right;">Amount (USD)</th>
+                    <th style="text-align: right;">Amount (£)</th>
                 </tr>
             </thead>
             <tbody>
@@ -362,26 +370,32 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th style="text-align: right;">Amount (USD)</th>
+                    <th style="text-align: right;">Amount (£)</th>
                 </tr>
             </thead>
             <tbody>
                 @if($payroll['deductions']['paye'] > 0)
                 <tr>
-                    <td>PAYE Tax</td>
+                    <td>Income Tax (PAYE)</td>
                     <td class="amount-column">{{ number_format($payroll['deductions']['paye'], 2) }}</td>
                 </tr>
                 @endif
-                @if($payroll['deductions']['nhif'] > 0)
+                @if($payroll['deductions']['national_insurance'] > 0)
                 <tr>
-                    <td>NHIF Contribution</td>
-                    <td class="amount-column">{{ number_format($payroll['deductions']['nhif'], 2) }}</td>
+                    <td>National Insurance</td>
+                    <td class="amount-column">{{ number_format($payroll['deductions']['national_insurance'], 2) }}</td>
                 </tr>
                 @endif
-                @if($payroll['deductions']['nssf'] > 0)
+                @if($payroll['deductions']['student_loan'] > 0)
                 <tr>
-                    <td>NSSF Contribution</td>
-                    <td class="amount-column">{{ number_format($payroll['deductions']['nssf'], 2) }}</td>
+                    <td>Student Loan Repayment</td>
+                    <td class="amount-column">{{ number_format($payroll['deductions']['student_loan'], 2) }}</td>
+                </tr>
+                @endif
+                @if($payroll['deductions']['pension'] > 0)
+                <tr>
+                    <td>Workplace Pension</td>
+                    <td class="amount-column">{{ number_format($payroll['deductions']['pension'], 2) }}</td>
                 </tr>
                 @endif
                 @if($payroll['deductions']['insurance'] > 0)
@@ -413,7 +427,7 @@
     <!-- Net Pay Section -->
     <div class="net-pay-section">
         <div class="net-pay-amount">
-            USD {{ number_format($payroll['net_pay'], 2) }}
+            £{{ number_format($payroll['net_pay'], 2) }}
         </div>
         <div class="net-pay-label">
             NET PAY

@@ -87,7 +87,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->leftJoin('employees', 'leave_requests.employee_id', '=', 'employees.id')
                 ->leftJoin('users', 'employees.user_id', '=', 'users.id')
                 ->select('leave_requests.*')
-                ->orderByRaw("CONCAT(users.first_name, ' ', users.other_names) $direction");
+                ->orderByRaw("users.first_name || ' ' || users.other_names $direction");
         } elseif ($this->sortField === 'leave_type') {
             $query->orderBy('leave_type', $direction);
         } elseif ($this->sortField === 'status') {
