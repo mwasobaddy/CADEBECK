@@ -29,6 +29,12 @@ class Employee extends Model
 
     protected $fillable = [
         'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id', 'basic_salary',
+        'tax_code', 'nic_category', 'student_loan_plan', 'include_pension',
+    ];
+
+    protected $casts = [
+        'basic_salary' => 'decimal:2',
+        'include_pension' => 'boolean',
     ];
 
     public function user()

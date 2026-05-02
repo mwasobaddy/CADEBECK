@@ -24,18 +24,20 @@ class Payroll extends Model
         'overtime_amount',
         'bonus_amount',
         'gross_pay',
+        'tax_code',
         'paye_tax',
-        'nhif_deduction',
-        'nssf_deduction',
+        'national_insurance',
+        'student_loan_deduction',
+        'pension_contribution',
+        'employer_pension_contribution',
         'insurance_deduction',
         'loan_deduction',
         'other_deductions',
         'total_deductions',
         'net_pay',
         'taxable_income',
-        'personal_relief',
-        'insurance_relief',
-        'total_relief',
+        'nic_category',
+        'student_loan_plan',
         'status',
         'notes',
         'calculation_details',
@@ -59,20 +61,18 @@ class Payroll extends Model
         'bonus_amount' => 'decimal:2',
         'gross_pay' => 'decimal:2',
         'paye_tax' => 'decimal:2',
-        'nhif_deduction' => 'decimal:2',
-        'nssf_deduction' => 'decimal:2',
+        'national_insurance' => 'decimal:2',
+        'student_loan_deduction' => 'decimal:2',
+        'pension_contribution' => 'decimal:2',
+        'employer_pension_contribution' => 'decimal:2',
         'insurance_deduction' => 'decimal:2',
         'loan_deduction' => 'decimal:2',
         'other_deductions' => 'decimal:2',
         'total_deductions' => 'decimal:2',
         'net_pay' => 'decimal:2',
         'taxable_income' => 'decimal:2',
-        'personal_relief' => 'decimal:2',
-        'insurance_relief' => 'decimal:2',
-        'total_relief' => 'decimal:2',
     ];
 
-    // Relationships
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
@@ -98,7 +98,6 @@ class Payroll extends Model
         return $this->hasMany(PayrollDeduction::class);
     }
 
-    // Scopes
     public function scopeForPeriod($query, $period)
     {
         return $query->where('payroll_period', $period);
@@ -119,7 +118,6 @@ class Payroll extends Model
         return $query->where('status', 'draft');
     }
 
-    // Helper methods
     public function isProcessed(): bool
     {
         return $this->status === 'processed';
@@ -144,30 +142,30 @@ class Payroll extends Model
         $this->update(['status' => 'paid']);
     }
 
-    // Calculation methods
     public function calculateTotalAllowances(): float
     {
-        return $this->house_allowance +
-               $this->transport_allowance +
-               $this->medical_allowance +
-               $this->other_allowances +
-               $this->overtime_amount +
-               $this->bonus_amount;
+        return (float) ($this->house_allowance ?? 0) +
+               (float) ($this->transport_allowance ?? 0) +
+               (float) ($this->medical_allowance ?? 0) +
+               (float) ($this->other_allowances ?? 0) +
+               (float) ($this->overtime_amount ?? 0) +
+               (float) ($this->bonus_amount ?? 0);
     }
 
     public function calculateTotalDeductions(): float
     {
-        return $this->paye_tax +
-               $this->nhif_deduction +
-               $this->nssf_deduction +
-               $this->insurance_deduction +
-               $this->loan_deduction +
-               $this->other_deductions;
+        return (float) ($this->paye_tax ?? 0) +
+               (float) ($this->national_insurance ?? 0) +
+               (float) ($this->student_loan_deduction ?? 0) +
+               (float) ($this->pension_contribution ?? 0) +
+               (float) ($this->insurance_deduction ?? 0) +
+               (float) ($this->loan_deduction ?? 0) +
+               (float) ($this->other_deductions ?? 0);
     }
 
     public function calculateGrossPay(): float
     {
-        return $this->basic_salary + $this->calculateTotalAllowances();
+        return (float) $this->basic_salary + $this->calculateTotalAllowances();
     }
 
     public function calculateNetPay(): float
@@ -177,6 +175,6 @@ class Payroll extends Model
 
     public function calculateTaxableIncome(): float
     {
-        return $this->basic_salary + $this->calculateTotalAllowances();
+        return (float) $this->basic_salary + $this->calculateTotalAllowances();
     }
 }

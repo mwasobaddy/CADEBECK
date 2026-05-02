@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Payslip extends Model
 {
@@ -20,6 +21,11 @@ class Payslip extends Model
         'emailed_at',
         'is_downloaded',
         'downloaded_at',
+        'is_external',
+        'external_file_path',
+        'external_file_name',
+        'external_uploaded_by',
+        'external_uploaded_at',
     ];
 
     protected $casts = [
@@ -29,9 +35,10 @@ class Payslip extends Model
         'emailed_at' => 'datetime',
         'is_downloaded' => 'boolean',
         'downloaded_at' => 'datetime',
+        'is_external' => 'boolean',
+        'external_uploaded_at' => 'datetime',
     ];
 
-    // Relationships
     public function payroll(): BelongsTo
     {
         return $this->belongsTo(Payroll::class);
@@ -47,15 +54,19 @@ class Payslip extends Model
         return $this->belongsTo(User::class, 'generated_by');
     }
 
-    // Scopes
+    public function uploadedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'external_uploaded_by');
+    }
+
     public function scopeEmailed($query)
     {
-        return $query->where('email_sent', true);
+        return $query->where('is_emailed', true);
     }
 
     public function scopeNotEmailed($query)
     {
-        return $query->where('email_sent', false);
+        return $query->where('is_emailed', false);
     }
 
     public function scopeViewed($query)
@@ -68,10 +79,19 @@ class Payslip extends Model
         return $query->whereNotNull('downloaded_at');
     }
 
-    // Helper methods
+    public function scopeGenerated($query)
+    {
+        return $query->where('is_external', false);
+    }
+
+    public function scopeExternal($query)
+    {
+        return $query->where('is_external', true);
+    }
+
     public function isEmailed(): bool
     {
-        return $this->email_sent;
+        return $this->is_emailed;
     }
 
     public function isViewed(): bool
@@ -81,14 +101,19 @@ class Payslip extends Model
 
     public function isDownloaded(): bool
     {
-        return !is_null($this->downloaded_at);
+        return $this->is_downloaded;
+    }
+
+    public function isExternal(): bool
+    {
+        return $this->is_external;
     }
 
     public function markAsEmailed(): void
     {
         $this->update([
-            'email_sent' => true,
-            'email_sent_at' => now(),
+            'is_emailed' => true,
+            'emailed_at' => now(),
         ]);
     }
 
@@ -101,14 +126,38 @@ class Payslip extends Model
 
     public function markAsDownloaded(): void
     {
-        if (!$this->downloaded_at) {
-            $this->update(['downloaded_at' => now()]);
+        if (!$this->is_downloaded) {
+            $this->update(['is_downloaded' => true, 'downloaded_at' => now()]);
         }
     }
 
     public function getPdfUrl(): string
     {
-        return asset('storage/' . $this->pdf_path);
+        return asset('storage/' . $this->file_path);
+    }
+
+    public function getExternalFileUrl(): string
+    {
+        if ($this->external_file_path) {
+            return asset('storage/' . $this->external_file_path);
+        }
+        return null;
+    }
+
+    public function getDownloadUrl(): string
+    {
+        if ($this->is_external && $this->external_file_path) {
+            return $this->getExternalFileUrl();
+        }
+        return $this->getPdfUrl();
+    }
+
+    public function deleteExternalFile(): bool
+    {
+        if ($this->external_file_path && Storage::disk('public')->exists($this->external_file_path)) {
+            return Storage::disk('public')->delete($this->external_file_path);
+        }
+        return false;
     }
 
     public function generatePayslipNumber(): string
@@ -116,7 +165,6 @@ class Payslip extends Model
         return 'PSL-' . date('Y') . '-' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
     }
 
-    // Static methods
     public static function generateUniquePayslipNumber(): string
     {
         do {
