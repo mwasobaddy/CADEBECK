@@ -181,13 +181,22 @@
             @endif
 
             @if (Auth::user()->can('process_payroll'))
-            <li>
-                <a href="{{ route('payroll.process') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('payroll.process') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>
-                    <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('payroll.process') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
-                        <flux:icon name="banknotes" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
-                    </span>
-                    <span>{{ __('Payroll') }}</span>
-                </a>
+            <li x-data="{ open: {{ (request()->routeIs('payroll.process') || request()->routeIs('payroll.import')) ? 'true' : 'false' }} }">
+                <div class="flex flex-col">
+                    <button type="button" @click="open = !open" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('payroll.*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                        <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('payroll.*') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                            <flux:icon name="banknotes" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
+                        </span>
+                        <span>{{ __('Payroll') }}</span>
+                        <svg class="w-4 h-4 transition-transform ml-auto" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" class="mt-2 ms-4 space-y-1" style="display: none;">
+                        <a href="{{ route('payroll.process') }}" class="px-3 py-1.5 flex items-center gap-2 transition-colors rounded-full font-semibold {{ request()->routeIs('payroll.process') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>{{ __('Process Payroll') }}</a>
+                        <a href="{{ route('payroll.import') }}" class="px-3 py-1.5 flex items-center gap-2 transition-colors rounded-full font-semibold {{ request()->routeIs('payroll.import') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>{{ __('Import Payroll') }}</a>
+                    </div>
+                </div>
             </li>
             @endif
 
