@@ -496,7 +496,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     <td class="px-5 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">{{ $designation->description }}</td>
                                     <td class="px-5 py-4 font-semibold">
                                         <span class="truncate text-blue-600 dark:text-blue-400">
-                                            {{ $designation->created_at ? $designation->created_at->format('Y-m-d') : '' }}
+                                            {{ $designation->created_at ? \Carbon\Carbon::parse($designation->created_at)->translatedFormat('j M Y') : '' }}
                                         </span>
                                     </td>
                                     <td class="px-5 py-4">

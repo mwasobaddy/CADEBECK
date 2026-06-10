@@ -617,7 +617,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                                         </div>
                                     </td>
                                     <td class="px-5 py-4 text-gray-700 dark:text-gray-300">
-                                        {{ $role->created_at->format('Y-m-d') }}
+                                        {{-- {{ $role->created_at->format('Y-m-d') }} --}}
+                                        {{ $role->created_at ? \Carbon\Carbon::parse($role->created_at)->translatedFormat('j M Y') : '' }}
                                     </td>
                                     <td class="px-5 py-4">
                                         <span class="flex gap-2">
