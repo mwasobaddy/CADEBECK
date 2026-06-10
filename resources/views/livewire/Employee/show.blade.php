@@ -35,6 +35,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         'contract_type_id' => '',
         'supervisor_id' => '',
         'basic_salary' => '',
+        'salary_frequency' => 'monthly',
+        'contracted_hours_per_week' => 40,
         'tax_code' => '1257L',
         'nic_category' => 'A',
         'student_loan_plan' => '',
@@ -70,6 +72,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
                 'basic_salary' => $this->employee->basic_salary ?? '',
+                'salary_frequency' => $this->employee->salary_frequency ?? 'monthly',
+                'contracted_hours_per_week' => $this->employee->contracted_hours_per_week ?? 40,
                 'tax_code' => $this->employee->tax_code ?? '1257L',
                 'nic_category' => $this->employee->nic_category ?? 'A',
                 'student_loan_plan' => $this->employee->student_loan_plan ?? '',
@@ -130,6 +134,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.contract_type_id' => ['required', 'exists:contract_types,id'],
             'form.supervisor_id' => ['nullable', 'exists:employees,id'],
             'form.basic_salary' => ['required', 'numeric', 'min:0'],
+            'form.salary_frequency' => ['required', 'in:monthly,annual,hourly'],
+            'form.contracted_hours_per_week' => ['nullable', 'required_if:form.salary_frequency,hourly', 'numeric', 'min:1', 'max:168'],
             'form.tax_code' => ['nullable', 'string', 'max:10'],
             'form.nic_category' => ['required', 'in:A,B,C,H,M,Z'],
             'form.student_loan_plan' => ['nullable', 'in:plan1,plan2,postgrad'],
@@ -262,6 +268,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => $this->employee->contract_type_id,
                 'supervisor_id' => $this->employee->supervisor_id,
                 'basic_salary' => $this->employee->basic_salary ?? '',
+                'salary_frequency' => $this->employee->salary_frequency ?? 'monthly',
+                'contracted_hours_per_week' => $this->employee->contracted_hours_per_week ?? 40,
                 'pay_date' => Payroll::where('employee_id', $this->employee->id)->first()?->pay_date ? Carbon::parse(Payroll::where('employee_id', $this->employee->id)->first()->pay_date)->format('Y-m-d') : '',
             ];
         } else {
@@ -285,6 +293,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'contract_type_id' => '',
                 'supervisor_id' => '',
                 'basic_salary' => '',
+                'salary_frequency' => 'monthly',
+                'contracted_hours_per_week' => 40,
                 'pay_date' => '',
             ];
         }
@@ -635,14 +645,37 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </flux:select>
             </div>
             <div>
+                <flux:select
+                    wire:model.live="form.salary_frequency"
+                    :label="__('Salary Frequency')"
+                    required>
+                    <flux:select.option value="monthly">{{ __('Monthly') }}</flux:select.option>
+                    <flux:select.option value="annual">{{ __('Annual') }}</flux:select.option>
+                    <flux:select.option value="hourly">{{ __('Hourly') }}</flux:select.option>
+                </flux:select>
+            </div>
+            <div>
                 <flux:input
                     wire:model="form.basic_salary"
-                    :label="__('Basic Salary (£)')"
+                    :label="__($form['salary_frequency'] === 'hourly' ? 'Hourly Rate (GBP)' : ($form['salary_frequency'] === 'annual' ? 'Annual Salary (GBP)' : 'Monthly Salary (GBP)'))"
                     type="number"
                     step="0.01"
                     required
-                    placeholder="{{ __('Basic Salary') }}" />
+                    :placeholder="__($form['salary_frequency'] === 'hourly' ? 'Hourly Rate' : ($form['salary_frequency'] === 'annual' ? 'Annual Salary' : 'Monthly Salary'))" />
             </div>
+            @if($form['salary_frequency'] === 'hourly')
+            <div>
+                <flux:input
+                    wire:model="form.contracted_hours_per_week"
+                    :label="__('Contracted Hours/Week')"
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    max="168"
+                    required
+                    placeholder="{{ __('e.g. 40') }}" />
+            </div>
+            @endif
             <div>
                 <flux:input
                     wire:model="form.tax_code"

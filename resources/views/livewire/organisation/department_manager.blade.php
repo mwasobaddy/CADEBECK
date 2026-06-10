@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 use App\Models\Location;
 use App\Models\Branch;
 use App\Models\Department;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -196,67 +198,92 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Branch deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $departments = Department::whereIn('id', $this->selected)->with(['branch', 'branch.location'])->get();
-        $csvData = "ID,Name,Code,Branch,Location,Created At\n";
-        foreach ($departments as $department) {
-            $csvData .= '"' . $department->id . '","' .
-                str_replace('"', '""', $department->name) . '","' .
-                str_replace('"', '""', $department->code) . '","' .
-                str_replace('"', '""', $department->branch?->name) . '","' .
-                str_replace('"', '""', $department->branch?->location?->name) . '","' .
-                $department->created_at . '"\n';
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'departments_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Branch', 'Code', 'Created At'];
+        $filename = $scope === 'selected' ? 'selected_departments_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_departments_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected departments exported successfully.')]);
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->name,
+                $item->branch?->name ?? '',
+                $item->code ?? '',
+                $item->created_at,
+            ];
+        }, $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $query = Department::query()->with(['branch', 'branch.location']);
-        
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Branch', 'Code', 'Created At'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->name,
+                $item->branch?->name ?? '',
+                $item->code ?? '',
+                $item->created_at,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'selected_departments_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_departments_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Departments',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Department::whereIn('id', $this->selected);
+        }
+
+        $query = Department::query();
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
                   ->orWhere('code', 'like', '%' . $this->search . '%');
             });
         }
-
         if ($this->filterLocation) {
             $query->whereHas('branch', function ($q) {
                 $q->where('location_id', $this->filterLocation);
             });
         }
-
         if ($this->filterBranch) {
             $query->where('branch_id', $this->filterBranch);
         }
+        return $query->orderByDesc('created_at');
+    }
 
-        $departments = $query->orderByDesc('created_at')->get();
-        $csvData = "ID,Name,Code,Branch,Location,Created At\n";
-        foreach ($departments as $department) {
-            $csvData .= '"' . $department->id . '","' .
-                str_replace('"', '""', $department->name) . '","' .
-                str_replace('"', '""', $department->code) . '","' .
-                str_replace('"', '""', $department->branch?->name) . '","' .
-                str_replace('"', '""', $department->branch?->location?->name) . '","' .
-                $department->created_at . '"\n';
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_departments_' . now()->format('Y-m-d_H-i-s') . '.csv'
+    protected function logExport($scope, int $count): void
+    {
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_' . $scope,
+            'target_type' => Department::class,
+            'details' => json_encode([
+                'scope' => $scope,
+                'total' => $count,
+            ]),
         ]);
-
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected departments exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -372,16 +399,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     @can('export_department')
-                        <button type="button" wire:click="exportAll"
-                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                            @if ($isLoadingExport) disabled @endif>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            <span class="hidden lg:inline">
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                            </span>
-                        </button>
+                        <x-export-dropdown
+                            :hasSelected="count($this->selected) > 0"
+                            :isLoading="$isLoadingExport"
+                        />
                     @endcan
                     @can('create_department')
                         <button type="button" wire:click="createNewDepartment"
@@ -456,16 +477,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endif
                     </div>
                     <div class="flex items-center gap-3">
-                        @can('export_department')
-                            <button type="button" wire:click="exportSelected"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                                @if ($isLoadingExport) disabled @endif>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                            </button>
-                        @endcan
+
                         @can('delete_department')
                             <button type="button" wire:click="bulkDeleteConfirm"
                                 class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
@@ -718,20 +730,3 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
     @endcan
 </div>
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>

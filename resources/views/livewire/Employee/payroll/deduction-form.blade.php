@@ -319,7 +319,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <div>
                 <flux:input
                     wire:model="form.amount"
-                    :label="__('Amount (£)')"
+                    :label="__('Amount (GBP)')"
                     type="number"
                     step="0.01"
                     required

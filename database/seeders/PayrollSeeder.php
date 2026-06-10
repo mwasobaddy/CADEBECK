@@ -208,7 +208,7 @@ class PayrollSeeder extends Seeder
      */
     private function generateBasicSalary(): float
     {
-        // Kenyan salary ranges (USD)
+        // Kenyan salary ranges (GBP)
         $salaryRanges = [
             ['min' => 15000, 'max' => 30000], // Entry level
             ['min' => 30000, 'max' => 50000], // Junior

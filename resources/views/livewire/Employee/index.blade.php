@@ -267,44 +267,74 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $employees = Employee::whereIn('id', $this->selected)->with(['user', 'location', 'branch', 'department', 'designation', 'contractType'])->get();
-        $csvData = "ID,Name,Staff Number,Email,Mobile,Location,Branch,Department,Designation,Contract Type,Date of Join\n";
-        foreach ($employees as $employee) {
-            $csvData .= '"' . $employee->id . '","' .
-                str_replace('"', '""', $employee->user->first_name . ' ' . $employee->user->other_names) . '","' .
-                str_replace('"', '""', $employee->staff_number) . '","' .
-                str_replace('"', '""', $employee->user->gender) . '","' .
-                str_replace('"', '""', $employee->mobile_number) . '","' .
-                str_replace('"', '""', $employee->location?->name) . '","' .
-                str_replace('"', '""', $employee->branch?->name) . '","' .
-                str_replace('"', '""', $employee->department?->name) . '","' .
-                str_replace('"', '""', $employee->designation?->name) . '","' .
-                str_replace('"', '""', $employee->contractType?->name) . '","' .
-                $employee->date_of_join . '"\n';
-        }        
-        
-        // Log the export selected action
-        Audit::create([
-            'actor_id' => Auth::id(),
-            'action' => 'export_selected',
-            'target_type' => Employee::class,
-            'details' => json_encode(['employee_ids' => $this->selected]),
-        ]);
+        $employees = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Staff Number', 'Email', 'Mobile', 'Location', 'Branch', 'Department', 'Designation', 'Contract Type', 'Date of Join'];
 
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $employees, function ($employee) {
+            return [
+                $employee->id,
+                $employee->user->first_name . ' ' . $employee->user->other_names,
+                $employee->staff_number,
+                $employee->user->email ?? '',
+                $employee->mobile_number,
+                $employee->location?->name ?? '',
+                $employee->branch?->name ?? '',
+                $employee->department?->name ?? '',
+                $employee->designation?->name ?? '',
+                $employee->contractType?->name ?? '',
+                $employee->date_of_join ?? '',
+            ];
+        }, $scope === 'selected' ? 'selected_employees_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_employees_' . now()->format('Y-m-d_H-i-s') . '.csv');
+
+        $this->logExport($scope, $employees->count());
         $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'employees_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $employees = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Staff Number', 'Email', 'Mobile', 'Location', 'Branch', 'Department', 'Designation', 'Contract Type', 'Date of Join'];
+
+        $rows = $employees->map(function ($employee) {
+            return [
+                $employee->id,
+                $employee->user->first_name . ' ' . $employee->user->other_names,
+                $employee->staff_number,
+                $employee->user->email ?? '',
+                $employee->mobile_number,
+                $employee->location?->name ?? '',
+                $employee->branch?->name ?? '',
+                $employee->department?->name ?? '',
+                $employee->designation?->name ?? '',
+                $employee->contractType?->name ?? '',
+                $employee->date_of_join ?? '',
+            ];
+        })->toArray();
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Employee List',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $scope === 'selected' ? 'selected_employees_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_employees_' . now()->format('Y-m-d_H-i-s') . '.pdf');
+
+        $this->logExport($scope, $employees->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Employee::whereIn('id', $this->selected)->with(['user', 'location', 'branch', 'department', 'designation', 'contractType']);
+        }
+
         $query = Employee::query()->with(['user', 'location', 'branch', 'department', 'designation', 'contractType']);
         if ($this->search) {
             $query->whereHas('user', function ($q) {
@@ -330,36 +360,21 @@ new #[Layout('components.layouts.app')] class extends Component {
         if ($this->filterContractType) {
             $query->where('contract_type_id', $this->filterContractType);
         }
-        $employees = $query->orderByDesc('created_at')->get();
-        $csvData = "ID,Name,Staff Number,Email,Mobile,Location,Branch,Department,Designation,Contract Type,Date of Join\n";
-        foreach ($employees as $employee) {
-            $csvData .= '"' . $employee->id . '","' .
-                str_replace('"', '""', $employee->user->first_name . ' ' . $employee->user->other_names) . '","' .
-                str_replace('"', '""', $employee->staff_number) . '","' .
-                str_replace('"', '""', $employee->user->gender) . '","' .
-                str_replace('"', '""', $employee->mobile_number) . '","' .
-                str_replace('"', '""', $employee->location?->name) . '","' .
-                str_replace('"', '""', $employee->branch?->name) . '","' .
-                str_replace('"', '""', $employee->department?->name) . '","' .
-                str_replace('"', '""', $employee->designation?->name) . '","' .
-                str_replace('"', '""', $employee->contractType?->name) . '","' .
-                $employee->date_of_join . '"\n';
-        }        
-        
-        // Log the export all action
+        return $query->orderByDesc('created_at');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
         Audit::create([
             'actor_id' => Auth::id(),
-            'action' => 'export_all',
+            'action' => 'export_' . $scope,
             'target_type' => Employee::class,
-            'details' => json_encode(['total_employees' => $employees->count()]),
+            'details' => json_encode(
+                $scope === 'selected'
+                    ? ['employee_ids' => $this->selected]
+                    : ['total_employees' => $count]
+            ),
         ]);
-
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_employees_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected employees exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -485,13 +500,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <div class="flex items-center gap-3">
                 @can('export_employee')
-                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        {{ __('Export All') }}
-                    </flux:button>
-                @else
-                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        {{ __('Exporting Denied') }}
-                    </flux:button>
+                    <x-export-dropdown
+                        :hasSelected="count($selected) > 0"
+                        :isLoading="$isLoadingExport"
+                    />
                 @endcan
                 @can('create_employee')
                     <flux:button icon:trailing="plus" variant="primary" type="button" wire:click="createNewEmployee" class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -581,15 +593,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    @can('export_employee')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Export Selected') }}
-                        </flux:button>
-                    @else
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Exporting Denied') }}
-                        </flux:button>
-                    @endcan
                     @can('delete_employee')
                         <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                             {{ __('Delete Selected') }}
@@ -876,20 +879,3 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
     @endif
 </div>
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>

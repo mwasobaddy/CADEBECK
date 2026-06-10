@@ -194,35 +194,107 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected leave requests deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $leaves = LeaveRequest::whereIn('id', $this->selected)->get();
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Leave Type', 'Start Date', 'End Date', 'Days', 'Status', 'Approved By', 'Created At'];
+        $filename = $scope === 'selected' ? 'selected_leaves_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_leaves_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->leave_type,
+                $item->start_date,
+                $item->end_date,
+                $item->days_requested,
+                $item->status,
+                $item->approver?->first_name . ' ' . $item->approver?->other_names ?? 'N/A',
+                $item->created_at,
+            ];
+        }, $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    public function exportPdf($scope = 'all')
+    {
+        $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Leave Type', 'Start Date', 'End Date', 'Days', 'Status', 'Approved By', 'Created At'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->leave_type,
+                $item->start_date,
+                $item->end_date,
+                $item->days_requested,
+                $item->status,
+                $item->approver?->first_name . ' ' . $item->approver?->other_names ?? 'N/A',
+                $item->created_at,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'selected_leaves_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_leaves_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'My Leave Requests',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return LeaveRequest::whereIn('id', $this->selected)->with(['employee.user', 'approver']);
+        }
+
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if (!$employee) {
+            return LeaveRequest::where('id', 0);
+        }
+
+        $query = LeaveRequest::where('employee_id', $employee->id)->with(['employee.user', 'approver']);
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('reason', 'like', '%' . $this->search . '%')
+                    ->orWhere('leave_type', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->filterStatus) {
+            $query->where('status', $this->filterStatus);
+        }
+
+        if ($this->filterType) {
+            $query->where('leave_type', $this->filterType);
+        }
+
+        return $query->orderByDesc('created_at');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
         Audit::create([
             'actor_id' => Auth::id(),
-            'action' => 'export_selected',
+            'action' => 'export_' . $scope,
             'target_type' => LeaveRequest::class,
-            'details' => json_encode(['leave_ids' => $this->selected]),
+            'details' => json_encode([
+                'scope' => $scope,
+                'total' => $count,
+            ]),
         ]);
-
-        $csvData = "ID,Leave Type,Start Date,End Date,Days,Status,Reason,Created At\n";
-        foreach ($leaves as $leave) {
-            $csvData .= '"' . $leave->id . '","' .
-                str_replace('"', '""', $leave->leave_type) . '","' .
-                $leave->start_date->format('Y-m-d') . '","' .
-                $leave->end_date->format('Y-m-d') . '","' .
-                $leave->days_requested . '","' .
-                str_replace('"', '""', $leave->status) . '","' .
-                str_replace('"', '""', $leave->reason) . '","' .
-                $leave->created_at . '"' . "\n";
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'selected_leave_requests_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Leave requests exported successfully.')]);
     }
 
     public function updatedPage(): void
@@ -374,67 +446,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->showFilters = !$this->showFilters;
     }
 
-    public function exportLeaveRequests(): void
-    {
-        $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
 
-        if (!$employee) return;
-
-        $query = LeaveRequest::where('employee_id', $employee->id);
-
-        // Apply search filter
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('reason', 'like', '%' . $this->search . '%')
-                    ->orWhere('leave_type', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        // Apply status filter
-        if ($this->filterStatus) {
-            $query->where('status', $this->filterStatus);
-        }
-
-        // Apply type filter
-        if ($this->filterType) {
-            $query->where('leave_type', $this->filterType);
-        }
-
-        // Apply sorting
-        $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
-        $field = in_array($this->sortField, ['start_date', 'end_date', 'status', 'leave_type', 'created_at']) 
-                 ? $this->sortField : 'created_at';
-        $query->orderBy($field, $direction);
-
-        $leaves = $query->get();
-
-        // Log the export action
-        Audit::create([
-            'actor_id' => Auth::id(),
-            'action' => 'export_leave_requests',
-            'target_type' => LeaveRequest::class,
-            'details' => json_encode(['total_requests' => $leaves->count()]),
-        ]);
-
-        $csvData = "ID,Leave Type,Start Date,End Date,Days,Status,Reason,Created At\n";
-        foreach ($leaves as $leave) {
-            $csvData .= '"' . $leave->id . '","' .
-                       str_replace('"', '""', $leave->leave_type) . '","' .
-                       $leave->start_date->format('Y-m-d') . '","' .
-                       $leave->end_date->format('Y-m-d') . '","' .
-                       $leave->days_requested . '","' .
-                       str_replace('"', '""', $leave->status) . '","' .
-                       str_replace('"', '""', $leave->reason) . '","' .
-                       $leave->created_at . '"' . "\n";
-        }
-
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'my_leave_requests_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Leave requests exported successfully.')]);
-    }
 };
 ?>
 
@@ -485,13 +497,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </h1>
             </div>
             <div class="flex items-center gap-3">
-                <button type="button" wire:click="exportLeaveRequests"
-                    class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <span class="hidden lg:inline">{{ __('Export') }}</span>
-                </button>
+                <x-export-dropdown
+                    :hasSelected="count($this->selected) > 0"
+                    :isLoading="$isLoadingExport"
+                />
                 <a href="{{ route('leave.apply') }}"
                     class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition" wire:navigate>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -602,16 +611,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-center gap-3">
-                    @can('export_user')
-                        <button type="button" wire:click="exportSelected"
-                            class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                            @if ($isLoadingExport) disabled @endif>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                        </button>
-                    @endcan
+
                     @can('delete_user')
                         <button type="button" wire:click="bulkDeleteConfirm"
                             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
@@ -909,20 +909,3 @@ new #[Layout('components.layouts.app')] class extends Component {
     @endif
 </div>
 
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>

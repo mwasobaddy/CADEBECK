@@ -44,7 +44,8 @@ class EmployeeSeeder extends Seeder
                 'designation_id' => $designation?->id,
                 'date_of_join' => Carbon::now()->subYears(2),
                 'contract_type_id' => $contractType?->id,
-                'supervisor_id' => null, // Will be updated later
+                'supervisor_id' => null,
+                'salary_frequency' => 'monthly',
             ]);
             $employees[$user->id] = $employee;
         }

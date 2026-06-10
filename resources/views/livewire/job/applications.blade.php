@@ -208,49 +208,69 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected applications deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Email', 'Phone', 'Job Title', 'Status', 'Applied At'];
+        $filename = $scope === 'selected' ? 'selected_applications_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_applications_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        // Get selected applications
-        $applications = Application::whereIn('id', $this->selected)->get();
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($app) {
+            return [
+                $app->id,
+                $app->name,
+                $app->email,
+                $app->phone ?? '',
+                $app->jobAdvert->title ?? '',
+                $app->status,
+                $app->created_at,
+            ];
+        }, $filename);
 
-        // Create CSV content
-        $csvData = "ID,Name,Email,Phone,Status,Submitted At,Cover Letter\n";
-        foreach ($applications as $application) {
-            $csvData .= '"' . $application->id . '","' .
-                       str_replace('"', '""', $application->name) . '","' .
-                       $application->email . '","' .
-                       $application->phone . '","' .
-                       $application->status . '","' .
-                       $application->submitted_at . '","' .
-                       str_replace('"', '""', $application->cover_letter) . '"' . "\n";
-        }
-
-        // Log the export selected action
-        Audit::create([
-            'actor_id' => Auth::id(),
-            'action' => 'export_selected',
-            'target_type' => Application::class,
-            'details' => json_encode(['application_ids' => $this->selected]),
-        ]);
-
+        $this->logExport($scope, $items->count());
         $this->isLoadingExport = false;
 
-        // Trigger download
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'applications_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected applications exported successfully.')]);
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Email', 'Phone', 'Job Title', 'Status', 'Applied At'];
+        $rows = $items->map(function ($app) {
+            return [
+                $app->id,
+                $app->name,
+                $app->email,
+                $app->phone ?? '',
+                $app->jobAdvert->title ?? '',
+                $app->status,
+                $app->created_at,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'selected_applications_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_applications_' . now()->format('Y-m-d_H-i-s') . '.pdf';
 
-        // Get all applications based on current filters
-        $query = Application::query()->where('job_advert_id', $this->jobAdvertId);
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Job Applications',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Application::whereIn('id', $this->selected)->with('jobAdvert');
+        }
+
+        $query = Application::query()->with('jobAdvert')
+            ->where('job_advert_id', $this->jobAdvertId);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -264,36 +284,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('status', $this->filterStatus);
         }
 
-        $applications = $query->orderByDesc('submitted_at')->get();
+        return $query->orderByDesc('created_at');
+    }
 
-        // Create CSV content
-        $csvData = "ID,Name,Email,Phone,Status,Submitted At,Cover Letter\n";
-        foreach ($applications as $application) {
-            $csvData .= '"' . $application->id . '","' .
-                       str_replace('"', '""', $application->name) . '","' .
-                       $application->email . '","' .
-                       $application->phone . '","' .
-                       $application->status . '","' .
-                       $application->submitted_at . '","' .
-                       str_replace('"', '""', $application->cover_letter) . '"' . "\n";
-        }
-
-        // Log the export all action
+    protected function logExport($scope, int $count): void
+    {
         Audit::create([
             'actor_id' => Auth::id(),
-            'action' => 'export_all',
+            'action' => 'export_' . $scope,
             'target_type' => Application::class,
-            'details' => json_encode(['total_applications' => $applications->count()]),
+            'details' => json_encode($scope === 'selected' ? ['application_ids' => $this->selected] : ['total_applications' => $count]),
         ]);
-
-        $this->isLoadingExport = false;
-
-        // Trigger download
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_applications_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('All applications exported successfully.')]);
     }
 
     public function confirmView($id): void
@@ -492,9 +493,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
             <div class="flex items-center gap-3">
                 @can('manage_job_advert')
-                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                    </flux:button>
+                    <x-export-dropdown
+                        :hasSelected="count($this->selected) > 0"
+                        :isLoading="$isLoadingExport"
+                    />
                 @else
                     <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         {{ __('Exporting Denied') }}
@@ -564,15 +566,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    @can('export_applications')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Export Selected') }}
-                        </flux:button>
-                    @else
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Exporting Denied') }}
-                        </flux:button>
-                    @endcan
+
 
                     @can('delete_applications')
                         <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -1032,45 +1026,3 @@ new #[Layout('components.layouts.app')] class extends Component {
     @endif
 </div>
 
-<!-- JavaScript for CSV Download and Cooldown Timer -->
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-
-        // Cooldown timer functionality
-        function updateCooldownTimers() {
-            const cooldownElements = document.querySelectorAll('[data-cooldown-seconds]');
-            
-            cooldownElements.forEach(element => {
-                let seconds = parseInt(element.getAttribute('data-cooldown-seconds'));
-                
-                if (seconds > 0) {
-                    seconds--;
-                    element.setAttribute('data-cooldown-seconds', seconds);
-                    element.textContent = seconds + 's';
-                    
-                    if (seconds <= 0) {
-                        // Refresh the component when cooldown expires
-                        Livewire.refresh();
-                    }
-                }
-            });
-        }
-
-        // Update cooldown timers every second
-        setInterval(updateCooldownTimers, 1000);
-    });
-</script>

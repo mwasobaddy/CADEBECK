@@ -154,6 +154,7 @@ function createEmployeeFor(User $user, ?Employee $supervisor = null): Employee
         'date_of_join' => now(),
         'supervisor_id' => $supervisor?->id,
         'basic_salary' => 100000,
+        'salary_frequency' => 'monthly',
     ]);
 }
 

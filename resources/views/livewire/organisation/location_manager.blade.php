@@ -3,6 +3,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use App\Models\Location;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -145,32 +147,61 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected locations deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $locations = Location::whereIn('id', $this->selected)->get();
-        $csvData = "ID,Name,Code,Address,City,Country,Created At\n";
-        foreach ($locations as $location) {
-            $csvData .= '"' . $location->id . '","' .
-                str_replace('"', '""', $location->name) . '","' .
-                str_replace('"', '""', $location->code) . '","' .
-                str_replace('"', '""', $location->address) . '","' .
-                str_replace('"', '""', $location->city) . '","' .
-                str_replace('"', '""', $location->country) . '","' .
-                $location->created_at . '"\n';
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'locations_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Code', 'Created At'];
+        $filename = $scope === 'selected' ? 'selected_locations_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_locations_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected locations exported successfully.')]);
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->name,
+                $item->code ?? '',
+                $item->created_at,
+            ];
+        }, $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Code', 'Created At'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->name,
+                $item->code ?? '',
+                $item->created_at,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'selected_locations_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_locations_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Locations',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Location::whereIn('id', $this->selected);
+        }
+
         $query = Location::query();
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%')
@@ -179,24 +210,20 @@ new #[Layout('components.layouts.app')] class extends Component {
                   ->orWhere('city', 'like', '%' . $this->search . '%')
                   ->orWhere('country', 'like', '%' . $this->search . '%');
         }
-        $locations = $query->orderByDesc('created_at')->get();
-        $csvData = "ID,Name,Code,Address,City,Country,Created At\n";
-        foreach ($locations as $location) {
-            $csvData .= '"' . $location->id . '","' .
-                str_replace('"', '""', $location->name) . '","' .
-                str_replace('"', '""', $location->code) . '","' .
-                str_replace('"', '""', $location->address) . '","' .
-                str_replace('"', '""', $location->city) . '","' .
-                str_replace('"', '""', $location->country) . '","' .
-                $location->created_at . '"\n';
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_locations_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
+        return $query->orderByDesc('created_at');
+    }
 
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected locations imported successfully.')]);
+    protected function logExport($scope, int $count): void
+    {
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_' . $scope,
+            'target_type' => Location::class,
+            'details' => json_encode([
+                'scope' => $scope,
+                'total' => $count,
+            ]),
+        ]);
     }
 
     public function confirmEdit($id): void
@@ -313,16 +340,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     @can('export_location')
-                        <button type="button" wire:click="exportAll"
-                            class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                            @if ($isLoadingExport) disabled @endif>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            <span class="hidden lg:inline">
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                            </span>
-                        </button>
+                        <x-export-dropdown
+                            :hasSelected="count($this->selected) > 0"
+                            :isLoading="$isLoadingExport"
+                        />
                     @endcan
                     @can('create_location')
                         <button type="button" wire:click="createNewLocation"
@@ -370,16 +391,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endif
                     </div>
                     <div class="flex items-center gap-3">
-                        @can('export_location')
-                            <button type="button" wire:click="exportSelected"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                                @if ($isLoadingExport) disabled @endif>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                            </button>
-                        @endcan
+
                         @can('delete_location')
                             <button type="button" wire:click="bulkDeleteConfirm"
                                 class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400 backdrop-blur-sm transition">
@@ -655,20 +667,3 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
     @endcan
 </div>
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>

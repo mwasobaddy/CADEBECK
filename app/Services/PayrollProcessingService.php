@@ -101,9 +101,12 @@ class PayrollProcessingService
         $studentLoanPlan = $employee->student_loan_plan;
         $includePension = $employee->include_pension ?? true;
 
+        // Normalise salary to monthly equivalent based on frequency
+        $monthlySalary = $this->getMonthlySalary($employee);
+
         // Calculate UK taxes
         $taxCalculation = $this->taxService->calculateAllTaxes(
-            $employee->basic_salary,
+            $monthlySalary,
             $totalAllowances,
             $totalDeductions,
             $taxCode,
@@ -117,7 +120,7 @@ class PayrollProcessingService
             'employee_id' => $employee->id,
             'payroll_period' => $period,
             'pay_date' => $payDate,
-            'basic_salary' => $employee->basic_salary,
+            'basic_salary' => $monthlySalary,
             'house_allowance' => $allowances->where('allowance_type', 'house')->sum('amount'),
             'transport_allowance' => $allowances->where('allowance_type', 'transport')->sum('amount'),
             'medical_allowance' => $allowances->where('allowance_type', 'medical')->sum('amount'),
@@ -252,6 +255,23 @@ class PayrollProcessingService
                 }
             }
         }
+    }
+
+    /**
+     * Normalise an employee's salary to a monthly equivalent.
+     */
+    protected function getMonthlySalary(Employee $employee): float
+    {
+        $frequency = $employee->salary_frequency ?? 'monthly';
+
+        return match ($frequency) {
+            'annual' => round($employee->basic_salary / 12, 2),
+            'hourly' => round(
+                $employee->basic_salary * ($employee->contracted_hours_per_week ?? 40) * 52 / 12,
+                2
+            ),
+            default => (float) $employee->basic_salary,
+        };
     }
 
     /**

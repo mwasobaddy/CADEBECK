@@ -3,6 +3,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use App\Models\Payroll;
 use App\Models\Employee;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PayrollAllowance;
 use App\Models\PayrollDeduction;
 use Livewire\WithPagination;
@@ -266,38 +268,70 @@ new #[Layout('components.layouts.app')] class extends Component {
         ]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $payrolls = Payroll::whereIn('id', $this->selected)->with(['employee.user', 'payslips'])->get();
-        $csvData = "ID,Employee,Payroll Period,Pay Date,Basic Salary,Gross Pay,Net Pay,Status\n";
-        
-        foreach ($payrolls as $payroll) {
-            $csvData .= '"' . $payroll->id . '","' .
-                str_replace('"', '""', $payroll->employee->user->first_name . ' ' . $payroll->employee->user->other_names) . '","' .
-                str_replace('"', '""', $payroll->payroll_period) . '","' .
-                $payroll->pay_date . '","' .
-                $payroll->basic_salary . '","' .
-                $payroll->gross_pay . '","' .
-                $payroll->net_pay . '","' .
-                $payroll->status . '"\n';
-        }
-        
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Payroll Period', 'Pay Date', 'Basic Salary', 'Gross Pay', 'Net Pay', 'Status'];
+        $filename = $scope === 'selected' ? 'payroll_history_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_payroll_history_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $item->payroll_period,
+                $item->pay_date,
+                $item->basic_salary,
+                $item->gross_pay,
+                $item->net_pay,
+                $item->status,
+            ];
+        }, $filename);
+
+        $this->logExport($scope, $items->count());
         $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'payroll_history_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('Selected payroll records exported successfully.')
-        ]);
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $query = $this->employee->payrolls()->with(['employee.user', 'payslips']);
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Payroll Period', 'Pay Date', 'Basic Salary', 'Gross Pay', 'Net Pay', 'Status'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $item->payroll_period,
+                $item->pay_date,
+                $item->basic_salary,
+                $item->gross_pay,
+                $item->net_pay,
+                $item->status,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'payroll_history_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_payroll_history_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Payroll History',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Payroll::whereIn('id', $this->selected)->with(['employee.user']);
+        }
+
+        $query = $this->employee->payrolls()->with(['employee.user']);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -314,28 +348,18 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('status', $this->selectedStatus);
         }
 
-        $payrolls = $query->orderByDesc('pay_date')->get();
-        $csvData = "ID,Employee,Payroll Period,Pay Date,Basic Salary,Gross Pay,Net Pay,Status\n";
-        
-        foreach ($payrolls as $payroll) {
-            $csvData .= '"' . $payroll->id . '","' .
-                str_replace('"', '""', $payroll->employee->user->first_name . ' ' . $payroll->employee->user->other_names) . '","' .
-                str_replace('"', '""', $payroll->payroll_period) . '","' .
-                $payroll->pay_date . '","' .
-                $payroll->basic_salary . '","' .
-                $payroll->gross_pay . '","' .
-                $payroll->net_pay . '","' .
-                $payroll->status . '"\n';
-        }
-        
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_payroll_history_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('All payroll records exported successfully.')
+        return $query->orderByDesc('pay_date');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_' . $scope,
+            'target_type' => Payroll::class,
+            'details' => $scope === 'selected'
+                ? json_encode(['payroll_ids' => $this->selected])
+                : json_encode(['total_payrolls' => $count]),
         ]);
     }
 
@@ -481,16 +505,10 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="flex items-center gap-3">
                 @can('export_payroll')
-                    <button type="button" wire:click="exportAll"
-                        class="flex items-center gap-2 px-2 lg:px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-900/20 hover:bg-purple-100/80 dark:hover:bg-purple-900/40 shadow-sm backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                        @if ($isLoadingExport) disabled @endif>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span class="hidden lg:inline">
-                            {{ __('Export All') }}
-                        </span>
-                    </button>
+                    <x-export-dropdown
+                        :hasSelected="count($this->selected) > 0"
+                        :isLoading="$isLoadingExport"
+                    />
                 @endcan
             </div>
         </div>
@@ -560,15 +578,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    @can('export_payroll')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" wire:loading.attr="disabled" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                        </flux:button>
-                    @else
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Exporting Denied') }}
-                        </flux:button>
-                    @endcan
                     @can('delete_payroll')
                         <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                             {{ __('Delete Selected') }}

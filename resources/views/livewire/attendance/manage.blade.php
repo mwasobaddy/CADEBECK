@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Models\Audit;
 use Livewire\WithPagination;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -21,6 +22,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public $showDeleted = false;
     public $selectedRecords = [];
     public $selectAll = false;
+    public $isLoadingExport = false;
 
     protected $queryString = [
         'filterPeriod' => ['except' => 'year'],
@@ -222,59 +224,71 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
     }
 
-    public function exportCsv()
+    public function exportCsv($scope = 'all')
     {
-        $filename = 'attendance_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Date', 'Clock In', 'Clock Out', 'Total Hours', 'Status', 'Notes'];
+        $filename = $scope === 'selected' ? 'attendance_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_attendance_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($attendance) {
+            return [
+                $attendance->id,
+                $attendance->employee->user->first_name . ' ' . $attendance->employee->user->other_names,
+                $attendance->date,
+                $attendance->clock_in_time,
+                $attendance->clock_out_time,
+                $attendance->total_hours,
+                $attendance->status,
+                $attendance->notes,
+            ];
+        }, $filename);
 
-        $attendances = $this->getAttendancesForExport();
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
 
-        $callback = function () use ($attendances) {
-            $file = fopen('php://output', 'w');
-
-            // CSV headers
-            fputcsv($file, [
-                __('Employee ID'),
-                __('Employee Name'),
-                __('Department'),
-                __('Date'),
-                __('Clock In'),
-                __('Clock Out'),
-                __('Total Hours'),
-                __('Status'),
-                __('Notes')
-            ]);
-
-            // CSV data
-            foreach ($attendances as $attendance) {
-                fputcsv($file, [
-                    $attendance->employee->employee_id ?? '',
-                    $attendance->employee->user->first_name . ' ' . ($attendance->employee->user->other_names ?? ''),
-                    $attendance->employee->department->name ?? '',
-                    $attendance->date->format('Y-m-d'),
-                    $attendance->clock_in_time ? $attendance->clock_in_time->format('H:i:s') : '',
-                    $attendance->clock_out_time ? $attendance->clock_out_time->format('H:i:s') : '',
-                    $attendance->total_hours ?? '',
-                    $attendance->status ?? '',
-                    $attendance->notes ?? ''
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return $response;
     }
 
-    private function getAttendancesForExport()
+    public function exportPdf($scope = 'all')
     {
+        $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Date', 'Clock In', 'Clock Out', 'Total Hours', 'Status', 'Notes'];
+        $rows = $items->map(function ($attendance) {
+            return [
+                $attendance->id,
+                $attendance->employee->user->first_name . ' ' . $attendance->employee->user->other_names,
+                $attendance->date,
+                $attendance->clock_in_time,
+                $attendance->clock_out_time,
+                $attendance->total_hours,
+                $attendance->status,
+                $attendance->notes,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'attendance_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_attendance_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Attendance Report',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Attendance::whereIn('id', $this->selectedRecords)->with(['employee.user', 'employee.department']);
+        }
+
         $query = Attendance::with(['employee.user', 'employee.department']);
 
-        // Apply same filters as the main query
         $user = Auth::user();
         $employee = $user->employee;
 
@@ -303,7 +317,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->whereNull('deleted_at');
         }
 
-        return $query->orderBy('date', 'desc')->get();
+        return $query->orderBy('date', 'desc')->orderBy('clock_in_time', 'desc');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_' . $scope,
+            'target_type' => Attendance::class,
+            'details' => json_encode($scope === 'selected' ? ['attendance_ids' => $this->selectedRecords] : ['total_attendance' => $count]),
+        ]);
     }
 
     public function softDeleteSelected()
@@ -528,15 +552,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     @can('view_other_attendance')
-                        <button
-                            wire:click="exportCsv"
-                            class="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            {{ __('Export CSV') }}
-                        </button>
+                        <x-export-dropdown
+                            :hasSelected="count($this->selectedRecords) > 0"
+                            :isLoading="$isLoadingExport"
+                        />
                     @else
                         <button
                             disabled

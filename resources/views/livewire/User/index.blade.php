@@ -201,72 +201,89 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Selected users deleted successfully.')]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $users = User::whereIn('id', $this->selected)->get();
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Email', 'Roles', 'Created At'];
+        $filename = $scope === 'selected' ? 'selected_users_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_users_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        // Log the export selected action
-        Audit::create([
-            'actor_id' => Auth::id(),
-            'action' => 'export_selected',
-            'target_type' => User::class,
-            'details' => json_encode(['user_ids' => $this->selected]),
-        ]);
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($user) {
+            return [
+                $user->id,
+                $user->first_name . ' ' . $user->other_names,
+                $user->email,
+                $user->roles->pluck('name')->implode(', '),
+                $user->created_at,
+            ];
+        }, $filename);
 
-        $csvData = "ID,Name,Email,Created At\n";
-        foreach ($users as $user) {
-            $csvData .= '"' . $user->id . '","' .
-                       str_replace('"', '""', $user->name) . '","' .
-                       str_replace('"', '""', $user->email) . '","' .
-                       $user->created_at . '"' . "\n";
-        }
+        $this->logExport($scope, $items->count());
         $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'users_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('User exported successfully.')]);
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Name', 'Email', 'Roles', 'Created At'];
+        $rows = $items->map(function ($user) {
+            return [
+                $user->id,
+                $user->first_name . ' ' . $user->other_names,
+                $user->email,
+                $user->roles->pluck('name')->implode(', '),
+                $user->created_at,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'selected_users_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_users_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Users',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return User::whereIn('id', $this->selected);
+        }
+
         $query = User::query();
+
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
+
         if ($this->filterRole) {
             $query->whereHas('roles', function ($q) {
                 $q->where('name', $this->filterRole);
             });
         }
-        $users = $query->orderByDesc('created_at')->get();
 
-        // Log the export all action
+        return $query->orderByDesc('created_at');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
         Audit::create([
             'actor_id' => Auth::id(),
-            'action' => 'export_all',
+            'action' => 'export_' . $scope,
             'target_type' => User::class,
-            'details' => json_encode(['total_users' => $users->count()]),
+            'details' => json_encode($scope === 'selected' ? ['user_ids' => $this->selected] : ['total_users' => $count]),
         ]);
-
-        $csvData = "ID,Name,Email,Created At\n";
-        foreach ($users as $user) {
-            $csvData .= '"' . $user->id . '","' .
-                       str_replace('"', '""', $user->name) . '","' .
-                       str_replace('"', '""', $user->email) . '","' .
-                       $user->created_at . '"' . "\n";
-        }
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_users_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', ['type' => 'success', 'message' => __('User exported successfully.')]);
     }
 
     public function confirmEdit($id): void
@@ -400,9 +417,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
                 <div class="flex items-center gap-3">
                     @can('export_user')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                        </flux:button>
+                        <x-export-dropdown
+                            :hasSelected="count($this->selected) > 0"
+                            :isLoading="$isLoadingExport"
+                        />
                     @else
                         <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
                             {{ __('Exporting Denied') }}
@@ -472,15 +490,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @endif
                     </div>
                     <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                        @can('export_user')
-                            <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" :disabled="$isLoadingExport" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                            </flux:button>
-                        @else
-                            <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                {{ __('Exporting Denied') }}
-                            </flux:button>
-                        @endcan
+
                         @can('delete_user')
                             <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                                 {{ __('Delete Selected') }}
@@ -753,20 +763,4 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
     @endcan
 </div>
-<script>
-    document.addEventListener('livewire:initialized', function () {
-        Livewire.on('download-csv', function (data) {
-            const blob = new Blob([data[0].data], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>
+

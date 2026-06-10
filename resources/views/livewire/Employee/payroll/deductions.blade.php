@@ -329,38 +329,67 @@ new #[Layout('components.layouts.app')] class extends Component {
         ]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $deductions = PayrollDeduction::whereIn('id', $this->selected)->with('employee.user')->get();
-        $csvData = "ID,Employee,Type,Description,Amount,Effective Date,Status\n";
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Type', 'Description', 'Amount', 'Effective Date', 'Status'];
+        $filename = $scope === 'selected' ? 'deductions_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_deductions_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
-        foreach ($deductions as $deduction) {
-            $csvData .= '"' . $deduction->id . '","' . str_replace('"', '""', $deduction->employee->user->first_name . ' ' . $deduction->employee->user->other_names) . '","' . str_replace('"', '""', $this->deductionTypes[$deduction->deduction_type] ?? $deduction->deduction_type) . '","' . str_replace('"', '""', $deduction->description) . '","' . $deduction->amount . '","' . $deduction->effective_date . '","' . $deduction->status . '"\n';
-        }
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $this->deductionTypes[$item->deduction_type] ?? $item->deduction_type,
+                $item->description,
+                $item->amount,
+                $item->effective_date,
+                $item->status,
+            ];
+        }, $filename);
 
-        // Audit log
-        Audit::create([
-            'actor_id' => Auth::id(),
-            'action' => 'export_selected_deductions',
-            'target_type' => PayrollDeduction::class,
-            'details' => json_encode(['deduction_ids' => $this->selected]),
-        ]);
-
+        $this->logExport($scope, $items->count());
         $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'deductions_' . now()->format('Y-m-d_H-i-s') . '.csv',
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('Selected deductions exported successfully.'),
-        ]);
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Type', 'Description', 'Amount', 'Effective Date', 'Status'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $this->deductionTypes[$item->deduction_type] ?? $item->deduction_type,
+                $item->description,
+                $item->amount,
+                $item->effective_date,
+                $item->status,
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'deductions_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_deductions_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Payroll Deductions',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return PayrollDeduction::whereIn('id', $this->selected)->with('employee.user');
+        }
+
         $query = $this->employee->payrollDeductions()->with('employee.user');
 
         if ($this->search) {
@@ -377,29 +406,18 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('status', $this->filterStatus);
         }
 
-        $deductions = $query->orderByDesc('effective_date')->get();
-        $csvData = "ID,Employee,Type,Description,Amount,Effective Date,Status\n";
+        return $query->orderByDesc('effective_date');
+    }
 
-        foreach ($deductions as $deduction) {
-            $csvData .= '"' . $deduction->id . '","' . str_replace('"', '""', $deduction->employee->user->first_name . ' ' . $deduction->employee->user->other_names) . '","' . str_replace('"', '""', $this->deductionTypes[$deduction->deduction_type] ?? $deduction->deduction_type) . '","' . str_replace('"', '""', $deduction->description) . '","' . $deduction->amount . '","' . $deduction->effective_date . '","' . $deduction->status . '"\n';
-        }
-
-        // Audit log
+    protected function logExport($scope, int $count): void
+    {
         Audit::create([
             'actor_id' => Auth::id(),
-            'action' => 'export_all_deductions',
+            'action' => 'export_' . $scope,
             'target_type' => PayrollDeduction::class,
-            'details' => json_encode(['employee_id' => $this->employee->id, 'total_deductions' => $deductions->count()]),
-        ]);
-
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_deductions_' . now()->format('Y-m-d_H-i-s') . '.csv',
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('All deductions exported successfully.'),
+            'details' => $scope === 'selected'
+                ? json_encode(['deduction_ids' => $this->selected])
+                : json_encode(['total_deductions' => $count]),
         ]);
     }
 
@@ -557,9 +575,10 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="flex items-center gap-3">
                 @can('export_deduction')
-                    <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                    </flux:button>
+                    <x-export-dropdown
+                        :hasSelected="count($this->selected) > 0"
+                        :isLoading="$isLoadingExport"
+                    />
                 @else
                     <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
                         {{ __('Export Denied') }}
@@ -642,15 +661,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    @can('export_deduction')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                        </flux:button>
-                    @else
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Exporting Denied') }}
-                        </flux:button>
-                    @endcan
                     @can('delete_deduction')
                         <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                             {{ __('Delete Selected') }}
@@ -1070,22 +1080,4 @@ new #[Layout('components.layouts.app')] class extends Component {
     @endif
 </div>
 
-<script>
-    document.addEventListener('livewire:initialized', function() {
-        Livewire.on('download-csv', function(data) {
-            const blob = new Blob([data[0].data], {
-                type: 'text/csv;charset=utf-8;'
-            });
-            const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', data[0].filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
-    });
-</script>
+

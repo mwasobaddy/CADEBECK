@@ -3,6 +3,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use App\Models\Payslip;
 use App\Models\Employee;
+use App\Models\Audit;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
 
@@ -305,37 +307,69 @@ new #[Layout('components.layouts.app')] class extends Component {
         ]);
     }
 
-    public function exportSelected(): void
+    public function exportCsv($scope = 'all')
     {
         $this->isLoadingExport = true;
-        $payslips = Payslip::whereIn('id', $this->selected)->with(['employee.user', 'payroll'])->get();
-        $csvData = "ID,Employee,Payslip Number,Payroll Period,Pay Date,Basic Salary,Net Pay,Status\n";
-        
-        foreach ($payslips as $payslip) {
-            $csvData .= '"' . $payslip->id . '","' .
-                str_replace('"', '""', $payslip->employee->user->first_name . ' ' . $payslip->employee->user->other_names) . '","' .
-                str_replace('"', '""', $payslip->payslip_number) . '","' .
-                str_replace('"', '""', $payslip->payroll_period) . '","' .
-                $payslip->pay_date . '","' .
-                ($payslip->payroll->basic_salary ?? 0) . '","' .
-                ($payslip->payroll->net_pay ?? 0) . '","' .
-                ($payslip->is_downloaded ? 'Downloaded' : 'Not Downloaded') . '"\n';
-        }
-        
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Payslip Number', 'Payroll Period', 'Pay Date', 'Basic Salary', 'Net Pay', 'Status'];
+        $filename = $scope === 'selected' ? 'payslips_' . now()->format('Y-m-d_H-i-s') . '.csv' : 'all_payslips_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        $response = app(\App\Services\ExportService::class)->streamCsv($headers, $items, function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $item->payslip_number,
+                $item->payroll_period,
+                $item->pay_date,
+                $item->payroll->basic_salary ?? 0,
+                $item->payroll->net_pay ?? 0,
+                $item->is_downloaded ? 'Downloaded' : 'Not Downloaded',
+            ];
+        }, $filename);
+
+        $this->logExport($scope, $items->count());
         $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'payslips_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('Selected payslips exported successfully.')
-        ]);
+
+        return $response;
     }
 
-    public function exportAll(): void
+    public function exportPdf($scope = 'all')
     {
         $this->isLoadingExport = true;
+        $items = $this->getExportQuery($scope)->get();
+        $headers = ['ID', 'Employee', 'Payslip Number', 'Payroll Period', 'Pay Date', 'Basic Salary', 'Net Pay', 'Status'];
+        $rows = $items->map(function ($item) {
+            return [
+                $item->id,
+                $item->employee->user->first_name . ' ' . $item->employee->user->other_names,
+                $item->payslip_number,
+                $item->payroll_period,
+                $item->pay_date,
+                $item->payroll->basic_salary ?? 0,
+                $item->payroll->net_pay ?? 0,
+                $item->is_downloaded ? 'Downloaded' : 'Not Downloaded',
+            ];
+        })->toArray();
+        $filename = $scope === 'selected' ? 'payslips_' . now()->format('Y-m-d_H-i-s') . '.pdf' : 'all_payslips_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        $response = app(\App\Services\ExportService::class)->streamPdf('exports.listing', [
+            'title' => 'Payslips',
+            'headers' => $headers,
+            'rows' => $rows,
+        ], $filename);
+
+        $this->logExport($scope, $items->count());
+        $this->isLoadingExport = false;
+
+        return $response;
+    }
+
+    protected function getExportQuery($scope)
+    {
+        if ($scope === 'selected') {
+            return Payslip::whereIn('id', $this->selected)->with(['employee.user', 'payroll']);
+        }
+
         $query = $this->employee->payslips()->with(['employee.user', 'payroll']);
 
         if ($this->search) {
@@ -355,28 +389,18 @@ new #[Layout('components.layouts.app')] class extends Component {
             $query->where('is_downloaded', false);
         }
 
-        $payslips = $query->orderByDesc('pay_date')->get();
-        $csvData = "ID,Employee,Payslip Number,Payroll Period,Pay Date,Basic Salary,Net Pay,Status\n";
-        
-        foreach ($payslips as $payslip) {
-            $csvData .= '"' . $payslip->id . '","' .
-                str_replace('"', '""', $payslip->employee->user->first_name . ' ' . $payslip->employee->user->other_names) . '","' .
-                str_replace('"', '""', $payslip->payslip_number) . '","' .
-                str_replace('"', '""', $payslip->payroll_period) . '","' .
-                $payslip->pay_date . '","' .
-                ($payslip->payroll->basic_salary ?? 0) . '","' .
-                ($payslip->payroll->net_pay ?? 0) . '","' .
-                ($payslip->is_downloaded ? 'Downloaded' : 'Not Downloaded') . '"\n';
-        }
-        
-        $this->isLoadingExport = false;
-        $this->dispatch('download-csv', [
-            'data' => $csvData,
-            'filename' => 'all_payslips_' . now()->format('Y-m-d_H-i-s') . '.csv'
-        ]);
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => __('All payslips exported successfully.')
+        return $query->orderByDesc('pay_date');
+    }
+
+    protected function logExport($scope, int $count): void
+    {
+        Audit::create([
+            'actor_id' => Auth::id(),
+            'action' => 'export_' . $scope,
+            'target_type' => Payslip::class,
+            'details' => $scope === 'selected'
+                ? json_encode(['payslip_ids' => $this->selected])
+                : json_encode(['total_payslips' => $count]),
         ]);
     }
 
@@ -521,9 +545,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
 
             <div class="flex items-center gap-3">
-                <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportAll" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    {{ $isLoadingExport ? __('Exporting...') : __('Export All') }}
-                </flux:button>
+                <x-export-dropdown
+                    :hasSelected="count($this->selected) > 0"
+                    :isLoading="$isLoadingExport"
+                />
             </div>
         </div>
 
@@ -583,15 +608,6 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="flex items-end justify-end gap-3 md:col-span-2 lg:col-span-3">
-                    @can('export_payslip')
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" wire:click="exportSelected" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ $isLoadingExport ? __('Exporting...') : __('Export Selected') }}
-                        </flux:button>
-                    @else
-                        <flux:button icon:trailing="arrow-up-tray" variant="primary" type="button" :disabled="true" class="flex flex-row items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            {{ __('Exporting Denied') }}
-                        </flux:button>
-                    @endcan
                     @can('delete_payslip')
                         <flux:button icon:trailing="trash" variant="primary" type="button" wire:click="bulkDeleteConfirm" class="flex flex-row items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                             {{ __('Delete Selected') }}

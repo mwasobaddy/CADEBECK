@@ -311,7 +311,7 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th style="text-align: right;">Amount (£)</th>
+                    <th style="text-align: right;">Amount (GBP)</th>
                 </tr>
             </thead>
             <tbody>
@@ -370,7 +370,7 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th style="text-align: right;">Amount (£)</th>
+                    <th style="text-align: right;">Amount (GBP)</th>
                 </tr>
             </thead>
             <tbody>
