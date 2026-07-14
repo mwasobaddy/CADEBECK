@@ -213,47 +213,47 @@
                 <tbody>
                     <tr>
                         <td><strong>{{ __('Basic Salary') }}</strong></td>
-                        <td><strong>USD {{ number_format($payroll->basic_salary ?? 0, 2) }}</strong></td>
+                        <td><strong>GBP {{ number_format($payroll->basic_salary ?? 0, 2) }}</strong></td>
                     </tr>
                     @if(($payroll->house_allowance ?? 0) > 0)
                     <tr>
                         <td>{{ __('House Allowance') }}</td>
-                        <td>USD {{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->house_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->transport_allowance ?? 0) > 0)
                     <tr>
                         <td>{{ __('Transport Allowance') }}</td>
-                        <td>USD {{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->transport_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->medical_allowance ?? 0) > 0)
                     <tr>
                         <td>{{ __('Medical Allowance') }}</td>
-                        <td>USD {{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->medical_allowance ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->overtime_amount ?? 0) > 0)
                     <tr>
                         <td>{{ __('Overtime Allowance') }}</td>
-                        <td>USD {{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->overtime_amount ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->bonus_amount ?? 0) > 0)
                     <tr>
                         <td>{{ __('Bonus') }}</td>
-                        <td>USD {{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->bonus_amount ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->other_allowances ?? 0) > 0)
                     <tr>
                         <td>{{ __('Other Allowances') }}</td>
-                        <td>USD {{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->other_allowances ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     <tr class="total-row">
                         <td><strong>{{ __('Total Earnings') }}</strong></td>
-                        <td><strong>USD {{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
+                        <td><strong>GBP {{ number_format(($payroll->gross_pay ?? 0), 2) }}</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -270,48 +270,48 @@
                     @if(($payroll->paye_tax ?? 0) > 0)
                     <tr>
                         <td>{{ __('PAYE Tax') }}</td>
-                        <td>USD {{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->paye_tax ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->nhif_deduction ?? 0) > 0)
                     <tr>
                         <td>{{ __('NHIF Contribution') }}</td>
-                        <td>USD {{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->nhif_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->nssf_deduction ?? 0) > 0)
                     <tr>
                         <td>{{ __('NSSF Contribution') }}</td>
-                        <td>USD {{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->nssf_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->insurance_deduction ?? 0) > 0)
                     <tr>
                         <td>{{ __('Insurance Premium') }}</td>
-                        <td>USD {{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->insurance_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->loan_deduction ?? 0) > 0)
                     <tr>
                         <td>{{ __('Loan Repayment') }}</td>
-                        <td>USD {{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->loan_deduction ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     @if(($payroll->other_deductions ?? 0) > 0)
                     <tr>
                         <td>{{ __('Other Deductions') }}</td>
-                        <td>USD {{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
+                        <td>GBP {{ number_format($payroll->other_deductions ?? 0, 2) }}</td>
                     </tr>
                     @endif
                     <tr class="total-row">
                         <td><strong>{{ __('Total Deductions') }}</strong></td>
-                        <td><strong>USD {{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
+                        <td><strong>GBP {{ number_format((($payroll->paye_tax ?? 0) + ($payroll->nhif_deduction ?? 0) + ($payroll->nssf_deduction ?? 0) + ($payroll->insurance_deduction ?? 0) + ($payroll->loan_deduction ?? 0) + ($payroll->other_deductions ?? 0)), 2) }}</strong></td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="net-pay">
-                <div class="amount">USD {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
+                <div class="amount">GBP {{ number_format($payroll->net_pay ?? 0, 2) }}</div>
                 <div class="label">{{ __('Net Pay') }}</div>
             </div>
 
