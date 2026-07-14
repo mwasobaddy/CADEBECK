@@ -721,7 +721,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-medium">
                             @if($payslip->payroll)
                             <span class="text-blue-600 dark:text-blue-400">
-                                USD {{ number_format($payslip->payroll->gross_pay, 2) }}
+                                GBP {{ number_format($payslip->payroll->gross_pay, 2) }}
                             </span>
                             @else
                             <span class="text-gray-400">-</span>
@@ -730,7 +730,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <td class="px-4 py-4 text-gray-900 dark:text-white font-bold">
                             @if($payslip->payroll)
                             <span class="text-green-600 dark:text-green-400">
-                                USD {{ number_format($payslip->payroll->net_pay, 2) }}
+                                GBP {{ number_format($payslip->payroll->net_pay, 2) }}
                             </span>
                             @else
                             <span class="text-gray-400">-</span>
