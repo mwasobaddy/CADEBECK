@@ -691,15 +691,15 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <div class="text-sm text-blue-600">{{ __('Employees') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600">USD {{ number_format($this->payrollSummary['total_gross_pay'], 2) }}</div>
+                        <div class="text-2xl font-bold text-green-600">GBP {{ number_format($this->payrollSummary['total_gross_pay'], 2) }}</div>
                         <div class="text-sm text-green-600">{{ __('Total Gross Pay') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-red-600">USD {{ number_format($this->payrollSummary['total_deductions'], 2) }}</div>
+                        <div class="text-2xl font-bold text-red-600">GBP {{ number_format($this->payrollSummary['total_deductions'], 2) }}</div>
                         <div class="text-sm text-red-600">{{ __('Total Deductions') }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-purple-600">USD {{ number_format($this->payrollSummary['total_net_pay'], 2) }}</div>
+                        <div class="text-2xl font-bold text-purple-600">GBP {{ number_format($this->payrollSummary['total_net_pay'], 2) }}</div>
                         <div class="text-sm text-purple-600">{{ __('Total Net Pay') }}</div>
                     </div>
                 </div>
@@ -965,12 +965,12 @@ new #[Layout('components.layouts.app')] class extends Component {
                                     </td>
                                     <td class="px-5 py-4 font-semibold">
                                         <span class="text-green-600 dark:text-green-400">
-                                            USD {{ number_format($payroll->gross_pay, 2) }}
+                                            GBP {{ number_format($payroll->gross_pay, 2) }}
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 font-semibold">
                                         <span class="text-purple-600 dark:text-purple-400">
-                                            USD {{ number_format($payroll->net_pay, 2) }}
+                                            GBP {{ number_format($payroll->net_pay, 2) }}
                                         </span>
                                     </td>
                                     <td class="px-5 py-4">
