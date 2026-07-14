@@ -7,7 +7,15 @@ Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::redirect('/', '/login')->name('home');
+Route::get('/', [App\Http\Controllers\ShowcaseController::class, 'home'])->name('home');
+Route::get('/pricing', [App\Http\Controllers\ShowcaseController::class, 'pricing'])->name('pricing');
+Route::get('/features', [App\Http\Controllers\ShowcaseController::class, 'features'])->name('features');
+Route::get('/about', [App\Http\Controllers\ShowcaseController::class, 'about'])->name('about');
+Route::match(['get', 'post'], '/contact', [App\Http\Controllers\ShowcaseController::class, 'contact'])->name('contact');
+Route::get('/resources', [App\Http\Controllers\ShowcaseController::class, 'blog'])->name('blog');
+Route::get('/resources/{slug}', [App\Http\Controllers\ShowcaseController::class, 'blogPost'])->name('blog.post');
+Route::match(['get', 'post'], '/download-demo', [App\Http\Controllers\ShowcaseController::class, 'downloadDemo'])->name('download-demo');
+
 Volt::route('careers/{slug}', 'job.job-advert-details')
     ->name('careers.details');
 Volt::route('careers/{slug}/apply', 'job.job-application-form')
@@ -285,3 +293,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/showcase.php';
