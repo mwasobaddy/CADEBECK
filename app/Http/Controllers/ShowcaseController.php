@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class ShowcaseController extends Controller
 {
@@ -36,6 +37,16 @@ class ShowcaseController extends Controller
                 'company' => 'nullable|string|max:255',
                 'message' => 'required|string',
             ]);
+
+            $phone = $data['phone'] ?? 'N/A';
+            $company = $data['company'] ?? 'N/A';
+
+            Mail::raw("Name: {$data['name']}\nEmail: {$data['email']}\nPhone: {$phone}\nCompany: {$company}\n\nMessage:\n{$data['message']}", function ($message) use ($data) {
+                $message->to('info@cadebeckhr.com')
+                    ->subject('Contact Form: ' . $data['name'])
+                    ->replyTo($data['email'], $data['name'])
+                    ->from(config('mail.from.address'), config('mail.from.name'));
+            });
 
             return back()->with('message_sent', true);
         }
