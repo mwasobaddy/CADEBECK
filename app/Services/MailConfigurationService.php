@@ -86,7 +86,7 @@ class MailConfigurationService
             'MAIL_USERNAME' => $credentials['username'] ?? '',
             'MAIL_PASSWORD' => $credentials['password'] ?? '',
             'MAIL_ENCRYPTION' => $credentials['encryption'] ?? $config['encryption'],
-            'MAIL_FROM_ADDRESS' => $credentials['from_address'] ?? 'noreply@cadebeckhrms.com',
+            'MAIL_FROM_ADDRESS' => $credentials['from_address'] ?? 'info@cadebeckhr.com',
             'MAIL_FROM_NAME' => $credentials['from_name'] ?? 'CADEBECK HRMS',
         ]);
 

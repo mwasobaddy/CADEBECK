@@ -139,7 +139,7 @@ class PayslipService
             'name' => 'CADEBECK HR Management',
             'address' => 'United Kingdom',
             'phone' => '+44 XXX XXX XXXX',
-            'email' => 'hr@cadebeck.com',
+            'email' => 'info@cadebeckhr.com',
         ];
 
         $employeeData = [

@@ -298,7 +298,7 @@
             <p><strong>{{ __('Important:') }}</strong> {{ __('This payslip is confidential and intended only for the named employee. If you have any questions about your salary, please contact the HR department.') }}</p>
 
             <div class="button">
-                <a href="mailto:hr@cadebeck.com">{{ __('Contact HR Department') }}</a>
+                <a href="mailto:info@cadebeckhr.com">{{ __('Contact HR Department') }}</a>
             </div>
 
             <p style="margin-top: 30px;">{{ __('Best regards,') }}<br>

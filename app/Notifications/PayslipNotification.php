@@ -177,7 +177,7 @@ class PayslipNotification extends Notification
             'name' => 'CADEBECK HR Management',
             'address' => 'Nairobi, Kenya',
             'phone' => '+254 XXX XXX XXX',
-            'email' => 'hr@cadebeck.com',
+            'email' => 'info@cadebeckhr.com',
         ];
 
         $employeeData = [

@@ -311,7 +311,7 @@
         </div>
 
         <div class="button">
-            <a href="mailto:hr@cadebeck.com">{{ __('Contact HR Department') }}</a>
+            <a href="mailto:info@cadebeckhr.com">{{ __('Contact HR Department') }}</a>
         </div>
 
         <div class="footer">
