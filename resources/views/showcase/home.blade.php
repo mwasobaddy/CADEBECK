@@ -11,10 +11,6 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
             <div class="grid lg:grid-cols-2 gap-16 items-center">
                 <div class="fade-in">
-                    <div class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm mb-8">
-                        <span class="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
-                        Trusted by businesses of all sizes
-                    </div>
                     <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
                         HR Software That<br/>
                         <span class="text-emerald-200">Simplifies People Management</span>
@@ -266,121 +262,6 @@
         </div>
     </section>
 
-    <section class="py-24 bg-white dark:bg-zinc-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Trusted by Businesses</h2>
-                <p class="text-xl text-gray-600 dark:text-gray-400">See what our customers have to say</p>
-            </div>
-
-            <div x-data="{ currentTestimonial: 0 }" class="relative max-w-4xl mx-auto">
-                <div class="overflow-hidden">
-                    <div class="flex transition-transform duration-500" x-bind:style="'transform: translateX(-' + currentTestimonial * 100 + '%)'">
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-gray-50 dark:bg-zinc-800 rounded-3xl p-10 text-center">
-                                <div class="flex justify-center mb-6">
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                </div>
-                                <blockquote class="text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed italic">
-                                    "CADEBECK HR has completely transformed how we manage our people. The payroll integration alone saves us days every month, and having everything in one platform gives us total peace of mind."
-                                </blockquote>
-                                <div class="flex items-center justify-center">
-                                    <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mr-4">
-                                        <span class="text-emerald-600 dark:text-emerald-400 font-bold text-lg">JD</span>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="font-bold text-gray-900 dark:text-white">James Davidson</div>
-                                        <div class="text-gray-500 dark:text-gray-400 text-sm">HR Director, TechScale Ltd</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-gray-50 dark:bg-zinc-800 rounded-3xl p-10 text-center">
-                                <div class="flex justify-center mb-6">
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                </div>
-                                <blockquote class="text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed italic">
-                                    "The leave management and attendance tracking features are fantastic. Our team loves the self-service portal. Customer support is exceptional — they're always there when we need them."
-                                </blockquote>
-                                <div class="flex items-center justify-center">
-                                    <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mr-4">
-                                        <span class="text-emerald-600 dark:text-emerald-400 font-bold text-lg">SW</span>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="font-bold text-gray-900 dark:text-white">Sarah Williams</div>
-                                        <div class="text-gray-500 dark:text-gray-400 text-sm">Operations Manager, LondonCare Group</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="w-full flex-shrink-0 px-4">
-                            <div class="bg-gray-50 dark:bg-zinc-800 rounded-3xl p-10 text-center">
-                                <div class="flex justify-center mb-6">
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                </div>
-                                <blockquote class="text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed italic">
-                                    "Switching to CADEBECK HR was the best decision we made. The recruitment module streamlined our hiring process, and the payroll integration is seamless."
-                                </blockquote>
-                                <div class="flex items-center justify-center">
-                                    <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mr-4">
-                                        <span class="text-emerald-600 dark:text-emerald-400 font-bold text-lg">MP</span>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="font-bold text-gray-900 dark:text-white">Michael Patel</div>
-                                        <div class="text-gray-500 dark:text-gray-400 text-sm">CEO, Fusion Retail Group</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-center mt-8 space-x-3">
-                    <button @click="currentTestimonial = 0" x-bind:class="currentTestimonial === 0 ? 'bg-emerald-600 w-8' : 'bg-gray-300 dark:bg-zinc-700 w-3'" class="h-3 rounded-full transition-all duration-300"></button>
-                    <button @click="currentTestimonial = 1" x-bind:class="currentTestimonial === 1 ? 'bg-emerald-600 w-8' : 'bg-gray-300 dark:bg-zinc-700 w-3'" class="h-3 rounded-full transition-all duration-300"></button>
-                    <button @click="currentTestimonial = 2" x-bind:class="currentTestimonial === 2 ? 'bg-emerald-600 w-8' : 'bg-gray-300 dark:bg-zinc-700 w-3'" class="h-3 rounded-full transition-all duration-300"></button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-16 bg-gray-50 dark:bg-zinc-800/50 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-8">Trusted by businesses of all sizes</p>
-            <div class="flex overflow-hidden">
-                <div class="flex logo-scroll space-x-16 items-center">
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">TechScale</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">LondonCare</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Fusion Retail</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">BrightStart</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">GreenLeaf</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Premier Group</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Metro Services</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Oakwood Ltd</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">TechScale</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">LondonCare</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Fusion Retail</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">BrightStart</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">GreenLeaf</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Premier Group</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Metro Services</div>
-                    <div class="text-2xl font-bold text-gray-300 dark:text-gray-600 whitespace-nowrap">Oakwood Ltd</div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <section class="py-24 bg-white dark:bg-zinc-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
