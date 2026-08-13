@@ -53,29 +53,4 @@ class ShowcaseController extends Controller
 
         return view('showcase.contact');
     }
-
-    public function blog()
-    {
-        return view('showcase.blog');
-    }
-
-    public function blogPost($slug)
-    {
-        return view('showcase.blog-post', ['slug' => $slug]);
-    }
-
-    public function downloadDemo(Request $request)
-    {
-        if ($request->isMethod('post')) {
-            $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255',
-                'company' => 'required|string|max:255',
-            ]);
-
-            return back()->with('download_ready', true);
-        }
-
-        return view('showcase.download-demo');
-    }
 }

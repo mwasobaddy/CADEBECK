@@ -120,7 +120,6 @@
                         <a href="/features" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Features</a>
                         <a href="/pricing" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Pricing</a>
                         <a href="/about" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About</a>
-                        <a href="/resources" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Resources</a>
                         <a href="/contact" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Contact</a>
                     </div>
 
@@ -141,7 +140,6 @@
                         <a href="/features" class="block px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800">Features</a>
                         <a href="/pricing" class="block px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800">Pricing</a>
                         <a href="/about" class="block px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800">About</a>
-                        <a href="/resources" class="block px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800">Resources</a>
                         <a href="/contact" class="block px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800">Contact</a>
                         <hr class="border-gray-100 dark:border-zinc-800">
                         <a href="/login" class="block px-4 py-2 text-base font-medium text-emerald-600 dark:text-emerald-400">Sign In</a>
@@ -156,7 +154,7 @@
 
         <footer class="bg-gray-900 dark:bg-black text-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     <div class="lg:col-span-2">
                         <a href="/" class="flex items-center space-x-3 mb-4">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-emerald-500 bg-white/10">
@@ -198,19 +196,7 @@
                         <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
                         <ul class="space-y-3">
                             <li><a href="/about" class="text-sm text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                            <li><a href="/resources" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a></li>
                             <li><a href="/contact" class="text-sm text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                            <li><a href="/download-demo" class="text-sm text-gray-400 hover:text-white transition-colors">Download Demo</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Resources</h3>
-                        <ul class="space-y-3">
-                            <li><a href="/resources" class="text-sm text-gray-400 hover:text-white transition-colors">Help Centre</a></li>
-                            <li><a href="/resources" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a></li>
-                            <li><a href="/resources" class="text-sm text-gray-400 hover:text-white transition-colors">FAQ</a></li>
-                            <li><a href="/download-demo" class="text-sm text-gray-400 hover:text-white transition-colors">Free Demo</a></li>
                         </ul>
                     </div>
                 </div>
@@ -246,11 +232,6 @@
     @if(session('message_sent'))
     <div class="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 fade-in" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
         <p class="font-medium">Thank you! We'll be in touch shortly.</p>
-    </div>
-    @endif
-    @if(session('download_ready'))
-    <div class="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 fade-in" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
-        <p class="font-medium">Your download is ready! <a href="/demo/cadebeck-hr-demo.zip" class="underline font-bold">Click here</a></p>
     </div>
     @endif
 

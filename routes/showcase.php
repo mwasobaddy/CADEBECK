@@ -10,8 +10,6 @@ Route::get('/sitemap.xml', function () {
         ['loc' => url('/pricing'), 'priority' => '0.9'],
         ['loc' => url('/about'), 'priority' => '0.8'],
         ['loc' => url('/contact'), 'priority' => '0.8'],
-        ['loc' => url('/resources'), 'priority' => '0.7'],
-        ['loc' => url('/download-demo'), 'priority' => '0.7'],
     ];
 
     return response()->view('showcase.sitemap', compact('pages'))->header('Content-Type', 'text/xml');
