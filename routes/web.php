@@ -7,14 +7,20 @@ Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::get('/', [App\Http\Controllers\ShowcaseController::class, 'home'])->name('home');
-Route::get('/pricing', [App\Http\Controllers\ShowcaseController::class, 'pricing'])->name('pricing');
-Route::get('/features', [App\Http\Controllers\ShowcaseController::class, 'features'])->name('features');
-Route::get('/about', [App\Http\Controllers\ShowcaseController::class, 'about'])->name('about');
-Route::match(['get', 'post'], '/contact', [App\Http\Controllers\ShowcaseController::class, 'contact'])->name('contact');
-Route::get('/resources', [App\Http\Controllers\ShowcaseController::class, 'blog'])->name('blog');
-Route::get('/resources/{slug}', [App\Http\Controllers\ShowcaseController::class, 'blogPost'])->name('blog.post');
-Route::match(['get', 'post'], '/download-demo', [App\Http\Controllers\ShowcaseController::class, 'downloadDemo'])->name('download-demo');
+Route::get('/under-construction', function () {
+    return view('showcase.under-construction');
+})->name('under-construction');
+
+Route::middleware(['under.construction'])->group(function () {
+    Route::get('/', [App\Http\Controllers\ShowcaseController::class, 'home'])->name('home');
+    Route::get('/pricing', [App\Http\Controllers\ShowcaseController::class, 'pricing'])->name('pricing');
+    Route::get('/features', [App\Http\Controllers\ShowcaseController::class, 'features'])->name('features');
+    Route::get('/about', [App\Http\Controllers\ShowcaseController::class, 'about'])->name('about');
+    Route::match(['get', 'post'], '/contact', [App\Http\Controllers\ShowcaseController::class, 'contact'])->name('contact');
+    Route::get('/resources', [App\Http\Controllers\ShowcaseController::class, 'blog'])->name('blog');
+    Route::get('/resources/{slug}', [App\Http\Controllers\ShowcaseController::class, 'blogPost'])->name('blog.post');
+    Route::match(['get', 'post'], '/download-demo', [App\Http\Controllers\ShowcaseController::class, 'downloadDemo'])->name('download-demo');
+});
 
 Volt::route('careers/{slug}', 'job.job-advert-details')
     ->name('careers.details');

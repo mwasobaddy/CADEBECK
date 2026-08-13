@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'temp.cleanup' => \App\Http\Middleware\TempFileCleanup::class,
             'setlanguage' => \App\Http\Middleware\SetLanguage::class,
+            'under.construction' => \App\Http\Middleware\UnderConstruction::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
