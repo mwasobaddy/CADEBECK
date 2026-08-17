@@ -10,6 +10,10 @@ class UnderConstruction
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->session()->get('site_unlocked')) {
+            return $next($request);
+        }
+
         return response()->view('showcase.under-construction');
     }
 }

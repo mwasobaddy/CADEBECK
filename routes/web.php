@@ -11,6 +11,16 @@ Route::get('/under-construction', function () {
     return view('showcase.under-construction');
 })->name('under-construction');
 
+Route::get('/preview/{token}', function (string $token) {
+    if (! hash_equals((string) config('app.preview_token'), $token)) {
+        abort(404);
+    }
+
+    session(['site_unlocked' => true]);
+
+    return redirect()->route('home');
+})->name('preview');
+
 Route::middleware(['under.construction'])->group(function () {
     Route::get('/', [App\Http\Controllers\ShowcaseController::class, 'home'])->name('home');
     Route::get('/pricing', [App\Http\Controllers\ShowcaseController::class, 'pricing'])->name('pricing');

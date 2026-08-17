@@ -99,6 +99,20 @@ return [
 
     'key' => env('APP_KEY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Preview Access Token
+    |--------------------------------------------------------------------------
+    |
+    | A secret token that lets the site owner bypass the under-construction
+    | page. Visiting /preview/{token} unlocks the guest pages for the
+    | current browser session. Public visitors without the token still see
+    | the under-construction page.
+    |
+    */
+
+    'preview_token' => env('PREVIEW_TOKEN'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', env('APP_PREVIOUS_KEYS', ''))
