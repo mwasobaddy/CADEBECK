@@ -11,6 +11,9 @@ Route::get('/under-construction', function () {
     return view('showcase.under-construction');
 })->name('under-construction');
 
+Route::post('/under-construction/subscribe', [App\Http\Controllers\ShowcaseController::class, 'subscribe'])
+    ->name('under-construction.subscribe');
+
 Route::get('/preview/{token}', function (string $token) {
     if (! hash_equals((string) config('app.preview_token'), $token)) {
         abort(404);

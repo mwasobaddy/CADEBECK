@@ -6,6 +6,7 @@
     <title>We're Building Something Great — CADEBECK HR</title>
     <meta name="description" content="CADEBECK HR is evolving. A smarter way to manage your people is on the way. Join the launch list to be notified first.">
     <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -444,8 +445,9 @@
         const form = document.getElementById('notifyFormEl');
         const card = document.getElementById('notifyForm');
         const input = document.getElementById('emailInput');
+        const button = form.querySelector('button[type="submit"]');
 
-        form.addEventListener('submit', function (e) {
+        form.addEventListener('submit', async function (e) {
             e.preventDefault();
             const email = input.value.trim();
             const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -455,7 +457,32 @@
                 return;
             }
             input.style.borderColor = '';
-            card.classList.add('submitted');
+
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Subscribing...';
+
+            try {
+                const response = await fetch('/under-construction/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({ email: email }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                card.classList.add('submitted');
+            } catch (err) {
+                input.style.borderColor = '#f87171';
+                button.disabled = false;
+                button.textContent = original;
+            }
         });
 
         input.addEventListener('input', function () {

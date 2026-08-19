@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use App\Models\LaunchSubscriber;
 
 class ShowcaseController extends Controller
 {
@@ -52,5 +53,26 @@ class ShowcaseController extends Controller
         }
 
         return view('showcase.contact');
+    }
+
+    public function subscribe(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        $email = $data['email'];
+
+        $subscriber = LaunchSubscriber::firstOrCreate(['email' => $email]);
+
+        if ($subscriber->wasRecentlyCreated) {
+            Mail::raw("A new launch notification subscription:\n\nEmail: {$email}", function ($message) {
+                $message->to('info@cadebeckhr.com')
+                    ->subject('New Launch Notification Subscription')
+                    ->from(config('mail.from.address'), config('mail.from.name'));
+            });
+        }
+
+        return response()->json(['success' => true, 'message' => 'You\'re on the list!']);
     }
 }
