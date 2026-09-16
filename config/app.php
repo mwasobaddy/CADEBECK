@@ -113,6 +113,8 @@ return [
 
     'preview_token' => env('PREVIEW_TOKEN'),
 
+    'launched' => env('APP_LAUNCHED', false),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', env('APP_PREVIOUS_KEYS', ''))
