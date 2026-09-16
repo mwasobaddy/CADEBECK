@@ -14,6 +14,12 @@ Route::get('/under-construction', function () {
 Route::post('/under-construction/subscribe', [App\Http\Controllers\ShowcaseController::class, 'subscribe'])
     ->name('under-construction.subscribe');
 
+Route::get('/privacy-policy', [App\Http\Controllers\ShowcaseController::class, 'privacyPolicy'])
+    ->name('privacy-policy');
+
+Route::get('/terms', [App\Http\Controllers\ShowcaseController::class, 'terms'])
+    ->name('terms');
+
 Route::get('/preview/{token}', function (string $token) {
     if (! hash_equals((string) config('app.preview_token'), $token)) {
         abort(404);

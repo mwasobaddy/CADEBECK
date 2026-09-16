@@ -237,7 +237,7 @@
                         <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-500/25">
                             Request Your Free Demo
                         </button>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 text-center">By submitting, you agree to our privacy policy.</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 text-center">By submitting, you agree to our <a href="/privacy-policy" class="text-emerald-600 dark:text-emerald-400 hover:underline">privacy policy</a>.</p>
                     </form>
                 </div>
             </div>

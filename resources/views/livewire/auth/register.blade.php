@@ -103,8 +103,8 @@ new #[Layout('components.layouts.auth')] class extends Component {
     <!-- Terms and Privacy -->
     <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
         {{ __('By creating an account, you agree to our') }} 
-        <a href="#" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">{{ __('Terms of Service') }}</a> {{ __('and') }} 
-        <a href="#" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">{{ __('Privacy Policy') }}</a>
+        <a href="/terms" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">{{ __('Terms of Service') }}</a> {{ __('and') }} 
+        <a href="/privacy-policy" class="text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300">{{ __('Privacy Policy') }}</a>
     </p>
 
     <!-- Login Link -->

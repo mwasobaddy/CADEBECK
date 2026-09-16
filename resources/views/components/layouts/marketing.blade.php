@@ -205,8 +205,8 @@
                     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                         <p class="text-sm text-gray-500">&copy; {{ date('Y') }} CADEBECK HR. All rights reserved.</p>
                         <div class="flex space-x-6 text-sm text-gray-500">
-                            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-                            <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+                            <a href="/privacy-policy" class="hover:text-white transition-colors">Privacy Policy</a>
+                            <a href="/terms" class="hover:text-white transition-colors">Terms of Service</a>
                             <a href="#" class="hover:text-white transition-colors">Cookie Policy</a>
                         </div>
                     </div>

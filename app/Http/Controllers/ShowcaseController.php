@@ -28,6 +28,16 @@ class ShowcaseController extends Controller
         return view('showcase.about');
     }
 
+    public function privacyPolicy()
+    {
+        return view('showcase.privacy-policy');
+    }
+
+    public function terms()
+    {
+        return view('showcase.terms');
+    }
+
     public function contact(Request $request)
     {
         if ($request->isMethod('post')) {
