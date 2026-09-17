@@ -38,6 +38,11 @@ class ShowcaseController extends Controller
         return view('showcase.terms');
     }
 
+    public function cookiePolicy()
+    {
+        return view('showcase.cookie-policy');
+    }
+
     public function contact(Request $request)
     {
         if ($request->isMethod('post')) {

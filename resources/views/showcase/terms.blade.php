@@ -148,7 +148,7 @@
 
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">13. Cookies</h2>
                 <p class="mb-4">Our website may use cookies and similar technologies.</p>
-                <p class="mb-10">Further information about cookies and how you can manage your preferences is available in our Cookie Policy.</p>
+                <p class="mb-10">Further information about cookies and how you can manage your preferences is available in our <a href="/cookie-policy" class="text-emerald-600 dark:text-emerald-400 hover:underline">Cookie Policy</a>.</p>
 
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">14. Changes to These Terms</h2>
                 <p class="mb-4">We may update these Terms from time to time.</p>

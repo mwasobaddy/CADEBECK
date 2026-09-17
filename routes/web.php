@@ -20,6 +20,9 @@ Route::get('/privacy-policy', [App\Http\Controllers\ShowcaseController::class, '
 Route::get('/terms', [App\Http\Controllers\ShowcaseController::class, 'terms'])
     ->name('terms');
 
+Route::get('/cookie-policy', [App\Http\Controllers\ShowcaseController::class, 'cookiePolicy'])
+    ->name('cookie-policy');
+
 Route::get('/preview/{token}', function (string $token) {
     if (! hash_equals((string) config('app.preview_token'), $token)) {
         abort(404);

@@ -51,7 +51,7 @@
                     <li>referring website;</li>
                     <li>technical information relating to website usage.</li>
                 </ul>
-                <p class="mb-10">The information collected automatically depends on the technologies and cookies enabled on our website.</p>
+                <p class="mb-10">The information collected automatically depends on the technologies and cookies enabled on our website. See our <a href="/cookie-policy" class="text-emerald-600 dark:text-emerald-400 hover:underline">Cookie Policy</a> for more information.</p>
 
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">3. How We Use Personal Information</h2>
                 <p class="mb-4">We may use personal information to:</p>

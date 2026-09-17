@@ -207,7 +207,7 @@
                         <div class="flex space-x-6 text-sm text-gray-500">
                             <a href="/privacy-policy" class="hover:text-white transition-colors">Privacy Policy</a>
                             <a href="/terms" class="hover:text-white transition-colors">Terms of Service</a>
-                            <a href="#" class="hover:text-white transition-colors">Cookie Policy</a>
+                            <a href="/cookie-policy" class="hover:text-white transition-colors">Cookie Policy</a>
                         </div>
                     </div>
                 </div>
