@@ -9,3 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('launch:notify')->everyFiveMinutes();
+
+Schedule::command('queue:work', ['--once', '--stop-when-empty'])
+    ->everyMinute()
+    ->withoutOverlapping();
