@@ -6,6 +6,8 @@ use App\Models\Client;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Services\ClientContext;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Role;
 
 class AssignDemoClientSeeder extends Seeder
@@ -89,5 +91,42 @@ class AssignDemoClientSeeder extends Seeder
         }
 
         $query->update(['client_id' => $client->id]);
+
+        $this->syncPermissionTeams();
+    }
+
+    /**
+     * Re-point role and permission assignments at the correct team.
+     *
+     * Spatie's teams feature stores the team id on the pivots, but at the time
+     * the role seeders run there is no client context yet, so every assignment
+     * lands on the reserved platform id. Now that client_id is populated we can
+     * correct them.
+     */
+    protected function syncPermissionTeams(): void
+    {
+        $client = Client::where('slug', DemoClientSeeder::SLUG)->first();
+
+        $clientUserIds = User::where('client_id', $client->id)->pluck('id');
+        $platformUserIds = User::whereNull('client_id')->pluck('id');
+
+        foreach (['model_has_roles', 'model_has_permissions'] as $pivot) {
+            if ($clientUserIds->isNotEmpty()) {
+                DB::table($pivot)
+                    ->where('model_type', User::class)
+                    ->whereIn('model_id', $clientUserIds)
+                    ->update(['client_id' => $client->id]);
+            }
+
+            if ($platformUserIds->isNotEmpty()) {
+                DB::table($pivot)
+                    ->where('model_type', User::class)
+                    ->whereIn('model_id', $platformUserIds)
+                    ->update(['client_id' => ClientContext::PLATFORM_TEAM_ID]);
+            }
+        }
+
+        // The permission cache is keyed by team, so it must be rebuilt.
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

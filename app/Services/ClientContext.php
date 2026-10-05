@@ -17,6 +17,13 @@ use App\Models\Client;
  */
 class ClientContext
 {
+    /**
+     * Reserved permission "team" id for platform staff (Developer, System
+     * Admin). They have no client, but Spatie's team pivot columns are NOT
+     * NULL, so their role assignments are stored under this id.
+     */
+    public const PLATFORM_TEAM_ID = 0;
+
     protected static ?int $override = null;
 
     protected static bool $bypass = false;
@@ -65,6 +72,17 @@ class ClientContext
     public static function override(?int $clientId): void
     {
         static::$override = $clientId;
+    }
+
+    /**
+     * The team id used by Spatie's permission teams feature.
+     *
+     * Always an integer: the current client, or the reserved platform id for
+     * users who do not belong to a client.
+     */
+    public static function permissionTeamId(): int
+    {
+        return static::currentClientId() ?? self::PLATFORM_TEAM_ID;
     }
 
     /**
