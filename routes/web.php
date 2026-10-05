@@ -7,9 +7,17 @@ use Livewire\Volt\Volt;
  * Platform area. Reached by staff who belong to no client: System Admin and
  * Developer. Gated on clients.view, which no client role is ever granted.
  */
-Volt::route('admin/clients', 'admin.clients')
+Volt::route('admin/clients', 'admin.clients.index')
     ->middleware(['auth', 'platform.staff', 'permission:clients.view'])
     ->name('admin.clients.index');
+
+Volt::route('admin/clients/create', 'admin.clients.create')
+    ->middleware(['auth', 'platform.staff', 'permission:clients.create'])
+    ->name('admin.clients.create');
+
+Volt::route('admin/clients/{client}', 'admin.clients.show')
+    ->middleware(['auth', 'platform.staff', 'permission:clients.view'])
+    ->name('admin.clients.show');
 
 Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

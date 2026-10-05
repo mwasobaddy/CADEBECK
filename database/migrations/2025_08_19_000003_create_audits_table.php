@@ -12,7 +12,9 @@ return new class extends Migration {
             // activity, such as a Developer adding a client or creating platform
             // staff, which has no client of its own.
             $table->foreignId('client_id')->nullable()->index()->constrained('clients');
-            $table->foreignId('actor_id')->constrained('users')->onDelete('cascade');
+            // Nullable on purpose: clients can also be provisioned from a console
+            // command or a seeder, where no user is signed in to be the actor.
+            $table->foreignId('actor_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('action');
             $table->string('target_type');
             $table->unsignedBigInteger('target_id')->nullable();

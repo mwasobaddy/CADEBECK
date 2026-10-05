@@ -37,6 +37,22 @@ new #[Layout('components.layouts.app')] class extends Component {
             })
             ->values();
     }
+
+    /**
+     * Send the operator to the create form.
+     */
+    public function createNewClient(): void
+    {
+        $this->redirectRoute('admin.clients.create', navigate: true);
+    }
+
+    /**
+     * Open a client.
+     */
+    public function viewClient(int $id): void
+    {
+        $this->redirectRoute('admin.clients.show', ['client' => $id], navigate: true);
+    }
 };
 ?>
 
@@ -113,6 +129,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
 
             <div class="flex items-center gap-3">
+                @can('clients.create')
+                    <flux:button variant="primary" type="button" wire:click="createNewClient"
+                        class="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 !rounded-full font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {{ __('Add Client') }}
+                    </flux:button>
+                @endcan
                 <flux:input wire:model.live.debounce.300ms="search" size="sm"
                     :placeholder="__('Search by client, plan or status')"
                     class="!ps-4 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md dark:!text-white !shadow-sm focus:!ring-green-500" />
@@ -154,7 +176,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                         @php($client = $row['client'])
                         <tr class="hover:bg-zinc-500/5 dark:hover:bg-white/5 transition-colors">
                             <td class="px-5 py-3 font-semibold text-zinc-900 dark:text-zinc-100">
-                                {{ $client->name }}
+                                <button type="button" wire:click="viewClient({{ $client->id }})"
+                                    class="text-left hover:underline text-green-700 dark:text-green-400">
+                                    {{ $client->name }}
+                                </button>
                                 @if ($client->trashed())
                                     <span class="ml-2 text-xs text-red-600 dark:text-red-400">
                                         {{ __('deleted') }}
