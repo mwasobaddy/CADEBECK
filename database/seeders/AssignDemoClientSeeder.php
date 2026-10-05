@@ -81,6 +81,14 @@ class AssignDemoClientSeeder extends Seeder
 
         $this->assignUsers($client, $platformUserIds);
         $this->syncPermissionTeams($client, $platformUserIds);
+
+        // DemoClientSeeder established this client as the current context so the
+        // seeders would write inside it. Clear it here, because this seeder runs
+        // last: leaving a static override behind would keep resolving requests
+        // in this process to the demo client, and a platform user with a null
+        // client_id would then be filtered out by its own scope.
+        ClientContext::flush();
+        Client::forgetCurrent();
     }
 
     /**

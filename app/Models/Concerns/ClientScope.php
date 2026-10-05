@@ -23,6 +23,14 @@ class ClientScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
+        // The session guard only caches the signed-in user after fetching it, and
+        // fetching it runs a query on the authenticatable model. Filtering here
+        // would re-enter this scope from inside the guard, so stand down until
+        // the guard has the user it asked for.
+        if (ClientContext::isResolvingGuardUser()) {
+            return;
+        }
+
         if (ClientContext::canAccessAllClients()) {
             return;
         }
@@ -49,7 +57,7 @@ class ClientScope implements Scope
         if ($model instanceof Authenticatable) {
             $builder->where(
                 $model->qualifyColumn($model->getKeyName()),
-                auth()->user()?->getAuthIdentifier()
+                ClientContext::guardUser()?->getAuthIdentifier()
             );
 
             return;
