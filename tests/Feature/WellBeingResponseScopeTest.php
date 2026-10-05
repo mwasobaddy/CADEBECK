@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\WellBeingResponse;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Models\Client;
+use App\Services\ClientContext;
 
 it('allows developers to view every wellbeing response', function () {
     $developer = createUserWithRole('Developer');
@@ -87,6 +89,7 @@ it('exposes the department relationship through employees', function () {
     $user = createUserWithRole('Developer');
     $employee = createEmployeeFor($user);
 
+    ensureTestClient();
     $response = createWellBeingResponseFor($employee);
 
     expect($response->department)
@@ -94,8 +97,26 @@ it('exposes the department relationship through employees', function () {
         ->id->toBe($employee->department_id);
 });
 
+/**
+ * Client data requires a client context now that client_id is NOT NULL, so the
+ * fixtures below run inside one.
+ */
+function ensureTestClient(): Client
+{
+    $client = Client::firstOrCreate(['slug' => 'test-client'], ['name' => 'Test Client']);
+    ClientContext::override($client->id);
+
+    return $client;
+}
+
+afterEach(fn () => ClientContext::flush());
+
 function createUserWithRole(string $roleName): User
 {
+    // Establish the client before assigning, so the role pivot is stored under
+    // the right team.
+    ensureTestClient();
+
     // Visibility is permission-based: each role gets the hierarchy permission
     // that corresponds to its reporting level, mirroring the seeded bundles.
     $hierarchy = [
@@ -109,6 +130,12 @@ function createUserWithRole(string $roleName): User
 
     if (isset($hierarchy[$roleName])) {
         $names[] = $hierarchy[$roleName];
+    }
+
+    // The Developer belongs to no client, so it needs the cross-client
+    // permission to see past the client scope at all.
+    if ($roleName === 'Developer') {
+        $names[] = 'access_all_clients';
     }
 
     foreach ($names as $name) {
@@ -155,6 +182,7 @@ function ensureOrgStructure(): array
 function createEmployeeFor(User $user, ?Employee $supervisor = null): Employee
 {
     static $staffCounter = 1000;
+    ensureTestClient();
     $structure = ensureOrgStructure();
 
     return Employee::create([

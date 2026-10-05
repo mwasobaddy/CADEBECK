@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Models\Client;
 use App\Models\User;
+use App\Services\ClientContext;
 use Illuminate\Support\Facades\Hash;
 
 class RolesAndPermissionsSeeder extends Seeder
@@ -407,16 +409,29 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ];
 
-        foreach ($users as $userData) {
-            $user = User::firstOrCreate([
-                'email' => $userData['email'],
-            ], [
-                'first_name' => $userData['first_name'],
-                'other_names' => $userData['other_names'],
-                'email_verified_at' => $userData['email_verified_at'],
-                'password' => $userData['password'],
-            ]);
-            $user->assignRole($userData['role']);
+        // The demo users here are platform staff, so they belong to no client
+        // and their role assignment must land on the reserved platform team.
+        // Seeding otherwise runs inside the demo client context, so the context
+        // is cleared for this block and restored afterwards.
+        $previousClientId = ClientContext::currentClientId();
+
+        try {
+            ClientContext::override(null);
+            Client::forgetCurrent();
+
+            foreach ($users as $userData) {
+                $user = User::firstOrCreate([
+                    'email' => $userData['email'],
+                ], [
+                    'first_name' => $userData['first_name'],
+                    'other_names' => $userData['other_names'],
+                    'email_verified_at' => $userData['email_verified_at'],
+                    'password' => $userData['password'],
+                ]);
+                $user->assignRole($userData['role']);
+            }
+        } finally {
+            ClientContext::override($previousClientId);
         }
     }
 }

@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
+            $table->foreignId('client_id')->index()->constrained('clients');
             $table->string('name');
             $table->string('code');
             // Unique within a client, so two clients may use the same code.

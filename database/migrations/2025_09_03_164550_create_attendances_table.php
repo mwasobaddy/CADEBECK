@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
+            $table->foreignId('client_id')->index()->constrained('clients');
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->date('date');

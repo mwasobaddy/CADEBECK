@@ -14,7 +14,9 @@ class JobAdvertSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::pluck('id')->all();
+        // acrossClients(): seeding runs inside the demo client context, and
+        // platform staff (client_id null) are outside it.
+        $users = User::acrossClients()->pluck('id')->all();
         if (empty($users)) {
             // If no users exist, create one Super Admin for context
             $user = User::factory()->create(['name' => 'Super Admin', 'email' => 'admin@example.com']);

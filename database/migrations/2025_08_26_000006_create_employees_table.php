@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
+            $table->foreignId('client_id')->index()->constrained('clients');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->date('date_of_birth')->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable();

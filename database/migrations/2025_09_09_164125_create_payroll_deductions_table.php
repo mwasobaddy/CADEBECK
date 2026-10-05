@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payroll_deductions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
+            $table->foreignId('client_id')->index()->constrained('clients');
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->foreignId('payroll_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('deduction_type'); // paye, nhif, nssf, insurance, loan, etc.

@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            // Nullable: four notifications use the database channel, which can be
+            // written from a queue worker or console command with no current
+            // tenant, so an unassigned row is legitimate here.
             $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('type');
             $table->morphs('notifiable');

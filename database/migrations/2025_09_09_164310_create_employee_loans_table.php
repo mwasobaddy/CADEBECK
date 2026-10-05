@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('employee_loans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
+            $table->foreignId('client_id')->index()->constrained('clients');
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('loan_type'); // personal, housing, vehicle, etc.
             $table->string('loan_number')->unique();
