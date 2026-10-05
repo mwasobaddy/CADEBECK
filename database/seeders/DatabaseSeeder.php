@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             DemoClientSeeder::class,
             RolesAndPermissionsSeeder::class,
             PlatformPermissionsSeeder::class,
+            RoleBundlesSeeder::class,
             JobAdvertSeeder::class,
             LocationSeeder::class,
             BranchSeeder::class,
