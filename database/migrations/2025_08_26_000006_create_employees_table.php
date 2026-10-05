@@ -15,7 +15,9 @@ return new class extends Migration {
             $table->enum('gender', ['male', 'female', 'other'])->nullable();
             $table->string('mobile_number')->nullable();
             $table->string('home_address')->nullable();
-            $table->string('staff_number')->unique();
+            $table->string('staff_number');
+            // Unique within a client, so two clients may reuse a staff number.
+            $table->unique(['client_id', 'staff_number']);
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
             $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
             $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');

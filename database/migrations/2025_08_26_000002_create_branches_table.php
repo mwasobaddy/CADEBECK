@@ -11,7 +11,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('name');
-            $table->string('code')->unique();
+            $table->string('code');
+            // Unique within a client, so two clients may use the same code.
+            $table->unique(['client_id', 'code']);
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
