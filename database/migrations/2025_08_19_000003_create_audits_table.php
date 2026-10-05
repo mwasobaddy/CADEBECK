@@ -8,6 +8,7 @@ return new class extends Migration {
     {
         Schema::create('audits', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->foreignId('actor_id')->constrained('users')->onDelete('cascade');
             $table->string('action');
             $table->string('target_type');

@@ -9,6 +9,7 @@ return new class extends Migration {
     {
         Schema::create('contract_types', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('name');
             $table->string('code')->unique();
             $table->text('description')->nullable();

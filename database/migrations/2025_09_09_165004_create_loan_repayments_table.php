@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('loan_repayments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->foreignId('employee_loan_id')->constrained('employee_loans')->onDelete('cascade');
             $table->foreignId('payroll_id')->nullable()->constrained('payrolls')->onDelete('set null');
             $table->integer('installment_number');

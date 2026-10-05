@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('launch_subscribers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('email')->unique();
             $table->timestamps();
         });

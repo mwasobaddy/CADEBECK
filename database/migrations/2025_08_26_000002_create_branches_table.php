@@ -9,6 +9,7 @@ return new class extends Migration {
     {
         Schema::create('branches', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('name');
             $table->string('code')->unique();
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');

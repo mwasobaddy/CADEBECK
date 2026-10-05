@@ -8,6 +8,7 @@ return new class extends Migration {
     {
         Schema::create('job_adverts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description');
