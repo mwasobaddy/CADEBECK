@@ -42,7 +42,14 @@ new class extends Component {
             ],
         ]);
 
-        $user->fill($validated);
+        // Map the component's camelCase state onto the model's actual
+        // attributes. Passing firstName/otherNames straight to fill() silently
+        // dropped both, so name changes never persisted.
+        $user->fill([
+            'first_name' => $validated['firstName'],
+            'other_names' => $validated['otherNames'],
+            'email' => $validated['email'],
+        ]);
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
