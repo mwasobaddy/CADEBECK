@@ -13,6 +13,9 @@ class EmployeeLoan extends Model
     use BelongsToClient;
     protected $fillable = [
         'employee_id',
+        'loan_number',
+        'term_months',
+        'status',
         'loan_type',
         'principal_amount',
         'interest_rate',
