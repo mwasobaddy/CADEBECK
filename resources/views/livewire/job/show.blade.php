@@ -153,7 +153,7 @@ new #[Layout('components.layouts.app')] class extends Component {
         </nav>
     </div>
     
-    @if (Auth::user()->can('create_job_advert') || Auth::user()->can('update_job_advert'))
+    @if (Auth::user()->can('create_job_advert') || Auth::user()->can('edit_job_advert'))
         <!-- Card Container for Form -->
         <div class="relative z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl shadow-2xl p-8 transition-all duration-300 hover:shadow-3xl border border-blue-100 dark:border-zinc-800 ring-1 ring-blue-200/30 dark:ring-zinc-700/40">
 

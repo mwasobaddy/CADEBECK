@@ -79,7 +79,7 @@
                         <a href="{{ route('job.show') }}" class="px-3 py-1.5 flex items-center gap-2 transition-colors rounded-full font-semibold {{ request()->routeIs('job.show') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>{{ __('Create Job Ad') }}</a>
                         @endcan
                         @can('view_analytics')
-                        <a href="{{ route('job.analytics') }}" class="px-3 py-1.5 flex items-center gap-2 transition-colors rounded-full font-semibold {{ request()->routeIs('job.analytics') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-80₀' }}" wire:navigate>{{ __('Analytics') }}</a>
+                        <a href="{{ route('job.analytics') }}" class="px-3 py-1.5 flex items-center gap-2 transition-colors rounded-full font-semibold {{ request()->routeIs('job.analytics') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>{{ __('Analytics') }}</a>
                         @endcan
                     </div>
                 </div>

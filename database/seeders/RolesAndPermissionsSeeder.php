@@ -202,6 +202,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'upload_external_payslip',
             'view_external_payslip',
             'delete_external_payslip',
+
+            // Referenced by the recruitment and payroll screens but were never
+            // seeded, so the @can guards and route middleware silently denied
+            // everyone, including the Developer.
+            'view_analytics',
+            'edit_applications',
+            'delete_applications',
+            'edit_payroll',
+            'delete_payroll',
+            'export_payroll',
         ];
 
         foreach ($permissions as $permission) {

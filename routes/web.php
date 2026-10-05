@@ -166,7 +166,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('role.edit');
 
         Volt::route('job/job-adverts/{slug}/vetting', 'job.candidate-vetting')
-            ->middleware(['auth', 'permission:vet_candidates'])
+            ->middleware(['auth', 'permission:vet_candidate'])
             ->name('job.index.vetting');
 
         Volt::route('job/job-adverts/{jobAdvertId}/applications', 'job.applications')
