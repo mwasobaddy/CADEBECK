@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use App\Services\ClientContext;
 use App\Services\PayslipService;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -30,7 +31,14 @@ class TempFileCleanup
      */
     protected function performCleanupIfNeeded(): void
     {
-        $cacheKey = 'temp_file_cleanup_last_run';
+        // The throttle key must be per client. A single global key would let the
+        // first client to trigger cleanup suppress it for every other client for
+        // the next 6 hours, leaving their temp files behind.
+        $clientId = ClientContext::currentClientId();
+        $cacheKey = $clientId !== null
+            ? "temp_file_cleanup_last_run:client-{$clientId}"
+            : 'temp_file_cleanup_last_run:global';
+
         $lastRun = Cache::get($cacheKey);
 
         // Only run cleanup if it hasn't been run in the last 6 hours
@@ -42,7 +50,8 @@ class TempFileCleanup
                 if ($deletedCount > 0) {
                     \Log::info("Automatic temp file cleanup completed", [
                         'deleted_files' => $deletedCount,
-                        'triggered_by' => auth()->user()->email ?? 'unknown'
+                        'triggered_by' => auth()->user()->email ?? 'unknown',
+                        'client_id' => $clientId
                     ]);
                 }
 
@@ -52,7 +61,8 @@ class TempFileCleanup
             } catch (\Exception $e) {
                 \Log::error('Automatic temp file cleanup failed', [
                     'error' => $e->getMessage(),
-                    'user' => auth()->user()->email ?? 'unknown'
+                    'user' => auth()->user()->email ?? 'unknown',
+                    'client_id' => $clientId
                 ]);
             }
         }

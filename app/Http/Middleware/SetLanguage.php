@@ -18,7 +18,9 @@ class SetLanguage
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Get active languages from database
+        // Languages are deliberately global reference data: the `languages`
+        // table carries no client_id, so this lookup is intentionally not
+        // client scoped. Individual locale preference is stored per user.
         $activeLanguages = Language::active()->pluck('code')->toArray();
         $defaultLanguage = 'en';
         

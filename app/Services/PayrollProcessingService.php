@@ -347,6 +347,7 @@ class PayrollProcessingService
                                 'type' => 'App\\Notifications\\PayrollApprovalNotification',
                                 'notifiable_type' => 'App\\Models\\User',
                                 'notifiable_id' => $payroll->employee->user->id,
+                                'client_id' => $payroll->employee->user->client_id,
                                 'data' => json_encode([
                                     'payroll_id' => $payroll->id,
                                     'payroll_period' => $payroll->payroll_period,
@@ -466,6 +467,7 @@ class PayrollProcessingService
                                 'type' => 'App\\Notifications\\PayrollPaidNotification',
                                 'notifiable_type' => 'App\\Models\\User',
                                 'notifiable_id' => $payroll->employee->user->id,
+                                'client_id' => $payroll->employee->user->client_id,
                                 'data' => json_encode([
                                     'payroll_id' => $payroll->id,
                                     'payroll_period' => $payroll->payroll_period,

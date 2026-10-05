@@ -204,6 +204,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 'type' => 'App\\Notifications\\PayrollProcessedNotification',
                                 'notifiable_type' => 'App\\Models\\User',
                                 'notifiable_id' => $payroll->employee->user->id,
+                                'client_id' => $payroll->employee->user->client_id,
                                 'data' => json_encode([
                                     'payroll_id' => $payroll->id,
                                     'payroll_period' => $payroll->payroll_period,
@@ -390,6 +391,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 'type' => 'App\\Notifications\\PayslipNotification',
                                 'notifiable_type' => 'App\\Models\\User',
                                 'notifiable_id' => $payroll->employee->user->id,
+                                'client_id' => $payroll->employee->user->client_id,
                                 'data' => json_encode([
                                     'payslip_id' => $payroll->payslip->id,
                                     'payroll_period' => $payroll->payroll_period,

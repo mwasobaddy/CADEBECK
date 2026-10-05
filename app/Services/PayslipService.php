@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Notifications\PayslipNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ClientContext;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -214,12 +215,24 @@ class PayslipService
     }
 
     /**
+     * The temp folder for the current client.
+     *
+     * Platform staff have no client and use a shared "global" folder.
+     */
+    protected function tempPayslipDirectory(): string
+    {
+        $clientId = ClientContext::currentClientId();
+
+        return 'temp/payslips/'.($clientId !== null ? "client-{$clientId}" : 'global');
+    }
+
+    /**
      * Store payslip PDF file in temporary location
      */
     protected function storePayslipPDF($pdf, string $filename): string
     {
-        // Store in temp/payslips folder for temporary access
-        $path = "temp/payslips/{$filename}";
+        // Store in a client-scoped temp folder for temporary access
+        $path = $this->tempPayslipDirectory()."/{$filename}";
         Storage::disk('public')->put($path, $pdf->output());
 
         // Schedule cleanup after 24 hours
@@ -360,8 +373,9 @@ class PayslipService
      */
     public function cleanupOldTempFiles(int $daysOld = 1): int
     {
-        // Always use temp/payslips as the base path
-        $tempPath = 'temp/payslips';
+        // Only ever touch the current client's own temp folder, so one client's
+        // request cannot delete another client's in-flight payslip PDFs.
+        $tempPath = $this->tempPayslipDirectory();
         $files = Storage::disk('public')->files($tempPath);
         $deletedCount = 0;
 
