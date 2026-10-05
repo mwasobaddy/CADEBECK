@@ -38,7 +38,7 @@ class PlatformPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $developer = Role::where('name', 'Developer')->first();
+        $developer = Role::where('name', 'Developer')->whereNull('client_id')->first();
 
         if ($developer) {
             // Additive: keeps the existing 150 permissions intact.

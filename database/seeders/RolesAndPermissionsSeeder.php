@@ -381,7 +381,15 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::firstOrCreate(['name' => $roleName]);
+            // Explicitly shared (client_id null). Note that Role::firstOrCreate
+            // goes through the query builder and so skips Spatie's static
+            // create(), which would otherwise file the role under the current
+            // permission team. Being explicit keeps these bundles global.
+            $role = Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+                'client_id' => null,
+            ]);
             foreach ($rolePermissions as $perms) {
                 $role->syncPermissions($perms);
             }
