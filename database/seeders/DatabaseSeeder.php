@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
+            // Must run first: creates the demo client the rest of the data belongs to.
+            DemoClientSeeder::class,
             RolesAndPermissionsSeeder::class,
             JobAdvertSeeder::class,
             LocationSeeder::class,
@@ -30,6 +32,8 @@ class DatabaseSeeder extends Seeder
             ApplicationSeeder::class,
             AttendanceSeeder::class,
             WellBeingResponseSeeder::class,
+            // Must run last: stamps client_id across everything seeded above.
+            AssignDemoClientSeeder::class,
         ]);
     }
 }
