@@ -46,6 +46,17 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->resetPage();
     }
 
+    /**
+     * Roles offered in the filter: the shared roles plus the current client's.
+     */
+    public function getAssignableRolesProperty()
+    {
+        return app(\App\Services\RoleCatalog::class)
+            ->visibleRoles()
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getUsersProperty()
     {
         $query = User::query();
@@ -464,7 +475,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div class="flex flex-wrap gap-6 mt-6 items-center animate-fade-in">
                         <flux:select wire:model.live="filterRole" placeholder="{{ __('All Roles') }}" class="!ps-3 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !focus:ring-2 !focus:ring-blue-400 dark:!bg-zinc-800/80 dark:!text-white !shadow-sm !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md !w-fit !outline-none">
                             <flux:select.option value="">{{ __('All Roles') }}</flux:select.option>
-                            @foreach (Spatie\Permission\Models\Role::all() as $role)
+                            @foreach ($this->assignableRoles as $role)
                                 <flux:select.option value="{{ $role->name }}">{{ $role->name }}</flux:select.option>
                             @endforeach
                         </flux:select>

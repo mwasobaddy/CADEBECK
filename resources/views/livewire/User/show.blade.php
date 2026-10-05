@@ -3,6 +3,9 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use App\Models\User;
 use App\Models\Audit;
+use App\Models\Client;
+use App\Services\RoleCatalog;
+use App\Services\ClientContext;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +36,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => '',
                 'password_confirmation' => '',
                 'role' => $this->user->roles->first()?->name ?? '',
+                'client_id' => $this->user->client_id,
             ];
             $this->editing = true;
         }
@@ -46,8 +50,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.email' => ['required', 'email', 'unique:users,email' . ($this->editing && $this->user ? ',' . $this->user->id : '')],
             'form.password' => [$this->editing ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'form.password_confirmation' => [$this->editing ? 'nullable' : 'required', 'same:form.password'],
-            'form.role' => ['required', 'exists:roles,name'],
+            'form.role' => ['required', 'string', 'max:255'],
         ]);
+
+        $catalog = app(RoleCatalog::class);
+        $role = $catalog->findAssignableByName($this->form['role']);
+        $clientId = $this->resolveClientId();
 
         if ($this->editing && $this->user) {
             $this->user->update([
@@ -56,7 +64,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'email' => $this->form['email'],
                 'password' => $this->form['password'] ? Hash::make($this->form['password']) : $this->user->password,
             ]);
-            $this->user->syncRoles([$this->form['role']]);
+            // Re-point the assignment at the owning client, since Spatie stores
+            // the team id on the pivot.
+            ClientContext::override($this->user->client_id);
+            $this->user->syncRoles([$role]);
 
             // Log the update action
             Audit::create([
@@ -81,13 +92,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             $existingNotifications[] = $notification;
             session(['notifications' => $existingNotifications]);
         } else {
+            ClientContext::override($clientId);
+
             $user = User::create([
+                'client_id' => $clientId,
                 'first_name' => $this->form['first_name'],
                 'other_names' => $this->form['other_names'],
                 'email' => $this->form['email'],
                 'password' => Hash::make($this->form['password']),
             ]);
-            $user->assignRole($this->form['role']);
+
+            $user->assignRole($role);
 
             // Log the create action
             Audit::create([
@@ -134,9 +149,55 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => '',
                 'password_confirmation' => '',
                 'role' => '',
+                'client_id' => ClientContext::currentClientId(),
             ];
         }
         $this->dispatch('notify', ['type' => 'info', 'message' => __('Form reset successfully.')]);
+    }
+
+    /**
+     * Which client a newly created user belongs to.
+     *
+     * A client user can only ever create users inside their own client. Platform
+     * staff may also create platform staff (null) or provision a user into a
+     * specific client.
+     */
+    protected function resolveClientId(): ?int
+    {
+        if (! ClientContext::canAccessAllClients()) {
+            return ClientContext::currentClientId();
+        }
+
+        $requested = $this->form['client_id'] ?? null;
+
+        if ($requested === null || $requested === '') {
+            return null;
+        }
+
+        return Client::whereKey($requested)->exists() ? (int) $requested : null;
+    }
+
+    /**
+     * Clients the current user may provision users into.
+     *
+     * Only platform staff see the picker; everyone else is locked to their own
+     * client.
+     */
+    public function getClientsProperty()
+    {
+        if (! ClientContext::canAccessAllClients()) {
+            return collect();
+        }
+
+        return Client::orderBy('name')->get(['id', 'name']);
+    }
+
+    /**
+     * Whether the current user is platform staff, used by the view.
+     */
+    public function getIsPlatformStaffProperty(): bool
+    {
+        return ClientContext::canAccessAllClients();
     }
 
     public function getUsersProperty()
@@ -157,7 +218,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getRolesProperty()
     {
-        return Role::all();
+        return app(RoleCatalog::class)->assignableRoles()->orderBy('name')->get();
     }
 };
 ?>
@@ -248,6 +309,19 @@ new #[Layout('components.layouts.app')] class extends Component {
                         placeholder="email@example.com"
                     />
                 </div>
+                @if ($this->isPlatformStaff)
+                    <div>
+                        <flux:select
+                            wire:model="form.client_id"
+                            :label="__('Client')"
+                        >
+                            <flux:select.option value="">{{ __('Platform staff (no client)') }}</flux:select.option>
+                            @foreach($this->clients as $client)
+                                <flux:select.option value="{{ $client->id }}">{{ __($client->name) }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+                @endif
                 <div>
                     <flux:select
                         wire:model="form.role"

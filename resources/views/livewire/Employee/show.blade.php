@@ -125,7 +125,8 @@ new #[Layout('components.layouts.app')] class extends Component {
             'form.gender' => ['required', 'in:male,female,other'],
             'form.mobile_number' => ['required', 'string', 'max:20'],
             'form.home_address' => ['required', 'string', 'max:255'],
-            'form.staff_number' => ['required', 'string', 'max:20', 'unique:employees,staff_number' . ($this->editing && $this->employee ? ',' . $this->employee->id : '')],
+            // A staff number only has to be unique inside its own client.
+            'form.staff_number' => ['required', 'string', 'max:20', $this->staffNumberRules()],
             'form.location_id' => ['required', 'exists:locations,id'],
             'form.branch_id' => ['required', 'exists:branches,id'],
             'form.department_id' => ['required', 'exists:departments,id'],
@@ -320,6 +321,20 @@ new #[Layout('components.layouts.app')] class extends Component {
     }
     public function getDesignationsProperty() { return Designation::all(); }
     public function getContractTypesProperty() { return ContractType::all(); }
+    /**
+     * Staff numbers are unique per client, not globally.
+     */
+    protected function staffNumberRules(): \Illuminate\Validation\Rules\Unique
+    {
+        $clientId = $this->editing && $this->employee
+            ? $this->employee->client_id
+            : \App\Services\ClientContext::currentClientId();
+
+        return \Illuminate\Validation\Rule::unique('employees', 'staff_number')
+            ->where(fn ($query) => $query->where('client_id', $clientId))
+            ->ignore($this->editing && $this->employee ? $this->employee->id : null);
+    }
+
     public function getUsersProperty() { return User::all(); }
 
     public function getAvailableSupervisorsProperty()

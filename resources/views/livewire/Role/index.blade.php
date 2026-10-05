@@ -5,6 +5,8 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Livewire\WithPagination;
 use App\Models\Audit;
+use App\Services\RoleCatalog;
+use App\Services\ClientContext;
 use Illuminate\Support\Facades\Auth;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -56,7 +58,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function getRolesProperty()
     {
-        $query = Role::query();
+        $query = app(RoleCatalog::class)->visibleRoles();
         
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
@@ -136,7 +138,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function selectAllData(): void
     {
-        $query = Role::query();
+        $query = app(RoleCatalog::class)->visibleRoles();
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
         }
@@ -157,7 +159,12 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function bulkDelete(): void
     {
         $this->isLoadingBulkDelete = true;
-        $roles = Role::whereIn('id', $this->selected)->get();
+        $catalog = app(RoleCatalog::class);
+
+        foreach ($catalog->visibleRoles()->whereIn('id', $this->selected)->get() as $role) {
+            $catalog->findManageableOrFail($role->id);
+        }
+
         Role::whereIn('id', $this->selected)->delete();
 
         // Log the bulk delete action
@@ -228,10 +235,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     protected function getExportQuery($scope)
     {
         if ($scope === 'selected') {
-            return Role::whereIn('id', $this->selected);
+            return app(RoleCatalog::class)->visibleRoles()
+                ->whereIn('id', $this->selected);
         }
 
-        $query = Role::query();
+        $query = app(RoleCatalog::class)->visibleRoles();
 
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
@@ -271,7 +279,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function editConfirmed(): void
     {
         $this->isLoadingEdit = true;
-        $role = Role::findOrFail($this->pendingEditId);
+        $role = app(RoleCatalog::class)->findManageableOrFail($this->pendingEditId);
         $this->showEditModal = false;
         $this->isLoadingEdit = false;
         $this->redirectRoute('role.edit', ['id' => $role->id]);
@@ -280,7 +288,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function deleteConfirmed(): void
     {
         $this->isLoadingDelete = true;
-        $role = Role::findOrFail($this->pendingDeleteId);
+        $role = app(RoleCatalog::class)->findManageableOrFail($this->pendingDeleteId);
         $role->delete();
 
         // Log the delete action
@@ -305,7 +313,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function delete($id): void
     {
-        $role = Role::findOrFail($id);
+        $role = app(RoleCatalog::class)->findManageableOrFail($id);
         $role->delete();
         $this->dispatch('notify', ['type' => 'success', 'message' => __('Role deleted successfully.')]);
         $this->redirectRoute('role.index');
@@ -313,20 +321,29 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function save(): void
     {
+        $catalog = app(RoleCatalog::class);
+
         $rules = [
-            'form.name' => ['required', 'string', 'max:50', $this->editing ? 'unique:roles,name,' . ($this->role?->id ?? 'NULL') : 'unique:roles,name'],
+            'form.name' => ['required', 'string', 'max:50'],
             'form.permissions' => ['array'],
         ];
         $this->validate($rules);
 
+        $catalog->assertNameAvailable($this->form['name'], $this->role);
+
         if ($this->editing && $this->role) {
+            $catalog->findManageableOrFail($this->role->id);
+
             $this->role->name = $this->form['name'];
             $this->role->save();
-            $this->role->syncPermissions($this->form['permissions']);
+            $this->role->syncPermissions($catalog->filterAssignable($this->form['permissions']));
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role updated successfully.')]);
         } else {
-            $role = Role::create(['name' => $this->form['name']]);
-            $role->syncPermissions($this->form['permissions']);
+            $role = Role::create([
+                'name' => $this->form['name'],
+                'client_id' => $catalog->newRoleClientId(),
+            ]);
+            $role->syncPermissions($catalog->filterAssignable($this->form['permissions']));
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role created successfully.')]);
         }
         $this->redirectRoute('role.index');
@@ -367,7 +384,10 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->showFilters = !$this->showFilters;
     }
 
-    public function getPermissionsProperty() { return Permission::all(); }
+    public function getPermissionsProperty()
+    {
+        return app(RoleCatalog::class)->assignablePermissions();
+    }
 };
 ?>
 

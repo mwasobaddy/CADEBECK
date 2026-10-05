@@ -1,9 +1,12 @@
 <?php
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\Audit;
+use App\Services\RoleCatalog;
+use App\Services\ClientContext;
 
 new #[Layout('components.layouts.app')] class extends Component {
     public array $form = [
@@ -16,7 +19,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function mount($id = null): void
     {
         if ($id) {
-            $this->role = Role::with('permissions')->findOrFail($id);
+            $this->role = app(RoleCatalog::class)->findManageableOrFail($id);
             $this->form['name'] = $this->role->name;
             $this->form['permissions'] = $this->role->permissions->pluck('name')->toArray();
             $this->editing = true;
@@ -26,15 +29,20 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function save(): void
     {
         $rules = [
-            'form.name' => ['required', 'string', 'max:50', $this->editing ? 'unique:roles,name,' . ($this->role?->id ?? 'NULL') : 'unique:roles,name'],
+            'form.name' => ['required', 'string', 'max:50'],
             'form.permissions' => ['array'],
         ];
         $this->validate($rules);
 
+        $catalog = app(RoleCatalog::class);
+        $catalog->assertNameAvailable($this->form['name'], $this->role);
+
         if ($this->editing && $this->role) {
+            $catalog->findManageableOrFail($this->role->id);
+
             $this->role->name = $this->form['name'];
             $this->role->save();
-            $this->role->syncPermissions($this->form['permissions']);
+            $this->role->syncPermissions($this->withAssignable($this->form['permissions']));
 
             // Log the update action
             Audit::create([
@@ -45,8 +53,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             ]);
             $this->dispatch('notify', ['type' => 'success', 'message' => __('Role updated successfully.')]);
         } else {
-            $role = Role::create(['name' => $this->form['name']]);
-            $role->syncPermissions($this->form['permissions']);
+            $catalog = app(RoleCatalog::class);
+            $role = Role::create([
+                'name' => $this->form['name'],
+                'client_id' => $catalog->newRoleClientId(),
+            ]);
+            $role->syncPermissions($catalog->filterAssignable($this->form['permissions']));
 
             // Log the creation action
             Audit::create([
@@ -60,7 +72,22 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->redirectRoute('role.index');
     }
 
-    public function getPermissionsProperty() { return Permission::all(); }
+    public function getPermissionsProperty()
+    {
+        return app(RoleCatalog::class)->assignablePermissions();
+    }
+
+    /**
+     * Restrict the submitted permissions to what this user may assign.
+     */
+    protected function withAssignable(array $names): array
+    {
+        return app(RoleCatalog::class)->filterAssignable($names);
+    }
+
+    /**
+     * A role name only has to be unique within its own client.
+     */
 };
 ?>
 
