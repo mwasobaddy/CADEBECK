@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToClient;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,6 +15,22 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, BelongsToClient;
+
+    /**
+     * Scope to users who hold a permission, through a role or directly.
+     *
+     * Used where authorization has to be expressed inside a relation query,
+     * e.g. "employees supervised by somebody who can view direct reports".
+     * Checking the permission rather than a role name keeps this working for
+     * custom roles created by a client.
+     */
+    public function scopeWithPermission(Builder $query, string $permission): Builder
+    {
+        return $query->where(function (Builder $q) use ($permission) {
+            $q->whereHas('roles.permissions', fn ($roleQuery) => $roleQuery->where('name', $permission))
+                ->orWhereHas('permissions', fn ($permissionQuery) => $permissionQuery->where('name', $permission));
+        });
+    }
 
     /**
      * The attributes that are mass assignable.

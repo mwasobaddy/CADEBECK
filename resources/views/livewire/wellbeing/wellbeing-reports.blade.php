@@ -44,20 +44,20 @@ new #[Layout('components.layouts.app')] class extends Component {
         // Get departments user can access
         $departments = Department::query();
 
-        if (!$user->hasRole(['Developer', 'Executive'])) {
+        if (!$user->can('view_all_wellbeing_reports')) {
             $departments->whereHas('employees', function ($q) use ($user) {
-                if ($user->hasRole('Manager N-1')) {
+                if ($user->can('view_team_wellbeing_reports')) {
                     $q->where(function ($subQ) use ($user) {
                         $subQ->whereHas('supervisor.supervisor', function ($superQ) use ($user) {
                             $superQ->where('user_id', $user->id);
                         })->orWhereHas('supervisor', function ($superQ) use ($user) {
                             $superQ->where('user_id', $user->id)
-                                   ->whereHas('user.roles', function ($roleQ) {
-                                       $roleQ->where('name', 'Manager N-2');
+                                   ->whereHas('user', function ($userQ) {
+                                       $userQ->withPermission('view_direct_reports_wellbeing_reports');
                                    });
                         });
                     });
-                } elseif ($user->hasRole('Manager N-2')) {
+                } elseif ($user->can('view_direct_reports_wellbeing_reports')) {
                     $q->whereHas('supervisor', function ($superQ) use ($user) {
                         $superQ->where('user_id', $user->id);
                     });

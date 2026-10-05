@@ -59,18 +59,18 @@ class WellBeingResponse extends Model
 
     public function scopeViewableBy(Builder $query, User $user): Builder
     {
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_wellbeing_reports')) {
             return $query;
         }
 
-        if ($user->hasRole('Manager N-1')) {
+        if ($user->can('view_team_wellbeing_reports')) {
             return $query->whereHas('employee', function (Builder $employeeQuery) use ($user) {
                 $employeeQuery->where(function (Builder $subQuery) use ($user) {
                     $subQuery->whereHas('supervisor.supervisor', function (Builder $supervisorQuery) use ($user) {
                         $supervisorQuery->where('user_id', $user->id);
                     })->orWhere(function (Builder $managerQuery) use ($user) {
-                        $managerQuery->whereHas('user.roles', function ($roleQuery) {
-                            $roleQuery->where('name', 'Manager N-2');
+                        $managerQuery->whereHas('user', function (Builder $userQuery) {
+                            $userQuery->withPermission('view_direct_reports_wellbeing_reports');
                         })->whereHas('supervisor', function (Builder $supervisorQuery) use ($user) {
                             $supervisorQuery->where('user_id', $user->id);
                         });
@@ -79,7 +79,7 @@ class WellBeingResponse extends Model
             });
         }
 
-        if ($user->hasRole('Manager N-2')) {
+        if ($user->can('view_direct_reports_wellbeing_reports')) {
             return $query->whereHas('employee', function (Builder $employeeQuery) use ($user) {
                 $employeeQuery->whereHas('supervisor', function (Builder $supervisorQuery) use ($user) {
                     $supervisorQuery->where('user_id', $user->id);

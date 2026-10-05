@@ -32,10 +32,8 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function mount(): void
     {
-        // Ensure only employees can access their own payslips
-        if (!Auth::user()->hasRole('Employee')) {
-            abort(403, 'Access denied. Only employees can view payslips.');
-        }
+        // Only users who may view their own payslips can use this page.
+        abort_unless(Auth::user()->can('view_my_payslips'), 403, 'Access denied.');
 
         $this->uploadPayDate = now()->format('Y-m-d');
         $this->availableUploadPeriods = [

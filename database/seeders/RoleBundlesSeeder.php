@@ -61,6 +61,9 @@ class RoleBundlesSeeder extends Seeder
         'view_all_wellbeing_reports',
         'view_team_wellbeing_reports',
         'view_direct_reports_wellbeing_reports',
+        'view_all_attendance',
+        'view_team_attendance',
+        'view_direct_reports_attendance',
     ];
 
     public function run(): void
@@ -120,9 +123,21 @@ class RoleBundlesSeeder extends Seeder
     protected function grantHierarchyDefaults(): void
     {
         $map = [
-            'Executive' => ['view_all_leave_requests', 'view_all_wellbeing_reports'],
-            'Manager N-1' => ['view_team_leave_requests', 'view_team_wellbeing_reports'],
-            'Manager N-2' => ['view_direct_reports_leave_requests', 'view_direct_reports_wellbeing_reports'],
+            'Executive' => [
+                'view_all_leave_requests',
+                'view_all_wellbeing_reports',
+                'view_all_attendance',
+            ],
+            'Manager N-1' => [
+                'view_team_leave_requests',
+                'view_team_wellbeing_reports',
+                'view_team_attendance',
+            ],
+            'Manager N-2' => [
+                'view_direct_reports_leave_requests',
+                'view_direct_reports_wellbeing_reports',
+                'view_direct_reports_attendance',
+            ],
         ];
 
         foreach ($map as $roleName => $permissions) {

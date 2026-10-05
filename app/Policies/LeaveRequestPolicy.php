@@ -24,7 +24,7 @@ class LeaveRequestPolicy
     public function view(User $user, LeaveRequest $leaveRequest): bool
     {
         // Developer and Executive can see all requests
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_leave_requests')) {
             return true;
         }
 
@@ -34,12 +34,12 @@ class LeaveRequestPolicy
         }
 
         // Manager N-1 can see requests from employees under their supervision
-        if ($user->hasRole('Manager N-1')) {
+        if ($user->can('view_team_leave_requests')) {
             return $this->isManagerN1SupervisorOf($user, $leaveRequest->employee);
         }
 
         // Manager N-2 can see requests from employees they supervise
-        if ($user->hasRole('Manager N-2')) {
+        if ($user->can('view_direct_reports_leave_requests')) {
             return $this->isManagerN2SupervisorOf($user, $leaveRequest->employee);
         }
 
@@ -60,7 +60,7 @@ class LeaveRequestPolicy
     public function update(User $user, LeaveRequest $leaveRequest): bool
     {
         // Developer and Executive can update any request
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_leave_requests')) {
             return true;
         }
 
@@ -78,7 +78,7 @@ class LeaveRequestPolicy
     public function approve(User $user, LeaveRequest $leaveRequest): bool
     {
         // Developer and Executive can approve any request
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_leave_requests')) {
             return true;
         }
 
@@ -88,12 +88,12 @@ class LeaveRequestPolicy
         }
 
         // Manager N-1 can approve requests from employees under their supervision
-        if ($user->hasRole('Manager N-1')) {
+        if ($user->can('view_team_leave_requests')) {
             return $this->isManagerN1SupervisorOf($user, $leaveRequest->employee);
         }
 
         // Manager N-2 can approve requests from employees they supervise
-        if ($user->hasRole('Manager N-2')) {
+        if ($user->can('view_direct_reports_leave_requests')) {
             return $this->isManagerN2SupervisorOf($user, $leaveRequest->employee);
         }
 
@@ -106,7 +106,7 @@ class LeaveRequestPolicy
     public function delete(User $user, LeaveRequest $leaveRequest): bool
     {
         // Developer and Executive can delete any request
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_leave_requests')) {
             return true;
         }
 
@@ -123,7 +123,7 @@ class LeaveRequestPolicy
      */
     public function restore(User $user, LeaveRequest $leaveRequest): bool
     {
-        return $user->hasRole(['Developer', 'Executive']);
+        return $user->can('view_all_leave_requests');
     }
 
     /**
@@ -131,7 +131,7 @@ class LeaveRequestPolicy
      */
     public function forceDelete(User $user, LeaveRequest $leaveRequest): bool
     {
-        return $user->hasRole(['Developer', 'Executive']);
+        return $user->can('view_all_leave_requests');
     }
 
     /**
@@ -140,13 +140,13 @@ class LeaveRequestPolicy
     private function isManagerN1SupervisorOf(User $managerN1, Employee $employee): bool
     {
         // Check if employee is supervised by a Manager N-2 who is supervised by this Manager N-1
-        if ($employee->supervisor && $employee->supervisor->user->hasRole('Manager N-2')) {
+        if ($employee->supervisor && $employee->supervisor->user->can('view_direct_reports_leave_requests')) {
             return $employee->supervisor->supervisor &&
                    $employee->supervisor->supervisor->user_id === $managerN1->id;
         }
 
         // Check if employee is a Manager N-2 supervised by this Manager N-1
-        if ($employee->user->hasRole('Manager N-2')) {
+        if ($employee->user->can('view_direct_reports_leave_requests')) {
             return $employee->supervisor &&
                    $employee->supervisor->user_id === $managerN1->id;
         }
@@ -170,7 +170,7 @@ class LeaveRequestPolicy
     public static function scopeViewableBy($query, User $user)
     {
         // Developer and Executive can see all requests
-        if ($user->hasRole(['Developer', 'Executive'])) {
+        if ($user->can('view_all_leave_requests')) {
             return $query;
         }
 
@@ -181,34 +181,33 @@ class LeaveRequestPolicy
             });
 
             // Manager N-1 can see requests from employees under their supervision
-            if ($user->hasRole('Manager N-1')) {
+            if ($user->can('view_team_leave_requests')) {
                 $q->orWhereHas('employee', function ($employeeQuery) use ($user) {
                     $employeeQuery->where(function ($subQuery) use ($user) {
-                        // Employees supervised by Manager N-2 who is supervised by this Manager N-1
-                        $subQuery->whereHas('supervisor', function ($supervisorQuery) use ($user) {
+                    // A person who can view direct reports, supervised by this user
+                    $subQuery->whereHas('supervisor', function ($supervisorQuery) use ($user) {
+                        $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
+                            $userQuery->where('id', $user->id)
+                                ->withPermission('view_direct_reports_leave_requests');
+                        });
+                    });
+
+                    // OR such a person supervised directly by this user
+                    $subQuery->orWhere(function ($managerQuery) use ($user) {
+                        $managerQuery->whereHas('user', function ($userQuery) {
+                            $userQuery->withPermission('view_direct_reports_leave_requests');
+                        })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
                             $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
                                 $userQuery->where('id', $user->id);
-                            })->whereHas('user.roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'Manager N-2');
                             });
                         });
-
-                        // OR Manager N-2 supervised by this Manager N-1
-                        $subQuery->orWhere(function ($managerQuery) use ($user) {
-                            $managerQuery->whereHas('user.roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'Manager N-2');
-                            })->whereHas('supervisor', function ($supervisorQuery) use ($user) {
-                                $supervisorQuery->whereHas('user', function ($userQuery) use ($user) {
-                                    $userQuery->where('id', $user->id);
-                                });
-                            });
-                        });
+                    });
                     });
                 });
             }
 
             // Manager N-2 can see requests from employees they supervise
-            elseif ($user->hasRole('Manager N-2')) {
+            elseif ($user->can('view_direct_reports_leave_requests')) {
                 $q->orWhereHas('employee', function ($employeeQuery) use ($user) {
                     $employeeQuery->whereHas('supervisor', function ($supervisorQuery) use ($user) {
                         $supervisorQuery->where('user_id', $user->id);

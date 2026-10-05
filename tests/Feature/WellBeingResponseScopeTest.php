@@ -96,14 +96,28 @@ it('exposes the department relationship through employees', function () {
 
 function createUserWithRole(string $roleName): User
 {
-    $permission = Permission::firstOrCreate(['name' => 'access_wellbeing_reports', 'guard_name' => 'web']);
+    // Visibility is permission-based: each role gets the hierarchy permission
+    // that corresponds to its reporting level, mirroring the seeded bundles.
+    $hierarchy = [
+        'Developer' => 'view_all_wellbeing_reports',
+        'Executive' => 'view_all_wellbeing_reports',
+        'Manager N-1' => 'view_team_wellbeing_reports',
+        'Manager N-2' => 'view_direct_reports_wellbeing_reports',
+    ];
 
-    $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+    $names = ['access_wellbeing_reports'];
 
-    $role->givePermissionTo($permission);
+    if (isset($hierarchy[$roleName])) {
+        $names[] = $hierarchy[$roleName];
+    }
+
+    foreach ($names as $name) {
+        $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+        $role->givePermissionTo(Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']));
+    }
 
     $user = User::factory()->create();
-    $user->assignRole($role);
+    $user->assignRole($roleName);
 
     return $user;
 }

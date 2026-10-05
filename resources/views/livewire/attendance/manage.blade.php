@@ -74,18 +74,18 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         // Executive and Developer can see all employees
-        if ($user->can('view_other_attendance') && ($user->hasRole(['Executive', 'Developer']))) {
+        if ($user->can('view_other_attendance') && ($user->can('view_all_attendance'))) {
             return Employee::active()->pluck('id')->toArray();
         }
 
         // Manager N-1 can see employees and Manager N-2 they supervise
-        if ($user->hasRole('Manager N-1')) {
+        if ($user->can('view_team_attendance')) {
             $subordinateIds = $this->getAllSubordinateIds($employee->id);
             return array_merge([$employee->id], $subordinateIds);
         }
 
         // Manager N-2 can see employees they directly supervise
-        if ($user->hasRole('Manager N-2')) {
+        if ($user->can('view_direct_reports_attendance')) {
             $subordinateIds = $this->getDirectSubordinateIds($employee->id);
             return array_merge([$employee->id], $subordinateIds);
         }
