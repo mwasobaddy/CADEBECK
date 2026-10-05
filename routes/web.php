@@ -3,6 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
+/*
+ * Platform area. Reached by staff who belong to no client: System Admin and
+ * Developer. Gated on clients.view, which no client role is ever granted.
+ */
+Volt::route('admin/clients', 'admin.clients')
+    ->middleware(['auth', 'platform.staff', 'permission:clients.view'])
+    ->name('admin.clients.index');
+
 Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

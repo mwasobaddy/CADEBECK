@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'temp.cleanup' => \App\Http\Middleware\TempFileCleanup::class,
             'setlanguage' => \App\Http\Middleware\SetLanguage::class,
             'under.construction' => \App\Http\Middleware\UnderConstruction::class,
+            'platform.staff' => \App\Http\Middleware\EnsurePlatformStaff::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

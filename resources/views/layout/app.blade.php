@@ -103,6 +103,19 @@
                         </li>
                         @endif
 
+                        @if (Auth::user()->can('clients.view'))
+                        <li>
+                            <a href="{{ route('admin.clients.index') }}" wire:navigate
+                               class="flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-colors
+                                      {{ request()->routeIs('admin.clients.*')
+                                         ? 'bg-green-600 dark:bg-green-700 text-white'
+                                         : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}">
+                                <flux:icon name="building-office" variant="solid" class="w-4 h-4" />
+                                {{ __('Clients') }}
+                            </a>
+                        </li>
+                        @endif
+
                         @if (Auth::user()->can('manage_user') || Auth::user()->can('create_user'))
                         <li x-data="{ open: {{ (request()->routeIs('user.show') || request()->routeIs('user.index') || request()->routeIs('user.edit')) ? 'true' : 'false' }} }">
                             <div class="flex flex-col">

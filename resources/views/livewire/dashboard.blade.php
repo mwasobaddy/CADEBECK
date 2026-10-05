@@ -28,6 +28,15 @@ new class extends \Livewire\Volt\Component {
     {
         $user = Auth::user();
 
+        // Platform staff (Developer, System Admin) belong to no client, so this
+        // HR dashboard has nothing to show them. Send them to the platform
+        // overview instead of an empty page.
+        if ($user && $user->client_id === null && $user->can('clients.view')) {
+            $this->redirect(route('admin.clients.index'), navigate: true);
+
+            return;
+        }
+
         // Load clock attendance data
         $this->loadTodayAttendance();
         $this->getCurrentLocation();
