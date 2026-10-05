@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attendance extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToClient;
     protected $fillable = [
         'employee_id',
         'user_id',
@@ -19,6 +20,7 @@ class Attendance extends Model
         'status',
         'notes',
         'location_data',
+        'client_id',
     ];
 
     protected $casts = [

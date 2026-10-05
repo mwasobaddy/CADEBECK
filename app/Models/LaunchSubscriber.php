@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 
 class LaunchSubscriber extends Model
 {
-    protected $fillable = ['email'];
+
+    use BelongsToClient;
+    protected $fillable = ['client_id', 'email'];
 }

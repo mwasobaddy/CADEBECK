@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -15,9 +16,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Location extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToClient;
     protected $fillable = [
-        'name', 'code', 'address', 'city', 'country'
+        'name', 'code', 'address', 'city', 'country',
+        'client_id',
     ];
     public function branches()
     {

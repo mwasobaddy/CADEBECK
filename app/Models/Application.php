@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,8 +18,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Application extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
-        'job_advert_id', 'name', 'email', 'phone', 'cv_blob', 'cover_letter', 'status', 'submitted_at', 'status_changed_at'
+        'job_advert_id', 'name', 'email', 'phone', 'cv_blob', 'cover_letter', 'status', 'submitted_at', 'status_changed_at',
+        'client_id',
     ];
 
     protected $casts = [

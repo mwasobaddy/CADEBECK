@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PayrollAllowance extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
         'employee_id',
         'payroll_id',
@@ -18,6 +21,7 @@ class PayrollAllowance extends Model
         'end_date',
         'status',
         'notes',
+        'client_id',
     ];
 
     protected $casts = [

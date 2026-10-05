@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
         'employee_id',
         'user_id',
@@ -19,6 +22,7 @@ class LeaveRequest extends Model
         'status',
         'approval_notes',
         'approved_at',
+        'client_id',
     ];
 
     protected $casts = [

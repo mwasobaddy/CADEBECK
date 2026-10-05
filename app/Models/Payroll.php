@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Payroll extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
         'employee_id',
         'payroll_period',
@@ -43,6 +46,7 @@ class Payroll extends Model
         'calculation_details',
         'processed_at',
         'processed_by',
+        'client_id',
     ];
 
     protected $casts = [

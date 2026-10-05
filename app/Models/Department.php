@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,10 +14,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Department extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToClient;
 
     protected $fillable = [
         'name', 'code', 'branch_id',
+        'client_id',
     ];
 
     public function branch()

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             // Must run first: creates the demo client the rest of the data belongs to.
             DemoClientSeeder::class,
             RolesAndPermissionsSeeder::class,
+            PlatformPermissionsSeeder::class,
             JobAdvertSeeder::class,
             LocationSeeder::class,
             BranchSeeder::class,

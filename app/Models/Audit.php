@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,8 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Audit extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
-        'actor_id', 'action', 'target_type', 'target_id', 'details'
+        'actor_id', 'action', 'target_type', 'target_id', 'details',
+        'client_id',
     ];
 
     public function actor(): BelongsTo

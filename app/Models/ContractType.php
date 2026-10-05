@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,8 +14,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class ContractType extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToClient;
     protected $fillable = [
-        'name', 'code', 'description'
+        'name', 'code', 'description',
+        'client_id',
     ];
 }

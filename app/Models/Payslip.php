@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class Payslip extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
         'payroll_id',
         'employee_id',
@@ -26,6 +29,7 @@ class Payslip extends Model
         'external_file_name',
         'external_uploaded_by',
         'external_uploaded_at',
+        'client_id',
     ];
 
     protected $casts = [

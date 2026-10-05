@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,12 +26,13 @@ use Illuminate\Notifications\Notifiable;
  */
 class Employee extends Model
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, BelongsToClient;
 
     protected $fillable = [
         'user_id', 'date_of_birth', 'gender', 'mobile_number', 'home_address', 'staff_number', 'location_id', 'branch_id', 'department_id', 'designation_id', 'date_of_join', 'contract_type_id', 'supervisor_id', 'basic_salary',
         'salary_frequency', 'contracted_hours_per_week',
         'tax_code', 'nic_category', 'student_loan_plan', 'include_pension',
+        'client_id',
     ];
 
     protected $casts = [

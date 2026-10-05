@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,8 +18,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class JobAdvert extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
-        'title', 'slug', 'description', 'deadline', 'status', 'posted_by'
+        'title', 'slug', 'description', 'deadline', 'status', 'posted_by',
+        'client_id',
     ];
 
     /**

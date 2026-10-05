@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\SetLanguage::class,
+            \App\Http\Middleware\SetCurrentClient::class,
             \App\Http\Middleware\TempFileCleanup::class,
         ]);
 

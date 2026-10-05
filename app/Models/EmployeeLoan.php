@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EmployeeLoan extends Model
 {
+
+    use BelongsToClient;
     protected $fillable = [
         'employee_id',
         'loan_type',
@@ -25,6 +28,7 @@ class EmployeeLoan extends Model
         'approved_by',
         'approved_at',
         'notes',
+        'client_id',
     ];
 
     protected $casts = [

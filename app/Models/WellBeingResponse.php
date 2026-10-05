@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class WellBeingResponse extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToClient;
 
     protected $fillable = [
         'employee_id',
@@ -25,6 +26,7 @@ class WellBeingResponse extends Model
         'support_level',
         'comments',
         'additional_metrics',
+        'client_id',
     ];
 
     protected $casts = [
