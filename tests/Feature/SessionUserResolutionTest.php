@@ -73,7 +73,7 @@ it('serves the dashboard to a session authenticated developer', function () {
 
     withSessionUser($this, $developer)
         ->get('/dashboard')
-        ->assertRedirect(route('admin.clients.index'));
+        ->assertRedirect(route('platform.clients.index'));
 });
 
 it('serves the platform clients screen to a session authenticated developer', function () {
@@ -85,7 +85,7 @@ it('serves the platform clients screen to a session authenticated developer', fu
         ->firstOrFail();
 
     withSessionUser($this, $developer)
-        ->get(route('admin.clients.index'))
+        ->get(route('platform.clients.index'))
         ->assertOk()
         ->assertSee('Demo Client');
 });

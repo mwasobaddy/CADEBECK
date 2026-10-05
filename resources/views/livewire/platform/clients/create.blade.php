@@ -67,7 +67,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             'message' => __('Client created. Their administrator can now sign in.'),
         ]);
 
-        $this->redirectRoute('admin.clients.show', ['client' => $client->id], navigate: true);
+        $this->redirectRoute('platform.clients.show', ['client' => $client->id], navigate: true);
     }
 };
 ?>

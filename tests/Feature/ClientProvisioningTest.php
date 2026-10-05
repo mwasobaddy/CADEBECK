@@ -117,7 +117,7 @@ it('creates a client through the screen and lands on it', function () {
 
     $this->actingAs(provisioningDeveloper());
 
-    Volt::test('admin.clients.create')
+    Volt::test('platform.clients.create')
         ->set('form.name', 'Globex Ltd')
         ->set('form.plan', 'enterprise')
         ->set('form.first_name', 'Hank')
@@ -141,7 +141,7 @@ it('rejects a duplicate login email on the create form', function () {
 
     $this->actingAs(provisioningDeveloper());
 
-    Volt::test('admin.clients.create')
+    Volt::test('platform.clients.create')
         ->set('form.name', 'Another Ltd')
         ->set('form.first_name', 'Someone')
         ->set('form.email', 'employee1@cadebeck.test')
@@ -158,12 +158,12 @@ it('lets a developer suspend and reactivate a client', function () {
     $client = provisionAcme();
     $this->actingAs(provisioningDeveloper());
 
-    Volt::test('admin.clients.show', ['client' => $client->id])
+    Volt::test('platform.clients.show', ['client' => $client->id])
         ->call('toggleStatus');
 
     expect($client->fresh()->status)->toBe('suspended');
 
-    Volt::test('admin.clients.show', ['client' => $client->id])
+    Volt::test('platform.clients.show', ['client' => $client->id])
         ->call('toggleStatus');
 
     expect($client->fresh()->status)->toBe('active');
@@ -180,6 +180,6 @@ it('keeps the client screens away from client users', function () {
     $this->actingAs($clientUser);
     ClientContext::override($clientUser->client_id);
 
-    $this->get(route('admin.clients.create'))->assertForbidden();
-    $this->get(route('admin.clients.show', ['client' => $clientUser->client_id]))->assertForbidden();
+    $this->get(route('platform.clients.create'))->assertForbidden();
+    $this->get(route('platform.clients.show', ['client' => $clientUser->client_id]))->assertForbidden();
 });

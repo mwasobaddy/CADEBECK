@@ -85,7 +85,7 @@ it('renders the clients screen for a system admin', function () {
     $this->actingAs(systemAdmin());
     ClientContext::override(null);
 
-    $this->get(route('admin.clients.index'))->assertOk()->assertSee('Acme');
+    $this->get(route('platform.clients.index'))->assertOk()->assertSee('Acme');
 });
 
 it('keeps the clients screen away from client users', function () {
@@ -103,7 +103,7 @@ it('keeps the clients screen away from client users', function () {
     ClientContext::override($client->id);
 
     // The catalogue hides it, and the route refuses it even if granted directly.
-    $this->get(route('admin.clients.index'))->assertForbidden();
+    $this->get(route('platform.clients.index'))->assertForbidden();
 });
 
 it('blocks a system admin from client HR screens', function () {
@@ -139,7 +139,7 @@ it('sends platform staff from the dashboard to the clients screen', function () 
     $this->actingAs($admin);
     ClientContext::override(null);
 
-    $this->get(route('dashboard'))->assertRedirect(route('admin.clients.index'));
+    $this->get(route('dashboard'))->assertRedirect(route('platform.clients.index'));
 });
 
 it('leaves a client user on the normal dashboard', function () {

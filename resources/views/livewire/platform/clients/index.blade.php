@@ -43,7 +43,7 @@ new #[Layout('components.layouts.app')] class extends Component {
      */
     public function createNewClient(): void
     {
-        $this->redirectRoute('admin.clients.create', navigate: true);
+        $this->redirectRoute('platform.clients.create', navigate: true);
     }
 
     /**
@@ -51,7 +51,7 @@ new #[Layout('components.layouts.app')] class extends Component {
      */
     public function viewClient(int $id): void
     {
-        $this->redirectRoute('admin.clients.show', ['client' => $id], navigate: true);
+        $this->redirectRoute('platform.clients.show', ['client' => $id], navigate: true);
     }
 };
 ?>

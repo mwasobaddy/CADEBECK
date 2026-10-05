@@ -99,8 +99,8 @@
 
             @if (Auth::user()->can('clients.view'))
             <li>
-                <a href="{{ route('admin.clients.index') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('admin.clients.*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>
-                    <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('admin.clients.*') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
+                <a href="{{ route('platform.clients.index') }}" class="flex items-center gap-2 px-1 py-1 transition-colors rounded-full font-semibold {{ request()->routeIs('platform.clients.*') ? 'bg-green-600 dark:bg-green-700 text-white dark:text-zinc-200' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-800' }}" wire:navigate>
+                    <span class="flex items-center rounded-full font-black bg-gray-200 dark:bg-zinc-700 p-2 {{ request()->routeIs('platform.clients.*') ? 'bg-white dark:bg-zinc-900' : 'dark:bg-zinc-500' }}">
                         <flux:icon name="building-office" variant="solid" class="w-4 h-4 text-zinc-500 dark:text-zinc-200" />
                     </span>
                     <span>{{ __('Clients') }}</span>

@@ -103,7 +103,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     public function backToList(): void
     {
-        $this->redirectRoute('admin.clients.index', navigate: true);
+        $this->redirectRoute('platform.clients.index', navigate: true);
     }
 };
 ?>
