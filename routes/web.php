@@ -114,15 +114,15 @@ Route::middleware(['auth'])->group(function () {
             ->name('employee.edit');
 
         Volt::route('users/manage', 'user.index')
-            ->middleware(['auth', 'permission:manage_user'])
+            ->middleware(['auth', 'permission:manage_user|manage_client_users'])
             ->name('user.index');
 
         Volt::route('users/create', 'user.show')
-            ->middleware(['auth', 'permission:create_user'])
+            ->middleware(['auth', 'permission:create_user|manage_client_users'])
             ->name('user.show');
 
         Volt::route('users/{id}/edit', 'user.show')
-            ->middleware(['auth', 'permission:edit_user'])
+            ->middleware(['auth', 'permission:edit_user|manage_client_users'])
             ->name('user.edit');
 
         Volt::route('job/job-adverts', 'job.index')

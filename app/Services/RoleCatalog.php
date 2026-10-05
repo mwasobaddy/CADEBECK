@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -86,6 +87,101 @@ class RoleCatalog
         }
 
         return ClientContext::currentClientId();
+    }
+
+    /**
+     * Ensure a role name is free among the roles this user can see.
+     *
+     * Spatie only rejects duplicate names in Role::create(), not on rename, and
+     * the database index treats NULL client_id as distinct. Without this, a
+     * client could rename a role onto a shared role's name, leaving two roles
+     * with the same name visible to that client and making name-based role
+     * assignment ambiguous.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function assertNameAvailable(string $name, ?Role $ignore = null): void
+    {
+        $clash = $this->visibleRoles()
+            ->where('name', $name)
+            ->when($ignore, fn ($query) => $query->where($query->qualifyColumn('id'), '!=', $ignore->getKey()))
+            ->exists();
+
+        if ($clash) {
+            throw ValidationException::withMessages([
+                'form.name' => [__('A role with this name already exists.')],
+            ]);
+        }
+    }
+
+    /**
+     * Whether a role is a platform-level role.
+     *
+     * A role counts as platform-level when it carries any platform permission,
+     * rather than when it is called "Developer" - naming would break the moment
+     * a role is renamed or a client creates a similarly named role.
+     */
+    public function isPlatformRole(Role $role): bool
+    {
+        return $role->permissions()
+            ->whereIn('name', $this->platformPermissions())
+            ->exists();
+    }
+
+    /**
+     * Roles the current user may assign to somebody.
+     *
+     * Client users get the shared roles plus their own client's roles, minus any
+     * platform-level role, so a Client Admin cannot promote anybody (or
+     * themselves) to Developer or System Admin. Platform staff may assign
+     * everything they can see.
+     */
+    public function assignableRoles(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = $this->visibleRoles();
+
+        if ($this->userIsPlatformStaff()) {
+            return $query;
+        }
+
+        $platform = $this->platformPermissions();
+
+        return $query->where(function ($builder) use ($platform) {
+            foreach ($platform as $permission) {
+                $builder->whereDoesntHave('permissions', fn ($q) => $q->where('name', $permission));
+            }
+        });
+    }
+
+    /**
+     * Whether the current user may assign the given role.
+     */
+    public function canAssign(Role $role): bool
+    {
+        if ($this->userIsPlatformStaff()) {
+            return true;
+        }
+
+        return ! $this->isPlatformRole($role)
+            && $this->visibleRoles()->whereKey($role->getKey())->exists();
+    }
+
+    /**
+     * Resolve a role by name that the current user is allowed to assign.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function findAssignableByName(string $name): Role
+    {
+        $role = $this->visibleRoles()->where('name', $name)->first();
+
+        if (! $role || ! $this->canAssign($role)) {
+            throw ValidationException::withMessages([
+                'form.role' => [__('The selected role is invalid.')],
+            ]);
+        }
+
+        return $role;
     }
 
     /**
