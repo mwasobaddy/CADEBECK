@@ -65,8 +65,13 @@ new #[Layout('components.layouts.app')] class extends Component {
                 'password' => $this->form['password'] ? Hash::make($this->form['password']) : $this->user->password,
             ]);
             // Re-point the assignment at the owning client, since Spatie stores
-            // the team id on the pivot.
-            ClientContext::override($this->user->client_id);
+            // the team id on the pivot. Platform staff have no client, so only
+            // override when there is one: override(null) would clear the ambient
+            // context that the audit trail below depends on.
+            if ($this->user->client_id !== null) {
+                ClientContext::override($this->user->client_id);
+            }
+
             $this->user->syncRoles([$role]);
 
             // Log the update action
@@ -92,7 +97,12 @@ new #[Layout('components.layouts.app')] class extends Component {
             $existingNotifications[] = $notification;
             session(['notifications' => $existingNotifications]);
         } else {
-            ClientContext::override($clientId);
+            // Only override when a specific client was chosen. For platform staff
+            // the ambient context is already null, and overriding with null would
+            // clear it for the audit entry below.
+            if ($clientId !== null) {
+                ClientContext::override($clientId);
+            }
 
             $user = User::create([
                 'client_id' => $clientId,

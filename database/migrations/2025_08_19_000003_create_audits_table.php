@@ -8,7 +8,10 @@ return new class extends Migration {
     {
         Schema::create('audits', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->index()->constrained('clients');
+            // Nullable on purpose: the audit trail also covers platform level
+            // activity, such as a Developer adding a client or creating platform
+            // staff, which has no client of its own.
+            $table->foreignId('client_id')->nullable()->index()->constrained('clients');
             $table->foreignId('actor_id')->constrained('users')->onDelete('cascade');
             $table->string('action');
             $table->string('target_type');
