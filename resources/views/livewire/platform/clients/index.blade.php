@@ -135,9 +135,22 @@ new #[Layout('components.layouts.app')] class extends Component {
                         {{ __('Add Client') }}
                     </flux:button>
                 @endcan
-                <flux:input wire:model.live.debounce.300ms="search" size="sm"
-                    :placeholder="__('Search by client, plan or status')"
-                    class="!ps-4 pe-4 !py-2 !rounded-full border !border-blue-200 dark:!border-indigo-700 !bg-white/80 dark:!bg-zinc-900/80 !backdrop-blur-md dark:!text-white !shadow-sm focus:!ring-green-500" />
+            </div>
+        </div>
+
+        <div>
+            <div class="flex flex-wrap gap-8 items-center">
+                <div class="relative w-80">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-blue-200 dark:text-indigo-400 z-[1]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                    </span>
+                    <input type="text" wire:model.live.debounce.500ms="search"
+                        class="w-full pl-10 pr-4 py-2 rounded-3xl border border-blue-200 dark:border-indigo-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-800/80 dark:text-white transition shadow-sm bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md"
+                        placeholder="{{ __('Search by client, plan or status...') }}">
+                </div>
             </div>
         </div>
 
